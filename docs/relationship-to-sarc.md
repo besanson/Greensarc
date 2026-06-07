@@ -48,6 +48,27 @@ Composition is optional and never required. Green SARC is standalone first; a
 safety layer is an independent, parallel concern. Nothing in Green SARC assumes a
 safety layer is present, and nothing in it provides one.
 
+### Composition in code: the SARC adapter
+
+The composition above is realised concretely by
+[`green_sarc/adapters/sarc.py`](../src/green_sarc/adapters/sarc.py). It expresses
+Green SARC's predictive cost/carbon control as SARC
+[`Constraint`](https://github.com/besanson/sarc-governance) objects and plugs
+them into a SARC `GovernanceToolset`:
+
+- the **Pre-Action Gate** becomes a HARD constraint at SARC's `PAG` site (it
+  fires — and SARC blocks with `ConstraintViolation` — when the forecast does not
+  fit the budget / carbon ceiling);
+- the **Post-Action Auditor** becomes a SOFT constraint at SARC's `PAA` site (it
+  reads actual token usage from the tool result, writes the predicted-vs-actual
+  record, spends the budget, and retrains the estimator).
+
+`wrap_toolset(toolset, governance, spec=safety_spec)` appends these to a caller's
+existing safety `ConstraintSpec`, so **one** governed toolset enforces both
+concerns at the shared four sites. This requires the optional extra
+(`pip install 'green-sarc[sarc]'`); the Green SARC core still does not import
+SARC. See [`examples/sarc_composition/run_demo.py`](../examples/sarc_composition/run_demo.py).
+
 ## Conventions mirrored from the SARC repo
 
 So that a reader of one repository recognises the other, Green SARC follows

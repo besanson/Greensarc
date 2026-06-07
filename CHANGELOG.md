@@ -32,8 +32,12 @@ Phase 1: per-action predictive cost + carbon governance.
     working in-process `GreenSarcSpanProcessor` (duck-typed against OpenTelemetry's
     `SpanProcessor`, so dependency-free and testable) that feeds ended spans to the auditor;
     cross-process OTLP collector ingestion remains a documented stub.
-- Runnable examples: a standalone four-site agent loop, a KAOS MCP-adapter demo, and a
-  PAIS sidecar demo gating a mock `/v1/chat/completions` endpoint.
+  - **SARC composition** (`adapters/sarc.py`): expresses the predictive gate and auditor as
+    SARC `Constraint`s (HARD at `PAG`, SOFT at `PAA`) plugged into a SARC `GovernanceToolset`,
+    so one toolset enforces safety and cost/carbon at the shared sites. Optional `sarc` extra;
+    the core never imports SARC.
+- Runnable examples: a standalone four-site agent loop, a KAOS MCP-adapter demo, a
+  PAIS sidecar demo gating a mock `/v1/chat/completions` endpoint, and a SARC composition demo.
 - Documentation (`docs/`): architecture, the relationship to the SARC framework, and a full
   KAOS integration guide — all cross-referenced to the upstream
   [SARC](https://github.com/besanson/sarc-governance),

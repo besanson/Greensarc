@@ -179,12 +179,12 @@ Two complementary surfaces:
 ## Install
 
 ```bash
-pip install -e ".[dev]"          # core + test/lint tooling
-pip install -e ".[dev,mcp,otel]" # plus the KAOS MCP server and OTel adapter deps
+pip install -e ".[dev]"               # core + test/lint tooling
+pip install -e ".[dev,mcp,otel,sarc]" # plus the KAOS adapters and the SARC composition adapter
 ```
 
-Core has **no runtime dependencies**; `mcp` and `opentelemetry-sdk` are optional
-extras pulled in only by their adapters.
+Core has **no runtime dependencies**; `mcp`, `opentelemetry-sdk`, and
+`sarc-governance` are optional extras pulled in only by their adapters.
 
 ## Run the examples
 
@@ -192,6 +192,7 @@ extras pulled in only by their adapters.
 python examples/standalone_agent_loop/run_demo.py   # four sites: reject, breaker trip, audit log
 python examples/kaos_mcp_adapter/run_demo.py        # KAOS agent driving the MCP gate + auditor (advisory)
 python examples/pais_sidecar/run_demo.py            # sidecar hard-gating /v1/chat/completions (429)
+python examples/sarc_composition/run_demo.py        # Green SARC as SARC constraints on one GovernanceToolset
 ```
 
 ## CLI
@@ -234,8 +235,13 @@ Green SARC borrows the **four-enforcement-site architecture** from the SARC
 framework and nothing more. SARC is the framework this layer takes those four
 sites from (arXiv:2605.07728,
 [github.com/besanson/sarc-governance](https://github.com/besanson/sarc-governance)).
-Green SARC is independent of it: it has no dependency on SARC and governs only
-cost and carbon.
+Green SARC's core has no dependency on SARC and governs only cost and carbon. It
+can, optionally, **compose** with SARC on a single governed toolset via
+[`green_sarc/adapters/sarc.py`](src/green_sarc/adapters/sarc.py): the predictive
+gate and auditor are expressed as SARC constraints at the shared `PAG`/`PAA`
+sites, so one `GovernanceToolset` enforces both safety and cost/carbon (requires
+`pip install 'green-sarc[sarc]'`). See
+[docs/relationship-to-sarc.md](docs/relationship-to-sarc.md).
 
 ## Reference
 
