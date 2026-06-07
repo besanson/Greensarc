@@ -11,6 +11,20 @@ enforcement sites to the FinOps / GreenOps domain.
 > Status: alpha (Phase 1). The core is framework-agnostic and runs standalone.
 > KAOS integrates as the caller through an adapter; the dependency runs one way.
 
+## Documentation
+
+Full docs live in [`docs/`](docs/):
+
+- [Architecture](docs/architecture.md) — the four enforcement sites and the `predict → act → log → retrain` loop.
+- [Relationship to SARC](docs/relationship-to-sarc.md) — what is borrowed from the **SARC** framework ([`besanson/sarc-governance`](https://github.com/besanson/sarc-governance)) and what is not.
+- [KAOS integration](docs/kaos-integration.md) — how **KAOS** ([`axsaucedo/kaos`](https://github.com/axsaucedo/kaos)) calls Green SARC, across all three surfaces, with deployment.
+- [Quickstart](docs/quickstart.md) — install, run, govern your own loop.
+
+**Related repositories** (Green SARC depends on neither at runtime):
+[SARC framework](https://github.com/besanson/sarc-governance) ·
+[KAOS orchestrator](https://github.com/axsaucedo/kaos) ·
+[PAIS runtime](https://github.com/axsaucedo/pydantic-ai-server)
+
 ---
 
 ## What it governs (and what it does not)

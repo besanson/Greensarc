@@ -32,3 +32,10 @@ Phase 1: per-action predictive cost + carbon governance.
     receiver is a documented stub.
 - Runnable examples: a standalone four-site agent loop, a KAOS MCP-adapter demo, and a
   PAIS sidecar demo gating a mock `/v1/chat/completions` endpoint.
+- Documentation (`docs/`): architecture, the relationship to the SARC framework, and a full
+  KAOS integration guide — all cross-referenced to the upstream
+  [SARC](https://github.com/besanson/sarc-governance),
+  [KAOS](https://github.com/axsaucedo/kaos), and
+  [PAIS](https://github.com/axsaucedo/pydantic-ai-server) repositories.
+- Deployment reference: `deploy/Dockerfile` and an env-configured MCP server entry point
+  (`examples/kaos_mcp_adapter/server.py`) registered via the `MCPServer` + `Agent` manifests.
