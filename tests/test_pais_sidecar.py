@@ -1,0 +1,191 @@
+"""Tests for the PAIS sidecar adapter (pure gate logic + ASGI middleware)."""
+
+from __future__ import annotations
+
+import json
+from typing import Any, Dict, List
+
+from green_sarc.adapters.pais_sidecar import (
+    GreenSarcASGIMiddleware,
+    SidecarGate,
+    count_message_tokens,
+    extract_response_text,
+    extract_usage_tokens,
+)
+from green_sarc.estimator import ColdStartEstimator
+from green_sarc.state import Budget
+
+
+def _sidecar(budget, cost_model, carbon_model) -> SidecarGate:
+    return SidecarGate(
+        budget=budget,
+        estimator=ColdStartEstimator(cost_model, carbon_model),
+        cost_model=cost_model,
+        carbon_model=carbon_model,
+        region="eu-west",
+    )
+
+
+def _chat_request(content: str = "hello there", model: str = "test-model", max_tokens: int = 50):
+    return {
+        "model": model,
+        "messages": [{"role": "user", "content": content}],
+        "max_tokens": max_tokens,
+    }
+
+
+# -- helper token functions -------------------------------------------------
+
+
+def test_count_message_tokens_and_usage_helpers():
+    msgs = [{"role": "user", "content": "x" * 40}]
+    assert count_message_tokens(msgs) == 10 + 4  # 40/4 + per-message overhead
+
+    assert extract_usage_tokens({"usage": {"total_tokens": 123}}) == 123.0
+    assert extract_usage_tokens({"usage": {"prompt_tokens": 10, "completion_tokens": 5}}) == 15.0
+    assert extract_usage_tokens({"usage": {"total_tokens": 0}}) == 0.0  # PAIS case
+
+    resp = {"choices": [{"message": {"role": "assistant", "content": "answer"}}]}
+    assert extract_response_text(resp) == "answer"
+
+
+# -- pure SidecarGate -------------------------------------------------------
+
+
+def test_gate_request_admits_and_audits(cost_model, carbon_model):
+    budget = Budget(token_budget=10_000.0, carbon_ceiling=100.0)
+    sc = _sidecar(budget, cost_model, carbon_model)
+
+    decision, action_id = sc.gate_request(_chat_request())
+    assert decision.admitted
+
+    rec = sc.audit_response(action_id, {"usage": {"total_tokens": 250}})
+    assert rec is not None
+    assert rec.actual_cost == 250.0
+    assert budget.remaining_tokens() == 10_000.0 - 250.0
+    assert len(sc.store.list()) == 1
+
+
+def test_gate_request_rejects_over_budget(cost_model, carbon_model):
+    budget = Budget(token_budget=10.0, carbon_ceiling=100.0)
+    sc = _sidecar(budget, cost_model, carbon_model)
+    decision, _ = sc.gate_request(_chat_request(max_tokens=4000))
+    assert not decision.admitted
+    assert decision.verdict.value == "reject"
+
+
+def test_audit_falls_back_to_text_estimate_when_usage_zero(cost_model, carbon_model):
+    # PAIS reports usage=0; the sidecar estimates from the response text instead.
+    budget = Budget(token_budget=10_000.0, carbon_ceiling=100.0)
+    sc = _sidecar(budget, cost_model, carbon_model)
+    _, action_id = sc.gate_request(_chat_request(content="hi"))
+    resp = {"usage": {"total_tokens": 0}, "choices": [{"message": {"content": "y" * 40}}]}
+    rec = sc.audit_response(action_id, resp)
+    assert rec is not None
+    # prompt estimate (>=1) + 40/4 completion estimate
+    assert rec.actual_cost >= 10.0
+
+
+def test_audit_unknown_action_id_returns_none(cost_model, carbon_model):
+    sc = _sidecar(Budget(1000.0, 100.0), cost_model, carbon_model)
+    assert sc.audit_response("nope", {"usage": {"total_tokens": 1}}) is None
+
+
+# -- ASGI middleware --------------------------------------------------------
+
+
+def _make_mock_pais(usage_total: int = 250):
+    """A minimal ASGI app standing in for PAIS /v1/chat/completions."""
+    state = {"called": False}
+
+    async def app(scope, receive, send):
+        state["called"] = True
+        # drain the request body
+        more = True
+        while more:
+            msg = await receive()
+            more = msg.get("more_body", False) if msg["type"] == "http.request" else False
+        payload = json.dumps(
+            {
+                "id": "x",
+                "object": "chat.completion",
+                "choices": [{"index": 0, "message": {"role": "assistant", "content": "hi"}}],
+                "usage": {"total_tokens": usage_total},
+            }
+        ).encode()
+        await send(
+            {
+                "type": "http.response.start",
+                "status": 200,
+                "headers": [(b"content-type", b"application/json")],
+            }
+        )
+        await send({"type": "http.response.body", "body": payload, "more_body": False})
+
+    return app, state
+
+
+async def _drive(
+    app, body: bytes, *, path="/v1/chat/completions", method="POST"
+) -> List[Dict[str, Any]]:
+    scope = {"type": "http", "path": path, "method": method, "headers": []}
+    sent = {"done": False}
+
+    async def receive():
+        if not sent["done"]:
+            sent["done"] = True
+            return {"type": "http.request", "body": body, "more_body": False}
+        return {"type": "http.disconnect"}
+
+    out: List[Dict[str, Any]] = []
+
+    async def send(message):
+        out.append(message)
+
+    await app(scope, receive, send)
+    return out
+
+
+async def test_middleware_forwards_admitted_call_and_audits(cost_model, carbon_model):
+    budget = Budget(token_budget=10_000.0, carbon_ceiling=100.0)
+    sc = _sidecar(budget, cost_model, carbon_model)
+    pais, state = _make_mock_pais(usage_total=250)
+    app = GreenSarcASGIMiddleware(pais, sc)
+
+    messages = await _drive(app, json.dumps(_chat_request()).encode())
+
+    assert state["called"] is True
+    assert messages[0]["type"] == "http.response.start"
+    assert messages[0]["status"] == 200
+    # response body forwarded unchanged
+    body = json.loads(messages[1]["body"])
+    assert body["usage"]["total_tokens"] == 250
+    # actuals audited and budget spent
+    assert budget.remaining_tokens() == 10_000.0 - 250.0
+    assert sc.store.list()[-1].actual_cost == 250.0
+
+
+async def test_middleware_rejects_with_429_and_does_not_call_app(cost_model, carbon_model):
+    budget = Budget(token_budget=10.0, carbon_ceiling=100.0)
+    sc = _sidecar(budget, cost_model, carbon_model)
+    pais, state = _make_mock_pais()
+    app = GreenSarcASGIMiddleware(pais, sc)
+
+    messages = await _drive(app, json.dumps(_chat_request(max_tokens=4000)).encode())
+
+    assert state["called"] is False  # the model was never reached
+    assert messages[0]["status"] == 429
+    error = json.loads(messages[1]["body"])["error"]
+    assert error["type"] == "green_sarc_budget_exceeded"
+    assert budget.remaining_tokens() == 10.0  # nothing spent
+
+
+async def test_middleware_passes_through_other_paths(cost_model, carbon_model):
+    sc = _sidecar(Budget(10_000.0, 100.0), cost_model, carbon_model)
+    pais, state = _make_mock_pais()
+    app = GreenSarcASGIMiddleware(pais, sc)
+
+    messages = await _drive(app, b"", path="/health", method="GET")
+    assert state["called"] is True
+    assert messages[0]["status"] == 200
+    assert len(sc.store.list()) == 0  # not gated/audited

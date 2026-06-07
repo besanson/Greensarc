@@ -22,6 +22,13 @@ Phase 1: per-action predictive cost + carbon governance.
 - `GreenGovernor` (`governor.py`) wiring all four sites around an arbitrary async executor.
 - Audit log persistence backends (`stores/`): in-memory and JSON Lines.
 - Phase-2 `TrajectoryEstimator` interface stub (`trajectory.py`) — raises `NotImplementedError`.
-- KAOS adapter: Green SARC as an **MCP server** exposing the gate and auditor as MCP tools
-  (`adapters/mcp.py`), plus an OpenTelemetry actuals-consumer stub (`adapters/otel.py`).
-- Runnable examples: a standalone four-site agent loop and a KAOS MCP-adapter demo.
+- KAOS adapters (one-way dependency, KAOS → Green SARC):
+  - **MCP server** (`adapters/mcp.py`) exposing the gate and auditor as MCP tools (advisory).
+  - **PAIS sidecar** (`adapters/pais_sidecar.py`) — dependency-free ASGI middleware that
+    hard-gates `/v1/chat/completions`, returning HTTP 429 on rejection and auditing actuals
+    from the response. `GreenSarcASGIMiddleware` wraps the PAIS app; `SidecarGate` is the
+    testable core.
+  - **OpenTelemetry** actuals-consumer (`adapters/otel.py`): span→actuals mapping; live OTLP
+    receiver is a documented stub.
+- Runnable examples: a standalone four-site agent loop, a KAOS MCP-adapter demo, and a
+  PAIS sidecar demo gating a mock `/v1/chat/completions` endpoint.

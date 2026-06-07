@@ -126,15 +126,25 @@ ordinary `MCPServer` custom resource and an agent lists it under
 
 Two complementary surfaces:
 
+- **PAIS sidecar / middleware** (`adapters/pais_sidecar.py`) — for
+  **non-bypassable** gating. The MCP tool surface is agent-invoked (advisory); an
+  agent could simply not call it. The sidecar is *hard*: it sits as ASGI
+  middleware in front of PAIS's `/v1/chat/completions` endpoint so **every** model
+  call is gated, returning HTTP `429` on rejection so the call never reaches the
+  model, and reading actual token usage from the response to audit. Pure ASGI —
+  no web-framework dependency. (`GreenSarcASGIMiddleware` wraps the PAIS `app`;
+  `SidecarGate` is the testable core.)
 - **OTel actuals feed** (`adapters/otel.py`) — KAOS/PAIS emit per-request
   OpenTelemetry spans carrying real token usage; the Post-Action Auditor can be
   fed from that stream. The span→actuals mapping is implemented and testable; the
   live OTLP receiver is a documented stub.
-- **PAIS sidecar / middleware** *(roadmap)* — for **non-bypassable** gating, the
-  same core gate can sit in ASGI middleware in front of PAIS's
-  `/v1/chat/completions` endpoint and return `429`. The MCP tool surface is
-  agent-invoked (advisory); the sidecar is hard-enforcing. Left as a documented
-  next step.
+
+> Choosing a surface: use the **MCP server** for the lightest-touch, MCP-native
+> integration (zero infra change, advisory gating); use the **sidecar** when you
+> need hard, unbypassable enforcement at the model-call boundary. Both wrap the
+> same framework-agnostic core. Note PAIS currently reports `usage` as zero, so
+> the sidecar falls back to a length-based estimate and the OTel span is the best
+> source of real actuals.
 
 ```text
         ┌────────── KAOS (orchestrator, K8s) ──────────┐
@@ -166,7 +176,8 @@ extras pulled in only by their adapters.
 
 ```bash
 python examples/standalone_agent_loop/run_demo.py   # four sites: reject, breaker trip, audit log
-python examples/kaos_mcp_adapter/run_demo.py        # KAOS agent driving the MCP gate + auditor
+python examples/kaos_mcp_adapter/run_demo.py        # KAOS agent driving the MCP gate + auditor (advisory)
+python examples/pais_sidecar/run_demo.py            # sidecar hard-gating /v1/chat/completions (429)
 ```
 
 ## CLI
@@ -197,7 +208,7 @@ src/green_sarc/
   escalation.py   # SITE 4  Escalation Router + handlers
   governor.py     # GreenGovernor: wires the four sites around an async executor
   stores/         # AuditStore protocol + memory / JSONL backends
-  adapters/       # KAOS-facing: mcp.py (MCP server), otel.py (OTel actuals feed)
+  adapters/       # KAOS-facing: mcp.py (MCP server), pais_sidecar.py (hard gate), otel.py
   cli.py          # `green-sarc inspect`
 examples/         # standalone_agent_loop/, kaos_mcp_adapter/
 tests/            # one test_*.py per module
