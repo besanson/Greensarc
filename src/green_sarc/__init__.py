@@ -45,6 +45,7 @@ from green_sarc.monitor import ActionTimeMonitor, CircuitTripped
 from green_sarc.pricing import (
     CarbonModel,
     CostModel,
+    IntensityProvider,
     ModelProfile,
     TableCarbonModel,
     TableCostModel,
@@ -76,6 +77,7 @@ __all__ = [
     "ModelProfile",
     "CostModel",
     "CarbonModel",
+    "IntensityProvider",
     "TableCostModel",
     "TableCarbonModel",
     "carbon_for_tokens",

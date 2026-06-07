@@ -16,12 +16,13 @@ time ``t`` — the ``kappa(rho, t)`` term of the augmented state (§4).
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Dict, Optional, Protocol, runtime_checkable
+from typing import Dict, List, Optional, Protocol, Tuple, runtime_checkable
 
 __all__ = [
     "ModelProfile",
     "CostModel",
     "CarbonModel",
+    "IntensityProvider",
     "TableCostModel",
     "TableCarbonModel",
     "carbon_for_tokens",
@@ -86,19 +87,65 @@ class TableCostModel:
         )
 
 
+@runtime_checkable
+class IntensityProvider(Protocol):
+    """Pluggable live carbon-intensity source (e.g. Electricity Maps / WattTime).
+
+    Implement this to feed a real grid signal into :class:`TableCarbonModel`.
+    """
+
+    def get(self, region: str, when: Optional[float] = None) -> Optional[float]: ...
+
+
+def _interpolate(series: List[Tuple[float, float]], t: float) -> float:
+    """Linear interpolation over a time-sorted ``(timestamp, value)`` series.
+
+    Values are clamped to the endpoints outside the series' range.
+    """
+    if t <= series[0][0]:
+        return series[0][1]
+    if t >= series[-1][0]:
+        return series[-1][1]
+    # Linear scan is fine for the short per-region series used here.
+    for (t0, v0), (t1, v1) in zip(series, series[1:]):
+        if t0 <= t <= t1:
+            if t1 == t0:
+                return v0
+            frac = (t - t0) / (t1 - t0)
+            return v0 + frac * (v1 - v0)
+    return series[-1][1]  # pragma: no cover - unreachable given the guards above
+
+
 @dataclass
 class TableCarbonModel:
-    """Table-driven :class:`CarbonModel` keyed by region.
+    """Table-driven :class:`CarbonModel` keyed by region, optionally time-varying.
 
-    The table is static (a simple ``region -> gCO2e/kWh`` map); the ``t``
-    argument is accepted so callers may later supply a time-varying grid signal
-    without changing the interface.
+    Resolution order for ``carbon_intensity(region, t)``:
+
+    1. a live :class:`IntensityProvider`, if one is configured and returns a value;
+    2. a per-region time series interpolated at ``t`` (the ``kappa(rho, t)`` term);
+    3. the static per-region ``intensities`` map;
+    4. ``default_intensity``.
+
+    ``time_series`` maps a region to a time-sorted list of ``(timestamp_seconds,
+    gCO2e/kWh)`` points; it is sorted on construction.
     """
 
     intensities: Dict[str, float] = field(default_factory=dict)
     default_intensity: float = 400.0
+    time_series: Dict[str, List[Tuple[float, float]]] = field(default_factory=dict)
+    provider: Optional[IntensityProvider] = None
+
+    def __post_init__(self) -> None:
+        self.time_series = {r: sorted(pts) for r, pts in self.time_series.items()}
 
     def carbon_intensity(self, region: str, t: Optional[float] = None) -> float:
+        if self.provider is not None:
+            live = self.provider.get(region, t)
+            if live is not None:
+                return live
+        if t is not None and self.time_series.get(region):
+            return _interpolate(self.time_series[region], t)
         return self.intensities.get(region, self.default_intensity)
 
 
