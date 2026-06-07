@@ -31,6 +31,7 @@ import uuid
 from dataclasses import dataclass, field
 from typing import Any, Awaitable, Callable, Dict, List, Optional, Tuple
 
+from green_sarc._ttl_map import TTLMap
 from green_sarc.auditor import AuditRecord, PostActionAuditor
 from green_sarc.estimator import Estimator
 from green_sarc.forecast import GateDecision
@@ -120,7 +121,7 @@ class SidecarGate:
     prompt_token_counter: Callable[[List[Dict[str, Any]]], int] = count_message_tokens
     gate: PreActionGate = field(init=False)
     auditor: PostActionAuditor = field(init=False)
-    _pending: Dict[str, Tuple[Action, GateDecision]] = field(default_factory=dict)
+    _pending: TTLMap[str, Tuple[Action, GateDecision]] = field(default_factory=TTLMap)
 
     def __post_init__(self) -> None:
         self.gate = PreActionGate(self.estimator)
@@ -142,7 +143,7 @@ class SidecarGate:
         )
         decision = self.gate.evaluate(action, GovernanceContext(budget=self.budget))
         action_id = uuid.uuid4().hex
-        self._pending[action_id] = (action, decision)
+        self._pending.put(action_id, (action, decision))
         return decision, action_id
 
     def audit_response(

@@ -30,6 +30,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
+from green_sarc._ttl_map import TTLMap
 from green_sarc.auditor import PostActionAuditor
 from green_sarc.estimator import Estimator
 from green_sarc.forecast import GateDecision
@@ -103,7 +104,7 @@ class SarcCostCarbonGovernance:
     store: AuditStore = field(default_factory=MemoryAuditStore)
     gate: PreActionGate = field(init=False)
     auditor: PostActionAuditor = field(init=False)
-    _pending: Dict[int, Tuple[Action, GateDecision]] = field(default_factory=dict)
+    _pending: TTLMap[int, Tuple[Action, GateDecision]] = field(default_factory=TTLMap)
 
     def __post_init__(self) -> None:
         self.gate = PreActionGate(self.estimator)
@@ -129,7 +130,7 @@ class SarcCostCarbonGovernance:
         action = self.action_factory(str(ctx.get("tool", "")), args)
         decision = self.gate.evaluate(action, GovernanceContext(budget=self.budget))
         if decision.admitted:
-            self._pending[id(args)] = (action, decision)
+            self._pending.put(id(args), (action, decision))
             return False  # do not fire -> SARC lets the action through
         # Rejected: log the blocked action, then fire so SARC raises.
         self._record(action, decision, actual_tokens=0.0)

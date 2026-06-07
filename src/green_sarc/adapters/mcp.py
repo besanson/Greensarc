@@ -24,6 +24,7 @@ from __future__ import annotations
 import uuid
 from typing import Any, Dict, Optional, Tuple
 
+from green_sarc._ttl_map import TTLMap
 from green_sarc.auditor import PostActionAuditor
 from green_sarc.estimator import Estimator
 from green_sarc.forecast import GateDecision
@@ -60,7 +61,7 @@ class GreenSarcMCPService:
         self.carbon_model = carbon_model
         self.gate = PreActionGate(estimator)
         self.auditor = PostActionAuditor(store or MemoryAuditStore(), estimator)
-        self._pending: Dict[str, Tuple[Action, GateDecision]] = {}
+        self._pending: TTLMap[str, Tuple[Action, GateDecision]] = TTLMap()
 
     def pre_action_gate(
         self,
@@ -82,7 +83,7 @@ class GreenSarcMCPService:
         ctx = GovernanceContext(budget=self.budget)
         decision = self.gate.evaluate(action, ctx)
         action_id = uuid.uuid4().hex
-        self._pending[action_id] = (action, decision)
+        self._pending.put(action_id, (action, decision))
         out = decision.to_dict()
         out["action_id"] = action_id
         out["budget_remaining_tokens"] = self.budget.remaining_tokens()
