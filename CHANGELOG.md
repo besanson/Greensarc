@@ -22,6 +22,22 @@ Phase 1: per-action predictive cost + carbon governance.
 - `GreenGovernor` (`governor.py`) wiring all four sites around an arbitrary async executor.
 - Audit log persistence backends (`stores/`): in-memory and JSON Lines.
 - Phase-2 `TrajectoryEstimator` interface stub (`trajectory.py`) — raises `NotImplementedError`.
-- KAOS adapter: Green SARC as an **MCP server** exposing the gate and auditor as MCP tools
-  (`adapters/mcp.py`), plus an OpenTelemetry actuals-consumer stub (`adapters/otel.py`).
-- Runnable examples: a standalone four-site agent loop and a KAOS MCP-adapter demo.
+- KAOS adapters (one-way dependency, KAOS → Green SARC):
+  - **MCP server** (`adapters/mcp.py`) exposing the gate and auditor as MCP tools (advisory).
+  - **PAIS sidecar** (`adapters/pais_sidecar.py`) — dependency-free ASGI middleware that
+    hard-gates `/v1/chat/completions`, returning HTTP 429 on rejection and auditing actuals
+    from the response. `GreenSarcASGIMiddleware` wraps the PAIS app; `SidecarGate` is the
+    testable core.
+  - **OpenTelemetry** actuals-consumer (`adapters/otel.py`): span→actuals mapping plus a
+    working in-process `GreenSarcSpanProcessor` (duck-typed against OpenTelemetry's
+    `SpanProcessor`, so dependency-free and testable) that feeds ended spans to the auditor;
+    cross-process OTLP collector ingestion remains a documented stub.
+- Runnable examples: a standalone four-site agent loop, a KAOS MCP-adapter demo, and a
+  PAIS sidecar demo gating a mock `/v1/chat/completions` endpoint.
+- Documentation (`docs/`): architecture, the relationship to the SARC framework, and a full
+  KAOS integration guide — all cross-referenced to the upstream
+  [SARC](https://github.com/besanson/sarc-governance),
+  [KAOS](https://github.com/axsaucedo/kaos), and
+  [PAIS](https://github.com/axsaucedo/pydantic-ai-server) repositories.
+- Deployment reference: `deploy/Dockerfile` and an env-configured MCP server entry point
+  (`examples/kaos_mcp_adapter/server.py`) registered via the `MCPServer` + `Agent` manifests.

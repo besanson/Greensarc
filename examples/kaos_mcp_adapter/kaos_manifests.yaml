@@ -1,0 +1,48 @@
+# Registering Green SARC with KAOS as an MCP-native governance tool.
+#
+# Green SARC runs as an ordinary MCP server (see build_mcp_server in
+# green_sarc/adapters/mcp.py).  KAOS discovers it through an MCPServer custom
+# resource and an Agent that lists it in spec.mcpServers — no change to KAOS or
+# PAIS is required.  The dependency runs one way: KAOS -> Green SARC.
+#
+# 1) The Green SARC MCP server, registered as an MCPServer CR.  Here it points at
+#    an externally deployed Green SARC server (the gate + auditor tools); KAOS
+#    injects its endpoint into the agent pod as MCP_SERVER_GREEN_SARC_URL.
+---
+apiVersion: kaos.tools/v1alpha1
+kind: MCPServer
+metadata:
+  name: green-sarc
+spec:
+  runtime: custom
+  # Container image that runs `green_sarc.adapters.mcp.build_mcp_server(...).run()`
+  # over MCP Streamable HTTP on :8000. Swap in your own image/registry.
+  container:
+    image: ghcr.io/besanson/green-sarc-mcp:0.1.0
+  telemetry:
+    enabled: true
+    endpoint: "otel-collector:4317"
+---
+# 2) An agent that consults Green SARC. Listing `green-sarc` under mcpServers is
+#    all it takes; the agent calls pre_action_gate before expensive steps and
+#    post_action_auditor afterwards (its instructions tell it to).
+apiVersion: kaos.tools/v1alpha1
+kind: Agent
+metadata:
+  name: budgeted-researcher
+spec:
+  modelAPI: shared-modelapi
+  model: "gpt-x"
+  mcpServers:
+    - green-sarc
+  config:
+    description: "Research agent governed by Green SARC for cost and carbon"
+    instructions: |
+      Before any expensive model call or tool use, call the `pre_action_gate`
+      tool with the step you intend to take. Only proceed if it returns
+      verdict "admit". After the step completes, call `post_action_auditor`
+      with the actual token usage so the budget and audit log stay accurate.
+    reasoningLoopMaxSteps: 10
+    telemetry:
+      enabled: true
+      endpoint: "otel-collector:4317"
