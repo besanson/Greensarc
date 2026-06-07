@@ -56,12 +56,31 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     inspect = sub.add_parser("inspect", help="summarise a JSONL audit log")
     inspect.add_argument("path", help="path to the audit .jsonl file")
 
+    boot = sub.add_parser("bootstrap", help="rebuild estimator state from a JSONL audit log")
+    boot.add_argument("path", help="path to the audit .jsonl file")
+    boot.add_argument(
+        "--out", default="estimator_state.json", help="where to write the estimator state"
+    )
+
     args = parser.parse_args(list(argv) if argv is not None else None)
 
     if args.command == "inspect":
         return _inspect(args.path)
+    if args.command == "bootstrap":
+        return _bootstrap(args.path, args.out)
     parser.print_help()  # pragma: no cover - argparse enforces a subcommand
     return 1
+
+
+def _bootstrap(path: str, out: str) -> int:
+    from green_sarc.estimator import LearnedEstimator
+    from green_sarc.pricing import default_carbon_model, default_cost_model
+
+    estimator = LearnedEstimator(default_cost_model(), default_carbon_model())
+    n = estimator.bootstrap_from_jsonl(path)
+    estimator.save(out)
+    print(f"bootstrapped estimator from {n} records -> {out}")
+    return 0
 
 
 if __name__ == "__main__":  # pragma: no cover

@@ -21,9 +21,11 @@ Both are model-agnostic: carbon is computed from the supplied
 
 from __future__ import annotations
 
+import json
 import math
 from dataclasses import dataclass, field
-from typing import Dict, Protocol, Tuple, runtime_checkable
+from pathlib import Path
+from typing import Any, Dict, Protocol, Tuple, runtime_checkable
 
 from green_sarc.auditor import AuditRecord
 from green_sarc.forecast import Forecast
@@ -193,3 +195,50 @@ class LearnedEstimator:
         """Number of observations learned for ``action``'s key (introspection)."""
         stat = self._stats.get(_key(action))
         return stat.n if stat is not None else 0
+
+    # -- persistence (audit P1-1) ----------------------------------------
+
+    def save(self, path: Any) -> None:
+        """Persist the learned regression state to a JSON file."""
+        data = {
+            "min_samples": self.min_samples,
+            "stats": [
+                {
+                    "kind": kind,
+                    "model": model,
+                    "n": s.n,
+                    "sx": s.sx,
+                    "sy": s.sy,
+                    "sxx": s.sxx,
+                    "sxy": s.sxy,
+                    "syy": s.syy,
+                }
+                for (kind, model), s in self._stats.items()
+            ],
+        }
+        Path(path).write_text(json.dumps(data), encoding="utf-8")
+
+    def load(self, path: Any) -> None:
+        """Replace the learned state with one previously :meth:`save`d."""
+        data = json.loads(Path(path).read_text(encoding="utf-8"))
+        self.min_samples = int(data.get("min_samples", self.min_samples))
+        self._stats = {}
+        for row in data.get("stats", []):
+            self._stats[(row["kind"], row["model"])] = _RegStats(
+                n=int(row["n"]),
+                sx=float(row["sx"]),
+                sy=float(row["sy"]),
+                sxx=float(row["sxx"]),
+                sxy=float(row["sxy"]),
+                syy=float(row["syy"]),
+            )
+
+    def bootstrap_from_jsonl(self, path: Any) -> int:
+        """Rehydrate the estimator by replaying a JSONL audit log; returns count."""
+        from green_sarc.stores.jsonl import JSONLAuditStore
+
+        count = 0
+        for record in JSONLAuditStore(path).iter_records():
+            self.update(record)
+            count += 1
+        return count
