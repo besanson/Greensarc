@@ -1,0 +1,221 @@
+\documentclass[11pt]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{mathtools}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage[hidelinks]{hyperref}
+\usepackage{xcolor}
+
+\definecolor{linkblue}{HTML}{2E75B6}
+\hypersetup{colorlinks=true, linkcolor=linkblue, urlcolor=linkblue, citecolor=linkblue}
+
+\titleformat{\section}{\normalfont\large\bfseries}{\thesection}{0.7em}{}
+\titleformat{\subsection}{\normalfont\normalsize\bfseries}{\thesubsection}{0.6em}{}
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}{Proposition}
+\newtheorem{definition}{Definition}
+\newtheorem{assumption}{Assumption}
+
+\newcommand{\btok}{b_{\mathrm{tok}}}
+\newcommand{\Carbon}{\mathrm{Carbon}}
+\newcommand{\Cost}{\mathrm{Cost}}
+
+\title{\textbf{Green SARC: Predictive FinOps as Governance-by-Architecture for Agentic AI Systems}}
+\author{Gaston Besanson\thanks{Universidad Torcuato Di Tella. Contact: \texttt{gbesanson@utdt.edu}.}}
+\date{Working paper, June 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent Agentic AI systems act through tools, sub-agents, and external services, yet the controls meant to bound their financial and environmental cost are still attached to dashboards, billing reconciliations, and policy-as-code layers evaluated beside or after execution. This is the same structural mismatch SARC identified for \emph{correctness} obligations: a control that must bound execution is evaluated only once execution has occurred. We present Green SARC, an application of the SARC governance-by-architecture framework (arXiv:2605.07728) to financial operations (FinOps) and sustainability (GreenOps). SARC supplies the architecture, i.e. \emph{where} to enforce: four sites in the agent loop. Our contribution is the \emph{theory of what to enforce and how to predict it}. We make three claims. First, FinOps governance \emph{decouples} from correctness governance: a cost-and-carbon control layer is valuable to an organization independently of whether it adopts any safety regime. Second, the unconstrained ``State Snowball'' produces a provably $\Theta(n^2)$ cost in loop depth, the formal signature of financial failure under naive multi-agent orchestration. Third, the Pre-Action Gate should be \emph{predictive} rather than rule-based: it admits actions on a \emph{learned forecast} of cost and carbon, trained on a closed predict--act--log--retrain loop, of which the standard accounting gate is the degenerate zero-information case. We formalize the predictive gate, give its regret and budget-safety properties, and frame a reproducible synthetic evaluation on a 10{,}000-SKU Integrated Business Planning pipeline.
+\end{abstract}
+
+\textbf{Keywords:} agentic AI, governance-by-architecture, predictive FinOps, GreenOps, token economics, runtime constraints, SARC.
+
+\section{Introduction}
+
+The cost center of artificial intelligence has shifted from training, whose resource envelope is fixed at design time, to the \emph{inference trajectory}: the runtime-determined sequence of model calls, tool invocations, and conditional retries an agent emits while pursuing a goal. A classical inference call has a bounded, predictable cost. An agentic workflow has neither: the same task, executed twice, can differ by an order of magnitude in token consumption. Both the API bill and the energy draw are therefore \emph{stochastic} quantities governed by the execution trace, not the specification.
+
+Two instruments are commonly deployed against this volatility. Post-hoc auditing reconciles spend after the billing period closes. Policy-as-code encodes budget rules in a layer evaluated alongside, but not inside, the agent loop. Both inherit the defect SARC identified for correctness obligations: they evaluate constraints after, or beside, the execution they are meant to bound. A budget breach detected at month-end cannot un-spend the tokens; a carbon overage logged to a dashboard cannot un-emit the carbon.
+
+\paragraph{Relationship to SARC and the new theory.}
+SARC~\cite{sarc2026} is a governance-by-architecture framework that treats constraints as first-class specification objects and compiles them into four enforcement sites: a Pre-Action Gate, an Action-Time Monitor, a Post-Action Auditor, and an Escalation Router. Green SARC is an \emph{application} of that architecture (we reuse the four sites unchanged), but it carries its \emph{own theory}, which is orthogonal to SARC's correctness results along three axes:
+
+\begin{enumerate}[leftmargin=1.4em,itemsep=2pt]
+\item \textbf{Decoupling (\S\ref{sec:decouple}).} Cost-and-carbon governance is a self-contained value proposition. It requires no safety mandate; an organization adopts it for the cloud bill alone. SARC governs whether the system is \emph{right}; Green SARC governs what the system \emph{costs}. These are independent axes.
+\item \textbf{The State-Snowball cost theorem (\S\ref{sec:snowball}).} Naive multi-agent context accretion yields $\Theta(n^2)$ cost in loop depth, and we show state scoping collapses it toward linear.
+\item \textbf{The predictive gate (\S\ref{sec:predictive}).} The Pre-Action Gate should decide on a \emph{learned forecast} of cost and carbon, not a static threshold. Rule-based accounting is recovered as the zero-information special case. This is the paper's central new construct.
+\end{enumerate}
+
+In one line: \emph{SARC gives us where to enforce; we contribute what to enforce, why it decouples from safety, and how to predict it.}
+
+\section{Background and Related Work}
+
+\paragraph{SARC.} A SARC specification declares, per constraint, its source, class, predicate, verification point, response protocol, and operating point, and compiles these into the four enforcement sites named above. It formalizes the minimal invariants for specification--trace correspondence and argues that finite reward penalties do not in general substitute for hard runtime constraints. Its procurement evaluation over 50 seeds reports zero hard-constraint violations under exact predicates and an 89.5\% reduction in soft-window overages relative to a policy-as-code-only baseline.
+
+\paragraph{FinOps and GreenOps.} FinOps brings financial accountability to variable cloud spend; GreenOps extends the discipline to carbon and energy. The financial and environmental cost of large-scale AI compute has been quantified for the training regime~\cite{strubell2019,patterson2021,lacoste2019}; the inference regime studied here shifts this cost into a runtime-variable, per-trajectory quantity. Both disciplines are predominantly practiced as observe-and-reconcile loops~\cite{finops}, a cadence adequate only when the consumption unit is predictable. Agentic inference violates that premise. Green SARC moves the FinOps/GreenOps obligation from the reconciliation cycle into the execution loop.
+
+\paragraph{Regulatory context.} Enterprise deployments increasingly must account for the energy footprint of AI systems and keep auditable records of automated decisions~\cite{aiact}. SARC's Post-Action Auditor already produces the attribution-preserving trace such reporting requires; Green SARC extends the logged fields to per-trajectory token yield and a carbon proxy, so disclosure is a byproduct of execution.
+
+\section{Decoupling FinOps Governance from Correctness Governance}\label{sec:decouple}
+
+We state the decoupling explicitly because it defines the scope of the artifact.
+
+\begin{proposition}[Independence of axes]
+Let a governance layer be characterized by the predicate class it enforces. SARC's correctness layer enforces predicates over \emph{action validity} (is this action safe and permitted?). The Green SARC layer enforces predicates over \emph{resource consumption} (does this action fit the cost and carbon budget?). The two predicate classes share enforcement sites but neither implies the other: a perfectly safe agent can be ruinously expensive, and a perfectly cheap agent can be unsafe.
+\end{proposition}
+
+\noindent Consequences for the artifact:
+\begin{itemize}[leftmargin=1.4em,itemsep=2pt]
+\item Green SARC is deployable with no safety regime present. Its value derives from the cloud bill, which every operator incurs.
+\item It tracks cost and carbon \emph{only}; correctness/accuracy is deliberately out of scope and is not logged as a governed quantity.
+\item It composes with SARC where both are wanted (the sites are shared), but does not depend on it.
+\end{itemize}
+
+\section{The State-Snowball Cost Theorem}\label{sec:snowball}
+
+\begin{definition}[State Snowball]
+A multi-agent loop exhibits the State Snowball when each step re-submits the full accreted context, so the per-step prompt grows monotonically with step index.
+\end{definition}
+
+\begin{theorem}[Quadratic cost of the unconstrained loop]\label{thm:quad}
+Let an agent re-invoke the model over $n$ steps with initial prompt $s_0$ tokens and $p$ tokens appended per step. The cumulative prompt-token cost is
+\begin{equation}
+T_{\mathrm{prompt}}(n) \;=\; \sum_{i=1}^{n}\big(s_0 + i\,p\big) \;=\; n\,s_0 + \frac{p\,n(n+1)}{2} \;=\; \Theta(n^2).
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+Direct summation of the arithmetic series $\sum_{i=1}^{n} i = n(n+1)/2$. The dominant term $p\,n(n+1)/2$ is $\Theta(n^2)$.
+\end{proof}
+
+\noindent The $\Theta(n^2)$ term is the formal signature of financial failure: cost is super-linear in a loop depth that is itself non-deterministic. State scoping via Adapter Nodes caps the per-hop increment $p$ (collapsing the quadratic term toward linear), and the Action-Time circuit breaker caps $n$ directly.
+
+\section{The Predictive Pre-Action Gate}\label{sec:predictive}
+
+This is the paper's central theoretical contribution. In SARC the Pre-Action Gate evaluates a deterministic predicate. We generalize it to a gate that decides on a \emph{learned forecast} of the resource cost of a proposed action.
+
+\subsection{Augmented state}
+The state ingests financial and environmental telemetry:
+\begin{equation}
+S' \;=\; S \,\cup\, \{\, \btok,\; \kappa(\rho,t),\; \Delta_{\mathrm{lat}} \,\},
+\end{equation}
+where $\btok$ is the live remaining token budget, $\kappa(\rho,t)$ the marginal carbon intensity (gCO\textsubscript{2}e/kWh) of compute region $\rho$ at time $t$, and $\Delta_{\mathrm{lat}}$ the latency/SLA headroom.
+
+\subsection{The estimator}
+Let $a$ be a proposed action in context $x$. Define a learned estimator
+\begin{equation}
+\hat{f}_\theta(a,x) \;=\; \big(\hat{c}(a,x),\ \hat{e}(a,x)\big),
+\end{equation}
+predicting expected token cost $\hat c$ and expected carbon $\hat e$ before the action fires. The gate admits $a$ iff the forecast fits the remaining budget at its operating-point confidence $1-\delta$:
+\begin{equation}
+\Pr\!\big[\,\hat{c}(a,x) \le \btok \,\big] \ge 1-\delta
+\quad\text{and}\quad
+\hat{e}(a,x) \le B_{\mathrm{CO_2}} - \Carbon(\tau_{<}),
+\end{equation}
+where $\Carbon(\tau_{<})$ is carbon already spent on the trajectory. Rule-based accounting is the special case $\hat f_\theta \equiv$ a constant threshold with no dependence on $(a,x)$, the \emph{zero-information gate}.
+
+\subsection{The closed learning loop}
+The estimator is trained on the Post-Action Auditor's own output, closing a loop:
+\begin{equation}
+\text{predict } \hat f_\theta \;\longrightarrow\; \text{act} \;\longrightarrow\; \text{log actual } (c,e) \;\longrightarrow\; \text{retrain } \theta.
+\end{equation}
+This loop \emph{is} the product: the rules are table stakes; the learned forecaster is the moat. At cold start $\hat f_\theta$ is weak and the gate behaves conservatively; it sharpens as the audit log accumulates.
+
+\subsection{Release sequencing: step then trajectory}
+The estimator is built in two phases, mapping onto a Bike$\rightarrow$Car release model:
+\begin{itemize}[leftmargin=1.4em,itemsep=2pt]
+\item \textbf{Phase 1, per-action (Bike).} $\hat f_\theta$ predicts the \emph{next step} only. Simple to deploy; it also generates the labeled actuals needed for Phase 2.
+\item \textbf{Phase 2, full-trajectory (Car).} A planner-level estimator $\hat F_\theta(\pi,x)$ predicts the cost of an entire \emph{plan} $\pi$ before the agent starts, enabling rejection of expensive plans, not merely expensive steps. It is trainable only on Phase~1's logged trajectories.
+\end{itemize}
+Phase 1 is therefore not throwaway: it is the data engine for Phase 2.
+
+\subsection{Budget safety and regret}
+\begin{proposition}[Budget safety under bounded estimator error]
+If the estimator is calibrated so that $\Pr[c > \hat c \mid x] \le \delta$ pointwise, then the probability that an admitted action breaches the hard budget is at most $\delta$ per gated action; residual breaches scale with estimator error $\delta$, not with the opportunity for breach.
+\end{proposition}
+
+\begin{proposition}[Regret of the predictive gate]
+Let the zero-information gate incur opportunity cost from conservatively rejecting affordable actions. The predictive gate's excess cost over an oracle gate is bounded by the estimator's expected calibration error $\mathbb{E}_x|\hat c(a,x)-c|$; as the learning loop drives this error down, regret$\,\to 0$, while the zero-information gate's regret is bounded below by its fixed margin.
+\end{proposition}
+
+\noindent These mirror, in the resource domain, SARC's claim that residual hard violations scale with enforcement-stack error rather than environmental violation opportunity.
+
+\subsection{The Sustainable Token Yield reward}
+Within the gated action space the agent optimizes a reward that penalizes brute-force inference where deterministic computation suffices:
+\begin{equation}
+R(\tau) \;=\; U(\tau)\;-\;\lambda_c \sum_{i} c_i\,\mathrm{tok}_i\;-\;\lambda_e \sum_{i}\kappa(\rho_i,t_i)\,E_i,
+\end{equation}
+with task utility $U$, FinOps weight $\lambda_c$, and GreenOps weight $\lambda_e$. Maximizing $R$ is equivalent to maximizing a Tokens-per-Joule efficiency. As SARC argues, this finite penalty shapes behavior \emph{within} the hard budget/carbon constraints; it does not replace them.
+
+\subsection{The constrained optimization}
+\begin{equation}
+\begin{aligned}
+\min_{\pi}\quad & \mathbb{E}\big[\,C_{\mathrm{tok}}(\tau)\,\big] + C_{\mathrm{infra}}(\tau)\\
+\text{s.t.}\quad
+& \btok(\tau) \ge 0 && \text{(budget; Pre-Action Gate)}\\
+& \mathrm{loops}(\tau) \le n_{\max} && \text{(loop bound; Action-Time Monitor)}\\
+& \Carbon(\tau) \le B_{\mathrm{CO_2}} && \text{(ESG ceiling; Post-Action Auditor)}\\
+& U(\tau) \ge U_{\min} && \text{(quality floor)}
+\end{aligned}
+\end{equation}
+The quality floor blocks the degenerate ``do nothing'' solution; budget and carbon are hard constraints enforced at their sites, not merely penalized in $R$.
+
+\section{Mapping the Enforcement Sites}\label{sec:sites}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{@{}p{0.28\linewidth} p{0.64\linewidth}@{}}
+\toprule
+\textbf{Enforcement site} & \textbf{Adapted predicate / role} \\
+\midrule
+Pre-Action Gate & Runs the \emph{predictive} cost/carbon estimator; admits an action only if its forecast fits $\btok$ at confidence $1-\delta$. \\
+Action-Time Monitor & Circuit breakers detect and kill runaway retry/re-plan loops once a loop-count or marginal-cost threshold is crossed. \\
+Post-Action Auditor & Logs actual token yield and carbon proxy per trajectory: both the ESG record and the training signal for the estimator. \\
+Escalation Router & Routes budget- or carbon-exhausted tasks to human review or a deterministic fallback rather than permitting silent overspend. \\
+\bottomrule
+\end{tabular}
+\caption{The four SARC sites under Green SARC predicates. Only the Pre-Action Gate changes character: from rule to forecast.}
+\end{table}
+
+\section{Implementation}
+
+Green SARC extends the reference implementation at \url{https://github.com/besanson/sarc-governance} rather than replacing it. Four components are added: \textbf{Adapter Nodes} (project upstream state to the minimal downstream scope, bounding $p$); a \textbf{Predictive Cost Estimator} invoked by the Pre-Action Gate; a \textbf{loop circuit breaker} at the Action-Time Monitor; and a \textbf{carbon-aware router} consulting $\kappa(\rho,t)$. The prototype audit checker is extended so that finite Green SARC specifications and runtime traces can be checked for cost/carbon specification--trace correspondence, exactly as the base checker does for safety predicates.
+
+\section{Synthetic Evaluation}
+
+We frame the evaluation around an \textbf{Integrated Business Planning (IBP) demand-forecasting pipeline across 10{,}000 SKUs}, a fan-out workload where per-task overhead is multiplied ten-thousand-fold.
+
+\paragraph{Baseline.} Naive multi-agent pipeline with shared accreting context (full State Snowball), no pre-flight estimation, no circuit breakers, single high-capability model per sub-task.
+
+\paragraph{Treatment.} Same pipeline under Green SARC: Adapter-Node scoping, predictive Pre-Action Gate, loop circuit breakers, semantic caching of recurring lookups, energy-aware routing of simple SKUs to a smaller model.
+
+\paragraph{Protocol.} Over 50 seeds (mirroring SARC), report mean and dispersion of: total tokens and Cost-to-Serve per run; carbon proxy under fixed and time-varying $\kappa$; forecast quality (WAPE) to confirm $U_{\min}$ is respected; and counts of circuit-breaker activations and gate rejections, to show enforcement (not chance) produces the savings. Following Theorem~\ref{thm:quad}, the predictive gate and state scoping are expected to compress aggregate token overhead substantially relative to the baseline. As with SARC, this illustrates the value of explicit enforcement placement rather than an intrinsic advantage of the label.
+
+\section{Discussion and Limitations}
+
+\textbf{Carbon-proxy fidelity:} $\Carbon(\tau)$ is only as good as $\kappa(\rho,t)$, which varies in availability across regions. \textbf{Estimator error:} budget safety degrades with estimator miscalibration; a systematically optimistic $\hat f_\theta$ admits overspend. \textbf{Cold start:} the predictive gate is weak until the audit log accumulates. \textbf{Governance overhead:} each site costs compute; Green SARC is most valuable on long, high-fan-out workloads where the Snowball is most dangerous. \textbf{Generalization:} the IBP pipeline is one instantiation and should be tested on other topologies.
+
+\section{Conclusion}
+
+Green SARC applies a correctness-governance architecture to the economics and ecology of inference, and in doing so develops its own theory. The decoupling proposition establishes FinOps governance as a standalone value proposition; the State-Snowball theorem explains why unconstrained agents fail financially; and the predictive Pre-Action Gate (with its closed predict--act--log--retrain loop, its step-then-trajectory sequencing, and its budget-safety and regret properties) generalizes the static accounting gate into a learning forecaster of which the rule is the zero-information limit. The structural claim is that correctness, cost, and sustainability are not separate governance problems but instances of one: the runtime enforcement of declared constraints, where the only thing that changes between them is the predicate.
+
+\begin{thebibliography}{9}
+\bibitem{sarc2026} Besanson, G. (2026). \emph{SARC: A Governance-by-Architecture Framework for Agentic AI Systems: Compiling Regulatory Obligations into Runtime Constraints.} Working paper, Universidad Torcuato Di Tella. arXiv:2605.07728. Code: \url{https://github.com/besanson/sarc-governance}.
+\bibitem{patterson2021} Patterson, D., Gonzalez, J., Le, Q., Liang, C., Mungu\'ia, L.-M., Rothchild, D., So, D., Texier, M., \& Dean, J. (2021). \emph{Carbon Emissions and Large Neural Network Training.} arXiv:2104.10350.
+\bibitem{strubell2019} Strubell, E., Ganesh, A., \& McCallum, A. (2019). \emph{Energy and Policy Considerations for Deep Learning in NLP.} In \emph{Proceedings of the 57th Annual Meeting of the Association for Computational Linguistics} (pp.~3645--3650). Florence, Italy. doi:10.18653/v1/P19-1355.
+\bibitem{lacoste2019} Lacoste, A., Luccioni, A., Schmidt, V., \& Dandres, T. (2019). \emph{Quantifying the Carbon Emissions of Machine Learning.} arXiv:1910.09700.
+\bibitem{finops} FinOps Foundation (2023). \emph{FinOps Framework: Principles, Domains, and Capabilities for Cloud Financial Management.} \url{https://www.finops.org/framework/}.
+\bibitem{aiact} European Parliament and Council (2024). \emph{Regulation (EU) 2024/1689 laying down harmonised rules on artificial intelligence (Artificial Intelligence Act).} Official Journal of the European Union.
+\end{thebibliography}
+
+\end{document}

@@ -240,7 +240,9 @@ cost and carbon.
 ## Reference
 
 Besanson, G. (2026). *Green SARC: Predictive FinOps as Governance-by-Architecture
-for Agentic AI Systems.* Working paper.
+for Agentic AI Systems.* Working paper. The paper source is in
+[`paper/green-sarc.tex`](paper/green-sarc.tex) (see [`paper/`](paper/) for how it
+maps to the code).
 
 ## License
 
