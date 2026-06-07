@@ -28,8 +28,10 @@ Phase 1: per-action predictive cost + carbon governance.
     hard-gates `/v1/chat/completions`, returning HTTP 429 on rejection and auditing actuals
     from the response. `GreenSarcASGIMiddleware` wraps the PAIS app; `SidecarGate` is the
     testable core.
-  - **OpenTelemetry** actuals-consumer (`adapters/otel.py`): span→actuals mapping; live OTLP
-    receiver is a documented stub.
+  - **OpenTelemetry** actuals-consumer (`adapters/otel.py`): span→actuals mapping plus a
+    working in-process `GreenSarcSpanProcessor` (duck-typed against OpenTelemetry's
+    `SpanProcessor`, so dependency-free and testable) that feeds ended spans to the auditor;
+    cross-process OTLP collector ingestion remains a documented stub.
 - Runnable examples: a standalone four-site agent loop, a KAOS MCP-adapter demo, and a
   PAIS sidecar demo gating a mock `/v1/chat/completions` endpoint.
 - Documentation (`docs/`): architecture, the relationship to the SARC framework, and a full

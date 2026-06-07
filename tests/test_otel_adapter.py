@@ -4,7 +4,20 @@ from __future__ import annotations
 
 import pytest
 
-from green_sarc.adapters.otel import OTelActualsConsumer, SpanActuals
+from green_sarc.adapters.otel import (
+    GreenSarcSpanProcessor,
+    OTelActualsConsumer,
+    SpanActuals,
+    span_to_dict,
+)
+
+
+class _FakeReadableSpan:
+    """Stands in for an opentelemetry ReadableSpan (name + attributes)."""
+
+    def __init__(self, name, attributes):
+        self.name = name
+        self.attributes = attributes
 
 
 def test_ingest_span_extracts_total_tokens():
@@ -51,3 +64,42 @@ def test_serve_otlp_is_a_documented_stub():
     consumer = OTelActualsConsumer(lambda a: None)
     with pytest.raises(NotImplementedError):
         consumer.serve_otlp("localhost:4317")
+
+
+def test_span_to_dict_reads_name_and_attributes():
+    span = _FakeReadableSpan("chat", {"gen_ai.usage.total_tokens": 42})
+    d = span_to_dict(span)
+    assert d["name"] == "chat"
+    assert d["attributes"]["gen_ai.usage.total_tokens"] == 42
+
+
+def test_span_processor_feeds_consumer_on_end():
+    seen = []
+    processor = GreenSarcSpanProcessor(OTelActualsConsumer(seen.append))
+    span = _FakeReadableSpan(
+        "chat",
+        {
+            "green_sarc.action_id": "a1",
+            "gen_ai.usage.total_tokens": 250,
+            "gen_ai.request.model": "gpt-x",
+        },
+    )
+    processor.on_start(span)  # no-op
+    processor.on_end(span)
+    assert len(seen) == 1
+    assert seen[0].action_id == "a1"
+    assert seen[0].actual_tokens == 250.0
+    assert processor.force_flush() is True
+    processor.shutdown()  # no-op, must not raise
+
+
+def test_span_processor_swallows_extraction_errors():
+    def boom(_actuals):
+        raise RuntimeError("downstream failed")
+
+    processor = GreenSarcSpanProcessor(OTelActualsConsumer(boom))
+    span = _FakeReadableSpan(
+        "chat", {"green_sarc.action_id": "a1", "gen_ai.usage.total_tokens": 5}
+    )
+    # Telemetry must never raise into the traced application.
+    processor.on_end(span)

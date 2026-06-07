@@ -112,10 +112,26 @@ PAIS emits per-request OpenTelemetry spans; real token usage lands there as
 `gen_ai.usage.*` attributes (pydantic-ai's instrumentation). The Post-Action
 Auditor's predicted-vs-actual log can be fed from that stream instead of an
 explicit auditor call.
-[`OTelActualsConsumer.ingest_span`](../src/green_sarc/adapters/otel.py) maps a
-span to actuals (implemented and unit-tested); the live OTLP receiver that pushes
-spans into it is a documented stub. Correlate a gated call with its span by
-setting the `green_sarc.action_id` attribute as OpenTelemetry baggage at the gate.
+
+For **in-process** consumption (Green SARC running in the same process as PAIS —
+e.g. alongside the sidecar) register the working
+[`GreenSarcSpanProcessor`](../src/green_sarc/adapters/otel.py) on your tracer
+provider; it forwards every ended span's actuals to the auditor:
+
+```python
+from green_sarc.adapters.otel import GreenSarcSpanProcessor, OTelActualsConsumer
+
+consumer = OTelActualsConsumer(on_actuals=record_actuals)   # your auditor callback
+tracer_provider.add_span_processor(GreenSarcSpanProcessor(consumer))
+```
+
+The processor is duck-typed against OpenTelemetry's `SpanProcessor`, so the
+adapter needs no `opentelemetry` import and stays unit-testable.
+[`OTelActualsConsumer.ingest_span`](../src/green_sarc/adapters/otel.py) is the
+underlying span→actuals mapping. Correlate a gated call with its span by setting
+the `green_sarc.action_id` attribute (e.g. as OpenTelemetry baggage) at the gate.
+**Cross-process** consumption from a standalone OTLP collector
+(`serve_otlp`) remains a documented stub.
 
 ## Known caveats (verify upstream)
 

@@ -5,20 +5,36 @@ model call lands there (pydantic-ai's instrumentation records ``gen_ai.usage.*``
 attributes).  The Post-Action Auditor's predicted-vs-actual log can therefore be
 fed from the OTel stream instead of an explicit auditor tool call.
 
-This module provides the framework-agnostic mapping from a span to actuals
-(:class:`OTelActualsConsumer.ingest_span`) — testable with a plain dict and no
-``opentelemetry`` dependency.  The live OTLP receiver that would push spans into
-it is a documented stub (:meth:`OTelActualsConsumer.serve_otlp`); wiring it is
-deferred until the integration surface is exercised end-to-end.
+This module provides:
+
+- the framework-agnostic mapping from a span to actuals
+  (:class:`OTelActualsConsumer.ingest_span`) — testable with a plain dict and no
+  ``opentelemetry`` dependency; and
+- :class:`GreenSarcSpanProcessor`, a working OpenTelemetry ``SpanProcessor`` that
+  feeds ended spans into the consumer **in process**.  It is duck-typed against
+  the ``SpanProcessor`` interface, so it needs no ``opentelemetry`` import itself
+  and is unit-testable, yet registers directly on a real ``TracerProvider``::
+
+      provider.add_span_processor(GreenSarcSpanProcessor(consumer))
+
+This is the supported live path when Green SARC runs in the same process as PAIS
+(for example alongside the sidecar).  Consuming spans **across** processes from a
+standalone OTLP collector is a separate deployment concern; the receiver hook
+(:meth:`OTelActualsConsumer.serve_otlp`) is left as a documented stub for that.
 """
 
 from __future__ import annotations
 
+import logging
 from typing import Any, Callable, Dict, Optional
+
+logger = logging.getLogger(__name__)
 
 __all__ = [
     "SpanActuals",
     "OTelActualsConsumer",
+    "span_to_dict",
+    "GreenSarcSpanProcessor",
 ]
 
 # Span attribute keys pydantic-ai / OpenAI-compatible instrumentation use.
@@ -103,12 +119,55 @@ class OTelActualsConsumer:
         return actuals
 
     def serve_otlp(self, endpoint: str) -> None:  # pragma: no cover - documented stub
-        """Run an OTLP receiver that feeds :meth:`ingest_span` (not yet implemented).
+        """Run a standalone OTLP receiver that feeds :meth:`ingest_span`.
 
-        The mapping above is the stable part; standing up an OTLP collector
-        endpoint is deferred until the KAOS OTel path is exercised end-to-end.
+        For **in-process** consumption use :class:`GreenSarcSpanProcessor` instead
+        — it is the supported live path.  A cross-process OTLP collector endpoint
+        is a deployment concern left as a documented stub here.
         """
         raise NotImplementedError(
-            "Live OTLP ingestion is a documented stub; use ingest_span() to feed "
-            "spans from your own collector for now."
+            "Cross-process OTLP ingestion is a documented stub; register a "
+            "GreenSarcSpanProcessor on your TracerProvider for in-process spans, "
+            "or feed ingest_span() from your own collector."
         )
+
+
+def span_to_dict(span: Any) -> Dict[str, Any]:
+    """Convert an OpenTelemetry ``ReadableSpan`` to the neutral span dict.
+
+    Reads ``span.name`` and ``span.attributes`` (a mapping), which is all
+    :meth:`OTelActualsConsumer.ingest_span` needs.  Works on the real SDK span and
+    on any object exposing those attributes.
+    """
+    attributes = getattr(span, "attributes", None) or {}
+    return {"name": getattr(span, "name", ""), "attributes": dict(attributes)}
+
+
+class GreenSarcSpanProcessor:
+    """OpenTelemetry ``SpanProcessor`` that feeds ended spans to a consumer.
+
+    Implements the ``SpanProcessor`` interface structurally (``on_start``,
+    ``on_end``, ``shutdown``, ``force_flush``) so it can be registered with
+    ``TracerProvider.add_span_processor`` without this module importing
+    ``opentelemetry``.  On span end it maps the span to actuals and forwards them;
+    extraction failures are logged and swallowed so telemetry never breaks the
+    traced application.
+    """
+
+    def __init__(self, consumer: OTelActualsConsumer) -> None:
+        self.consumer = consumer
+
+    def on_start(self, span: Any, parent_context: Any = None) -> None:
+        return None
+
+    def on_end(self, span: Any) -> None:
+        try:
+            self.consumer.ingest_span(span_to_dict(span))
+        except Exception:  # pragma: no cover - defensive; telemetry must not raise
+            logger.exception("GreenSarcSpanProcessor failed to ingest a span — suppressed")
+
+    def shutdown(self) -> None:
+        return None
+
+    def force_flush(self, timeout_millis: int = 30_000) -> bool:
+        return True
