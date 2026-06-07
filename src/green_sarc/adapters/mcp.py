@@ -132,7 +132,13 @@ class GreenSarcMCPService:
                 action.region,
             )
         )
-        self.budget.commit(reserve_tokens, reserve_carbon, float(actual_tokens), carbon)
+        prompt = float(action.prompt_tokens or 0)
+        actual_usd = self.cost_model.usd(
+            action.model, prompt, max(0.0, float(actual_tokens) - prompt)
+        )
+        self.budget.commit(
+            reserve_tokens, reserve_carbon, float(actual_tokens), carbon, actual_usd
+        )
         rec = self.auditor.record(
             action_id=action_id,
             action_kind=action.kind,
@@ -146,6 +152,7 @@ class GreenSarcMCPService:
             carbon_remaining=self.budget.remaining_carbon(),
             carbon_intensity=intensity,
             prompt_tokens=action.prompt_tokens or 0,
+            actual_usd=actual_usd,
         )
         return {
             "ok": True,

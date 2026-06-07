@@ -82,11 +82,13 @@ class ColdStartEstimator:
             action.region,
             ctx.timestamp,
         )
+        usd_hat = self.cost_model.usd(action.model, prompt, completion)
         return Forecast(
             cost_hat=cost_hat,
             carbon_hat=carbon_hat,
             confidence=self.confidence,
             cost_std=None,  # treated as worst case by the gate
+            usd_hat=usd_hat,
             source="cold_start",
         )
 
@@ -176,11 +178,13 @@ class LearnedEstimator:
             action.region,
             ctx.timestamp,
         )
+        usd_hat = self.cost_model.usd(action.model, prompt, completion_hat)
         return Forecast(
             cost_hat=cost_hat,
             carbon_hat=carbon_hat,
             confidence=confidence,
             cost_std=sigma if sigma > 0.0 else None,
+            usd_hat=usd_hat,
             source="learned",
         )
 

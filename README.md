@@ -29,7 +29,7 @@ Full docs live in [`docs/`](docs/):
 
 ## What it governs (and what it does not)
 
-- ✅ **Cost and carbon only.** Token cost (`b_tok`) and carbon (`gCO2e`).
+- ✅ **Cost and carbon only.** Token cost (`b_tok`), an optional **USD** budget, and carbon (`gCO2e`).
 - ❌ **Not correctness, safety, or output quality.** Those are out of scope by
   design — Green SARC never tracks accuracy or quality as a governed quantity.
 - ✅ **Standalone.** No dependency on SARC or any safety framework. It may
@@ -193,6 +193,7 @@ python examples/standalone_agent_loop/run_demo.py   # four sites: reject, breake
 python examples/kaos_mcp_adapter/run_demo.py        # KAOS agent driving the MCP gate + auditor (advisory)
 python examples/pais_sidecar/run_demo.py            # sidecar hard-gating /v1/chat/completions (429)
 python examples/sarc_composition/run_demo.py        # Green SARC as SARC constraints on one GovernanceToolset
+python examples/learning_curve/run_demo.py          # forecast MAE drops as the estimator learns; USD budget enforced
 ```
 
 ## CLI

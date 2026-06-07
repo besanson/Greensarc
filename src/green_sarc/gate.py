@@ -50,36 +50,42 @@ class PreActionGate:
         """Forecast ``action`` and return the admission :class:`GateDecision`."""
         budget = ctx.budget
 
-        # Already out of budget/carbon: nothing to gate — escalate.
-        if budget.is_token_exhausted() or budget.is_carbon_exhausted():
+        # Already out of budget / carbon / USD: nothing to gate — escalate.
+        if (
+            budget.is_token_exhausted()
+            or budget.is_carbon_exhausted()
+            or budget.is_usd_exhausted()
+        ):
             forecast = self.estimator.predict(action, ctx)
             return GateDecision(
                 verdict=Verdict.ESCALATE,
                 forecast=forecast,
-                reason="budget or carbon ceiling already exhausted",
+                reason="budget, carbon, or USD ceiling already exhausted",
             )
 
         forecast = self.estimator.predict(action, ctx)
         cost_bound = self.cost_upper_bound(forecast, budget.delta)
         token_ok = cost_bound <= budget.remaining_tokens()
         carbon_ok = forecast.carbon_hat <= budget.remaining_carbon()
+        usd_ok = forecast.usd_hat <= budget.remaining_usd()
 
-        if token_ok and carbon_ok:
+        if token_ok and carbon_ok and usd_ok:
             return GateDecision(verdict=Verdict.ADMIT, forecast=forecast, reason="within budget")
 
-        if not token_ok and not carbon_ok:
-            reason = (
-                f"forecast cost {cost_bound:.1f} > {budget.remaining_tokens():.1f} tokens "
-                f"and carbon {forecast.carbon_hat:.3f} > {budget.remaining_carbon():.3f} gCO2e"
-            )
-        elif not token_ok:
-            reason = (
+        reasons = []
+        if not token_ok:
+            reasons.append(
                 f"forecast cost {cost_bound:.1f} exceeds remaining "
                 f"{budget.remaining_tokens():.1f} tokens at {1 - budget.delta:.0%} confidence"
             )
-        else:
-            reason = (
+        if not carbon_ok:
+            reasons.append(
                 f"forecast carbon {forecast.carbon_hat:.3f} exceeds remaining "
                 f"{budget.remaining_carbon():.3f} gCO2e"
             )
-        return GateDecision(verdict=Verdict.REJECT, forecast=forecast, reason=reason)
+        if not usd_ok:
+            reasons.append(
+                f"forecast cost ${forecast.usd_hat:.4f} exceeds remaining "
+                f"${budget.remaining_usd():.4f}"
+            )
+        return GateDecision(verdict=Verdict.REJECT, forecast=forecast, reason="; ".join(reasons))

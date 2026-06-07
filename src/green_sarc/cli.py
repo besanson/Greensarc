@@ -45,6 +45,11 @@ def _inspect(path: str) -> int:
         print(f"  total carbon (g)  : {total_actual_carbon:.3f}")
         print(f"  MAE token cost    : {mae_cost:.1f}")
         print(f"  MAE carbon (g)    : {mae_carbon:.4f}")
+        total_usd = sum(r.actual_usd for r in ran)
+        if total_usd > 0:
+            mae_usd = sum(abs(r.usd_error) for r in ran) / len(ran)
+            print(f"  total USD spent   : ${total_usd:.4f}")
+            print(f"  MAE USD           : ${mae_usd:.4f}")
     return 0
 
 

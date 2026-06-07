@@ -53,6 +53,8 @@ class AuditRecord:
     admitted: bool
     verdict: str
     prompt_tokens: int = 0
+    predicted_usd: float = 0.0
+    actual_usd: float = 0.0
     circuit_tripped: bool = False
     escalated: bool = False
     forecast_source: str = "estimator"
@@ -72,6 +74,11 @@ class AuditRecord:
         """Actual minus predicted carbon (gCO2e)."""
         return self.actual_carbon - self.predicted_carbon
 
+    @property
+    def usd_error(self) -> float:
+        """Actual minus predicted USD."""
+        return self.actual_usd - self.predicted_usd
+
     def to_dict(self) -> Dict[str, Any]:
         """Serialise to a plain dict suitable for JSON Lines storage."""
         d: Dict[str, Any] = {
@@ -85,7 +92,10 @@ class AuditRecord:
             "actual_cost": self.actual_cost,
             "actual_carbon": self.actual_carbon,
             "prompt_tokens": self.prompt_tokens,
+            "predicted_usd": self.predicted_usd,
+            "actual_usd": self.actual_usd,
             "cost_error": self.cost_error,
+            "usd_error": self.usd_error,
             "carbon_error": self.carbon_error,
             "budget_remaining_tokens": self.budget_remaining_tokens,
             "carbon_remaining": self.carbon_remaining,
@@ -121,6 +131,8 @@ class AuditRecord:
             actual_cost=float(data["actual_cost"]),
             actual_carbon=float(data["actual_carbon"]),
             prompt_tokens=int(data.get("prompt_tokens", 0)),
+            predicted_usd=float(data.get("predicted_usd", 0.0)),
+            actual_usd=float(data.get("actual_usd", 0.0)),
             budget_remaining_tokens=float(data.get("budget_remaining_tokens", 0.0)),
             carbon_remaining=float(data.get("carbon_remaining", 0.0)),
             carbon_intensity=float(data.get("carbon_intensity", 0.0)),
@@ -172,6 +184,7 @@ class PostActionAuditor:
         carbon_remaining: float,
         carbon_intensity: float,
         prompt_tokens: int = 0,
+        actual_usd: float = 0.0,
         circuit_tripped: bool = False,
         escalated: bool = False,
         plan_id: Optional[str] = None,
@@ -194,6 +207,8 @@ class PostActionAuditor:
             carbon_remaining=carbon_remaining,
             carbon_intensity=carbon_intensity,
             prompt_tokens=prompt_tokens,
+            predicted_usd=forecast.usd_hat,
+            actual_usd=actual_usd,
             admitted=decision.admitted,
             verdict=decision.verdict.value,
             circuit_tripped=circuit_tripped,

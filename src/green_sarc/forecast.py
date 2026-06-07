@@ -43,6 +43,7 @@ class Forecast:
     carbon_hat: float
     confidence: float
     cost_std: Optional[float] = None
+    usd_hat: float = 0.0
     source: str = "estimator"
 
     def as_tuple(self) -> tuple[float, float, float]:

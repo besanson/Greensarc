@@ -64,6 +64,8 @@ class Budget:
     latency_headroom: Optional[float] = None
     reserved_tokens: float = 0.0
     reserved_carbon: float = 0.0
+    usd_budget: Optional[float] = None
+    usd_spent: float = 0.0
     _lock: Any = field(default_factory=threading.Lock, repr=False, compare=False)
 
     def remaining_tokens(self) -> float:
@@ -74,6 +76,12 @@ class Budget:
         """Remaining carbon headroom (gCO2e) net of in-flight reservations."""
         return self.carbon_ceiling - self.carbon_spent - self.reserved_carbon
 
+    def remaining_usd(self) -> float:
+        """Remaining USD budget, or ``+inf`` when no USD budget is set."""
+        if self.usd_budget is None:
+            return float("inf")
+        return self.usd_budget - self.usd_spent
+
     def is_token_exhausted(self) -> bool:
         """True once no token budget remains."""
         return self.remaining_tokens() <= 0.0
@@ -81,6 +89,10 @@ class Budget:
     def is_carbon_exhausted(self) -> bool:
         """True once the carbon ceiling has been reached."""
         return self.remaining_carbon() <= 0.0
+
+    def is_usd_exhausted(self) -> bool:
+        """True once the USD budget (if any) has been reached."""
+        return self.usd_budget is not None and self.remaining_usd() <= 0.0
 
     def reserve(self, tokens: float, carbon: float) -> bool:
         """Atomically hold ``tokens``/``carbon`` against the budget.
@@ -110,6 +122,7 @@ class Budget:
         reserve_carbon: float,
         actual_tokens: float,
         actual_carbon: float,
+        actual_usd: float = 0.0,
     ) -> None:
         """Release a reservation and spend the action's actual cost atomically."""
         with self._lock:
@@ -117,8 +130,9 @@ class Budget:
             self.reserved_carbon = max(0.0, self.reserved_carbon - reserve_carbon)
             self.token_budget -= actual_tokens
             self.carbon_spent += actual_carbon
+            self.usd_spent += actual_usd
 
-    def spend(self, tokens: float, carbon: float) -> None:
+    def spend(self, tokens: float, carbon: float, usd: float = 0.0) -> None:
         """Spend actual cost with no prior reservation, atomically.
 
         Retained for callers that do not use the reserve/commit protocol.
@@ -126,6 +140,7 @@ class Budget:
         with self._lock:
             self.token_budget -= tokens
             self.carbon_spent += carbon
+            self.usd_spent += usd
 
 
 @dataclass

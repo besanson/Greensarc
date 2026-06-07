@@ -22,6 +22,8 @@ Senior-review hardening (audit items P0/P1).
   and auditing after the stream ends; non-streaming bodies use a bounded buffer.
 
 ### Added (P1 — production readiness)
+- **P1-2** Optional **USD budget** enforced at the gate alongside tokens and carbon;
+  `Budget.usd_budget`, predicted/actual USD on the audit record, USD in `inspect`.
 - **P1-1** Estimator `save`/`load` and `bootstrap_from_jsonl`; `green-sarc bootstrap`.
 - **P1-4** Optional `tiktoken` prompt-token counter (`tiktoken` extra).
 - **P1-6** `SQLiteAuditStore` for durable, queryable runs.

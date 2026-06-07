@@ -192,8 +192,10 @@ class GreenGovernor:
                 ctx.timestamp,
             )
         )
+        prompt = float(action.prompt_tokens or 0)
+        actual_usd = self.cost_model.usd(action.model, prompt, max(0.0, actual_cost - prompt))
         # Release the reservation and spend the actuals in one atomic step.
-        self.budget.commit(reserve_tokens, reserve_carbon, actual_cost, actual_carbon)
+        self.budget.commit(reserve_tokens, reserve_carbon, actual_cost, actual_carbon, actual_usd)
 
         # ---- SITE 2: Action-Time Monitor (post-execution cost guard) -----
         circuit_exc: Optional[CircuitTripped] = None
@@ -235,6 +237,7 @@ class GreenGovernor:
             carbon_remaining=self.budget.remaining_carbon(),
             carbon_intensity=intensity,
             prompt_tokens=action.prompt_tokens or 0,
+            actual_usd=actual_usd,
             circuit_tripped=circuit_exc is not None,
             escalated=escalated,
             session_id=session_id or None,
@@ -291,6 +294,8 @@ class GreenGovernor:
     def _exhaustion_reason(self) -> EscalationReason:
         if self.budget.is_carbon_exhausted():
             return EscalationReason.CARBON_EXHAUSTED
+        if self.budget.is_usd_exhausted():
+            return EscalationReason.USD_EXHAUSTED
         return EscalationReason.TOKEN_EXHAUSTED
 
     async def _escalate(

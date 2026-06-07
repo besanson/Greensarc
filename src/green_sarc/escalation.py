@@ -33,6 +33,7 @@ class EscalationReason(str, Enum):
 
     TOKEN_EXHAUSTED = "token_exhausted"
     CARBON_EXHAUSTED = "carbon_exhausted"
+    USD_EXHAUSTED = "usd_exhausted"
     GATE_REJECT = "gate_reject"
     CIRCUIT_TRIPPED = "circuit_tripped"
 

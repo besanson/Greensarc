@@ -184,7 +184,9 @@ class SarcCostCarbonGovernance:
         carbon = carbon_for_tokens(
             self.cost_model, self.carbon_model, action.model, actual_tokens, action.region
         )
-        self.budget.commit(reserve_tokens, reserve_carbon, actual_tokens, carbon)
+        prompt = float(action.prompt_tokens or 0)
+        actual_usd = self.cost_model.usd(action.model, prompt, max(0.0, actual_tokens - prompt))
+        self.budget.commit(reserve_tokens, reserve_carbon, actual_tokens, carbon, actual_usd)
         self.auditor.record(
             action_id="",
             action_kind=action.kind,
@@ -198,6 +200,7 @@ class SarcCostCarbonGovernance:
             carbon_remaining=self.budget.remaining_carbon(),
             carbon_intensity=self.carbon_model.carbon_intensity(action.region),
             prompt_tokens=action.prompt_tokens or 0,
+            actual_usd=actual_usd,
         )
 
     # -- SARC constraints -------------------------------------------------
