@@ -46,6 +46,7 @@ from green_sarc.stores.memory import MemoryAuditStore
 __all__ = [
     "estimate_text_tokens",
     "count_message_tokens",
+    "tiktoken_message_counter",
     "extract_usage_tokens",
     "extract_response_text",
     "SidecarGate",
@@ -81,6 +82,30 @@ def count_message_tokens(messages: List[Dict[str, Any]]) -> int:
     for msg in messages:
         total += estimate_text_tokens(_message_text(msg)) + 4  # small per-message overhead
     return total
+
+
+def tiktoken_message_counter(model: str) -> Callable[[List[Dict[str, Any]]], int]:
+    """Return an accurate prompt-token counter backed by ``tiktoken``.
+
+    Pass the result as ``SidecarGate(prompt_token_counter=...)`` for exact counts
+    instead of the chars/4 heuristic.  Requires the optional extra
+    (``pip install 'green-sarc[tiktoken]'``).
+    """
+    try:
+        import tiktoken
+    except ImportError as exc:  # pragma: no cover - exercised only without the extra
+        raise RuntimeError(
+            "tiktoken_message_counter requires the 'tiktoken' extra; install green-sarc[tiktoken]"
+        ) from exc
+    try:
+        encoding = tiktoken.encoding_for_model(model)
+    except KeyError:
+        encoding = tiktoken.get_encoding("cl100k_base")
+
+    def count(messages: List[Dict[str, Any]]) -> int:
+        return sum(len(encoding.encode(_message_text(m))) + 4 for m in messages)
+
+    return count
 
 
 def extract_usage_tokens(response: Dict[str, Any]) -> float:

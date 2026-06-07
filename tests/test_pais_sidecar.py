@@ -5,12 +5,15 @@ from __future__ import annotations
 import json
 from typing import Any, Dict, List
 
+import pytest
+
 from green_sarc.adapters.pais_sidecar import (
     GreenSarcASGIMiddleware,
     SidecarGate,
     count_message_tokens,
     extract_response_text,
     extract_usage_tokens,
+    tiktoken_message_counter,
 )
 from green_sarc.estimator import ColdStartEstimator
 from green_sarc.state import Budget
@@ -89,6 +92,17 @@ def test_audit_falls_back_to_text_estimate_when_usage_zero(cost_model, carbon_mo
 def test_audit_unknown_action_id_returns_none(cost_model, carbon_model):
     sc = _sidecar(Budget(1000.0, 100.0), cost_model, carbon_model)
     assert sc.audit_response("nope", {"usage": {"total_tokens": 1}}) is None
+
+
+def test_tiktoken_counter_uses_extra_or_errors_clearly():
+    try:
+        import tiktoken  # noqa: F401
+    except ImportError:
+        with pytest.raises(RuntimeError, match="tiktoken"):
+            tiktoken_message_counter("gpt-4")
+        return
+    counter = tiktoken_message_counter("gpt-4")
+    assert counter([{"role": "user", "content": "hello world"}]) > 0
 
 
 # -- ASGI middleware --------------------------------------------------------

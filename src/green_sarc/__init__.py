@@ -54,7 +54,12 @@ from green_sarc.pricing import (
     default_cost_model,
 )
 from green_sarc.state import Action, Budget, GovernanceContext
-from green_sarc.stores import AuditStore, JSONLAuditStore, MemoryAuditStore
+from green_sarc.stores import (
+    AuditStore,
+    JSONLAuditStore,
+    MemoryAuditStore,
+    SQLiteAuditStore,
+)
 from green_sarc.trajectory import (
     NotImplementedTrajectoryEstimator,
     Plan,
@@ -111,4 +116,5 @@ __all__ = [
     "AuditStore",
     "MemoryAuditStore",
     "JSONLAuditStore",
+    "SQLiteAuditStore",
 ]

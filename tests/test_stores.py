@@ -5,6 +5,7 @@ from __future__ import annotations
 from green_sarc.auditor import AuditRecord
 from green_sarc.stores.jsonl import JSONLAuditStore
 from green_sarc.stores.memory import MemoryAuditStore
+from green_sarc.stores.sqlite import SQLiteAuditStore
 
 
 def _rec(action_id: str, actual_cost: float = 100.0) -> AuditRecord:
@@ -50,6 +51,25 @@ def test_jsonl_store_roundtrip(tmp_path):
     records = reopened.list()
     assert [r.action_id for r in records] == ["a1", "a2"]
     assert records[1].actual_cost == 200.0
+
+
+def test_sqlite_store_roundtrip_and_persist(tmp_path):
+    db = tmp_path / "audit.db"
+    store = SQLiteAuditStore(db)
+    store.append(_rec("a1", actual_cost=100.0))
+    store.append(_rec("a2", actual_cost=200.0))
+    assert [r.action_id for r in store.list()] == ["a1", "a2"]
+    store.close()
+
+    # Reopen the same database file -> records persisted.
+    reopened = SQLiteAuditStore(db)
+    records = reopened.list()
+    assert [r.action_id for r in records] == ["a1", "a2"]
+    assert records[1].actual_cost == 200.0
+    out = tmp_path / "export.jsonl"
+    assert reopened.export_jsonl(out) == 2
+    assert out.read_text().count("\n") == 2
+    reopened.close()
 
 
 def test_jsonl_export_copies(tmp_path):

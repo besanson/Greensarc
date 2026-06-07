@@ -2,6 +2,35 @@
 
 All notable changes to this project are documented here.
 
+## [Unreleased]
+
+Senior-review hardening (audit items P0/P1).
+
+### Fixed (P0 — correctness / safety)
+- **P0-1** Atomic `Budget` reserve/commit closes a concurrent over-spend race; the
+  governor and all three adapters reserve the forecast at the gate and commit
+  actuals at the auditor.
+- **P0-2** `TTLMap` bounds the adapter correlation maps by age and size (was an
+  unbounded-dict memory leak); eviction releases any held reservation.
+- **P0-3** Time-varying carbon intensity `kappa(rho, t)` (interpolated series +
+  pluggable `IntensityProvider`); the `t` argument is no longer ignored.
+- **P0-4** `LearnedEstimator` regresses completion tokens on prompt length and
+  exposes the residual std to the gate.
+- **P0-5** `EscalationRouter.route` returns a `RouteOutcome` instead of silently
+  swallowing handler errors.
+- **P0-6** Sidecar streams responses through (SSE-safe), parsing usage on the fly
+  and auditing after the stream ends; non-streaming bodies use a bounded buffer.
+
+### Added (P1 — production readiness)
+- **P1-1** Estimator `save`/`load` and `bootstrap_from_jsonl`; `green-sarc bootstrap`.
+- **P1-4** Optional `tiktoken` prompt-token counter (`tiktoken` extra).
+- **P1-6** `SQLiteAuditStore` for durable, queryable runs.
+- **P1-8** `strict` mode for the pricing/carbon tables (raise vs. warn-once).
+- **P1-9** `AuditRecord` plan/session/parent ids; `JSONLTrajectoryStore` groups the
+  log into per-plan trajectories (the Phase-2 data engine).
+- **P1-10** Sidecar path matched by regex (`GREEN_SARC_PATH_REGEX`).
+- Docs: `SECURITY.md`, `CONTRIBUTING.md`.
+
 ## [0.1.0] — 2026-06-07
 
 Phase 1: per-action predictive cost + carbon governance.

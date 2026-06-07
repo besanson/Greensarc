@@ -27,6 +27,7 @@ dependencies = []
 mcp = ["mcp>=1.0"]
 otel = ["opentelemetry-sdk>=1.20"]
 sarc = ["sarc-governance @ git+https://github.com/besanson/sarc-governance"]
+tiktoken = ["tiktoken>=0.5"]
 dev = [
     "pytest>=8.0",
     "pytest-asyncio>=0.23",
