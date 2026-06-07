@@ -255,6 +255,19 @@ async def test_non_streaming_overflow_falls_back_to_estimate(cost_model, carbon_
     assert rec.extra.get("actuals_source") == "estimate_overflow"
 
 
+async def test_path_regex_matches_trailing_slash(cost_model, carbon_model):
+    sc = _sidecar(Budget(10_000.0, 100.0), cost_model, carbon_model)
+    pais, state = _make_mock_pais()
+    app = GreenSarcASGIMiddleware(pais, sc)
+    # Default regex tolerates a trailing slash.
+    messages = await _drive(
+        app, json.dumps(_chat_request()).encode(), path="/v1/chat/completions/"
+    )
+    assert state["called"] is True
+    assert messages[0]["status"] == 200
+    assert len(sc.store.list()) == 1
+
+
 def test_orphan_gate_releases_reservation(cost_model, carbon_model):
     from green_sarc._ttl_map import TTLMap
 

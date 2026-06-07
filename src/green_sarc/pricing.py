@@ -15,8 +15,9 @@ time ``t`` — the ``kappa(rho, t)`` term of the augmented state (§4).
 
 from __future__ import annotations
 
+import warnings
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Protocol, Tuple, runtime_checkable
+from typing import Dict, List, Optional, Protocol, Set, Tuple, runtime_checkable
 
 __all__ = [
     "ModelProfile",
@@ -73,9 +74,21 @@ class TableCostModel:
     default_profile: ModelProfile = field(
         default_factory=lambda: ModelProfile(energy_per_token_kwh=3.0e-7)
     )
+    strict: bool = False
+    _warned: Set[str] = field(default_factory=set, repr=False, compare=False)
 
     def _profile(self, model: str) -> ModelProfile:
-        return self.profiles.get(model, self.default_profile)
+        if model in self.profiles:
+            return self.profiles[model]
+        if self.strict:
+            raise KeyError(f"TableCostModel: unknown model {model!r} (strict mode)")
+        if model not in self._warned:
+            self._warned.add(model)
+            warnings.warn(
+                f"TableCostModel: unknown model {model!r}; using the default profile",
+                stacklevel=2,
+            )
+        return self.default_profile
 
     def energy_kwh(self, model: str, tokens: float) -> float:
         return self._profile(model).energy_per_token_kwh * tokens
@@ -135,6 +148,8 @@ class TableCarbonModel:
     default_intensity: float = 400.0
     time_series: Dict[str, List[Tuple[float, float]]] = field(default_factory=dict)
     provider: Optional[IntensityProvider] = None
+    strict: bool = False
+    _warned: Set[str] = field(default_factory=set, repr=False, compare=False)
 
     def __post_init__(self) -> None:
         self.time_series = {r: sorted(pts) for r, pts in self.time_series.items()}
@@ -146,7 +161,17 @@ class TableCarbonModel:
                 return live
         if t is not None and self.time_series.get(region):
             return _interpolate(self.time_series[region], t)
-        return self.intensities.get(region, self.default_intensity)
+        if region in self.intensities:
+            return self.intensities[region]
+        if self.strict:
+            raise KeyError(f"TableCarbonModel: unknown region {region!r} (strict mode)")
+        if region not in self._warned:
+            self._warned.add(region)
+            warnings.warn(
+                f"TableCarbonModel: unknown region {region!r}; using the default intensity",
+                stacklevel=2,
+            )
+        return self.default_intensity
 
 
 def carbon_for_tokens(

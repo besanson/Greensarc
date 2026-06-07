@@ -56,6 +56,9 @@ class AuditRecord:
     circuit_tripped: bool = False
     escalated: bool = False
     forecast_source: str = "estimator"
+    plan_id: Optional[str] = None
+    session_id: Optional[str] = None
+    parent_action_id: Optional[str] = None
     timestamp: float = field(default_factory=time.time)
     extra: Dict[str, Any] = field(default_factory=dict)
 
@@ -92,6 +95,9 @@ class AuditRecord:
             "circuit_tripped": self.circuit_tripped,
             "escalated": self.escalated,
             "forecast_source": self.forecast_source,
+            "plan_id": self.plan_id,
+            "session_id": self.session_id,
+            "parent_action_id": self.parent_action_id,
             "timestamp": self.timestamp,
         }
         if self.extra:
@@ -123,6 +129,9 @@ class AuditRecord:
             circuit_tripped=bool(data.get("circuit_tripped", False)),
             escalated=bool(data.get("escalated", False)),
             forecast_source=data.get("forecast_source", "estimator"),
+            plan_id=data.get("plan_id"),
+            session_id=data.get("session_id"),
+            parent_action_id=data.get("parent_action_id"),
             timestamp=float(data.get("timestamp", 0.0)),
             extra=dict(data.get("extra", {})),
         )
@@ -165,6 +174,9 @@ class PostActionAuditor:
         prompt_tokens: int = 0,
         circuit_tripped: bool = False,
         escalated: bool = False,
+        plan_id: Optional[str] = None,
+        session_id: Optional[str] = None,
+        parent_action_id: Optional[str] = None,
         extra: Optional[Dict[str, Any]] = None,
     ) -> AuditRecord:
         """Build, persist, and learn from one :class:`AuditRecord`."""
@@ -187,6 +199,9 @@ class PostActionAuditor:
             circuit_tripped=circuit_tripped,
             escalated=escalated,
             forecast_source=forecast.source,
+            plan_id=plan_id,
+            session_id=session_id,
+            parent_action_id=parent_action_id,
             extra=dict(extra or {}),
         )
         self.store.append(rec)

@@ -237,6 +237,7 @@ class GreenGovernor:
             prompt_tokens=action.prompt_tokens or 0,
             circuit_tripped=circuit_exc is not None,
             escalated=escalated,
+            session_id=session_id or None,
             extra=extra,
         )
 

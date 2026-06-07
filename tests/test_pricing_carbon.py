@@ -2,7 +2,17 @@
 
 from __future__ import annotations
 
-from green_sarc.pricing import TableCarbonModel, carbon_for_tokens, default_cost_model
+import warnings
+
+import pytest
+
+from green_sarc.pricing import (
+    ModelProfile,
+    TableCarbonModel,
+    TableCostModel,
+    carbon_for_tokens,
+    default_cost_model,
+)
 
 
 def test_static_intensity_unchanged_without_time_or_series():
@@ -44,3 +54,21 @@ def test_live_provider_takes_precedence():
     cm = TableCarbonModel(intensities={"eu-west": 300.0}, provider=_Provider())
     assert cm.carbon_intensity("eu-west") == 42.0  # provider wins
     assert cm.carbon_intensity("other") == 400.0  # provider returns None -> fallback
+
+
+def test_strict_mode_raises_on_unknown_keys():
+    cm = TableCarbonModel(intensities={"eu-west": 300.0}, strict=True)
+    with pytest.raises(KeyError):
+        cm.carbon_intensity("mars")
+    pm = TableCostModel(profiles={"m": ModelProfile(1.0e-6)}, strict=True)
+    with pytest.raises(KeyError):
+        pm.energy_kwh("unknown", 100.0)
+
+
+def test_lax_mode_warns_once_per_key():
+    cm = TableCarbonModel(intensities={}, default_intensity=400.0)
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        assert cm.carbon_intensity("mars") == 400.0
+        assert cm.carbon_intensity("mars") == 400.0  # second call must not re-warn
+    assert sum("unknown region" in str(w.message) for w in caught) == 1

@@ -27,6 +27,8 @@ point the agent's model traffic at it, or wrap the PAIS ``app`` directly with
 from __future__ import annotations
 
 import json
+import os
+import re
 import uuid
 from dataclasses import dataclass, field
 from typing import Any, Awaitable, Callable, Dict, List, Optional, Tuple
@@ -272,19 +274,26 @@ class GreenSarcASGIMiddleware:
         sidecar: SidecarGate,
         *,
         path: str = "/v1/chat/completions",
+        path_regex: Optional[str] = None,
         max_buffer_bytes: int = 8 * 1024 * 1024,
         stream_passthrough: bool = True,
     ) -> None:
         self.app = app
         self.sidecar = sidecar
         self.path = path
+        # Match the gated path by regex so trailing slashes, query strings, and
+        # other OpenAI-compatible servers can be guarded (env override available).
+        pattern = (
+            path_regex or os.environ.get("GREEN_SARC_PATH_REGEX") or rf"^{re.escape(path)}/?$"
+        )
+        self.path_re = re.compile(pattern)
         self.max_buffer_bytes = max_buffer_bytes
         self.stream_passthrough = stream_passthrough
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         if (
             scope.get("type") != "http"
-            or scope.get("path") != self.path
+            or not self.path_re.match(scope.get("path", ""))
             or scope.get("method", "").upper() != "POST"
         ):
             await self.app(scope, receive, send)
