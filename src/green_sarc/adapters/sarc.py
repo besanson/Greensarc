@@ -33,7 +33,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 from green_sarc._ttl_map import TTLMap
 from green_sarc.auditor import PostActionAuditor
 from green_sarc.estimator import Estimator
-from green_sarc.forecast import GateDecision
+from green_sarc.forecast import GateDecision, Verdict
 from green_sarc.gate import PreActionGate
 from green_sarc.pricing import CarbonModel, CostModel, carbon_for_tokens
 from green_sarc.state import Action, Budget, GovernanceContext
@@ -104,7 +104,9 @@ class SarcCostCarbonGovernance:
     store: AuditStore = field(default_factory=MemoryAuditStore)
     gate: PreActionGate = field(init=False)
     auditor: PostActionAuditor = field(init=False)
-    _pending: TTLMap[int, Tuple[Action, GateDecision]] = field(default_factory=TTLMap)
+    _pending: TTLMap[int, Tuple[Action, GateDecision, float, float]] = field(
+        default_factory=TTLMap
+    )
 
     def __post_init__(self) -> None:
         self.gate = PreActionGate(self.estimator)
@@ -130,8 +132,17 @@ class SarcCostCarbonGovernance:
         action = self.action_factory(str(ctx.get("tool", "")), args)
         decision = self.gate.evaluate(action, GovernanceContext(budget=self.budget))
         if decision.admitted:
-            self._pending.put(id(args), (action, decision))
-            return False  # do not fire -> SARC lets the action through
+            reserve_tokens = self.gate.cost_upper_bound(decision.forecast, self.budget.delta)
+            reserve_carbon = decision.forecast.carbon_hat
+            if self.budget.reserve(reserve_tokens, reserve_carbon):
+                self._pending.put(id(args), (action, decision, reserve_tokens, reserve_carbon))
+                return False  # do not fire -> SARC lets the action through
+            # Raced out by a concurrent reservation: block as a reject.
+            decision = GateDecision(
+                verdict=Verdict.REJECT,
+                forecast=decision.forecast,
+                reason="insufficient budget after concurrent reservations",
+            )
         # Rejected: log the blocked action, then fire so SARC raises.
         self._record(action, decision, actual_tokens=0.0)
         return True
@@ -142,16 +153,30 @@ class SarcCostCarbonGovernance:
         pending = self._pending.pop(id(args), None)
         if pending is None:
             return False
-        action, decision = pending
+        action, decision, reserve_tokens, reserve_carbon = pending
         actual = float(self.usage_extractor(ctx.get("result")))
-        self._record(action, decision, actual_tokens=actual)
+        self._record(
+            action,
+            decision,
+            actual_tokens=actual,
+            reserve_tokens=reserve_tokens,
+            reserve_carbon=reserve_carbon,
+        )
         return False
 
-    def _record(self, action: Action, decision: GateDecision, *, actual_tokens: float) -> None:
+    def _record(
+        self,
+        action: Action,
+        decision: GateDecision,
+        *,
+        actual_tokens: float,
+        reserve_tokens: float = 0.0,
+        reserve_carbon: float = 0.0,
+    ) -> None:
         carbon = carbon_for_tokens(
             self.cost_model, self.carbon_model, action.model, actual_tokens, action.region
         )
-        self.budget.spend(actual_tokens, carbon)
+        self.budget.commit(reserve_tokens, reserve_carbon, actual_tokens, carbon)
         self.auditor.record(
             action_id="",
             action_kind=action.kind,

@@ -26,7 +26,7 @@ from green_sarc.escalation import (
     EscalationRouter,
     RouteOutcome,
 )
-from green_sarc.forecast import GateDecision
+from green_sarc.forecast import GateDecision, Verdict
 from green_sarc.gate import PreActionGate
 from green_sarc.monitor import ActionTimeMonitor, CircuitTripped
 from green_sarc.pricing import CarbonModel, CostModel, carbon_for_tokens
@@ -130,54 +130,55 @@ class GreenGovernor:
         # ---- SITE 1: Pre-Action Gate -------------------------------------
         decision = self.gate.evaluate(action, ctx)
         if not decision.admitted:
-            escalated = decision.verdict.value == "escalate"
-            self.auditor.record(
-                action_id=action_id,
-                action_kind=action.kind,
-                model=action.model,
-                region=action.region,
-                forecast=decision.forecast,
-                decision=decision,
-                actual_cost=0.0,
-                actual_carbon=0.0,
-                budget_remaining_tokens=self.budget.remaining_tokens(),
-                carbon_remaining=self.budget.remaining_carbon(),
-                carbon_intensity=intensity,
-                escalated=escalated,
-            )
+            extra: dict[str, Any] = {}
+            escalated = decision.verdict is Verdict.ESCALATE
             if escalated:
-                await self._escalate(
-                    self._exhaustion_reason(),
-                    action_id,
-                    action,
-                    decision.reason,
+                outcome_er = await self._escalate(
+                    self._exhaustion_reason(), action_id, action, decision.reason
                 )
+                extra["escalation_handled"] = outcome_er.handled
+            self._record_blocked(action_id, action, decision, intensity, escalated, extra)
             raise GateRejected(decision)
+
+        # ---- reserve the forecast upper bound atomically (audit P0-1) ----
+        reserve_tokens = self.gate.cost_upper_bound(decision.forecast, self.budget.delta)
+        reserve_carbon = decision.forecast.carbon_hat
+        if not self.budget.reserve(reserve_tokens, reserve_carbon):
+            # Raced out by a concurrent action between evaluate() and reserve().
+            raced = GateDecision(
+                verdict=Verdict.REJECT,
+                forecast=decision.forecast,
+                reason="insufficient budget after concurrent reservations",
+            )
+            self._record_blocked(action_id, action, raced, intensity, False, {})
+            raise GateRejected(raced)
 
         # ---- SITE 2: Action-Time Monitor (pre-execution loop guard) ------
         try:
             self.monitor.before()
         except CircuitTripped as exc:
-            self.auditor.record(
-                action_id=action_id,
-                action_kind=action.kind,
-                model=action.model,
-                region=action.region,
-                forecast=decision.forecast,
-                decision=decision,
-                actual_cost=0.0,
-                actual_carbon=0.0,
-                budget_remaining_tokens=self.budget.remaining_tokens(),
-                carbon_remaining=self.budget.remaining_carbon(),
-                carbon_intensity=intensity,
-                circuit_tripped=True,
-                escalated=True,
+            self.budget.release(reserve_tokens, reserve_carbon)
+            outcome_er = await self._escalate(
+                EscalationReason.CIRCUIT_TRIPPED, action_id, action, exc.reason
             )
-            await self._escalate(EscalationReason.CIRCUIT_TRIPPED, action_id, action, exc.reason)
+            self._record_blocked(
+                action_id,
+                action,
+                decision,
+                intensity,
+                True,
+                {"escalation_handled": outcome_er.handled},
+                circuit_tripped=True,
+            )
             raise
 
         # ---- execute the admitted action ---------------------------------
-        outcome = await execute(action)
+        try:
+            outcome = await execute(action)
+        except BaseException:
+            self.budget.release(reserve_tokens, reserve_carbon)
+            raise
+
         actual_cost = float(outcome.actual_tokens)
         actual_carbon = (
             float(outcome.actual_carbon)
@@ -191,7 +192,8 @@ class GreenGovernor:
                 ctx.timestamp,
             )
         )
-        self.budget.spend(actual_cost, actual_carbon)
+        # Release the reservation and spend the actuals in one atomic step.
+        self.budget.commit(reserve_tokens, reserve_carbon, actual_cost, actual_carbon)
 
         # ---- SITE 2: Action-Time Monitor (post-execution cost guard) -----
         circuit_exc: Optional[CircuitTripped] = None
@@ -199,6 +201,25 @@ class GreenGovernor:
             self.monitor.after(actual_cost)
         except CircuitTripped as exc:
             circuit_exc = exc
+
+        # ---- SITE 4: Escalation Router (route before recording so the audit
+        #      can carry whether the escalation was handled) ---------------
+        extra = {}
+        exhausted = self._is_exhausted()
+        escalated = circuit_exc is not None or exhausted
+        if circuit_exc is not None:
+            outcome_er = await self._escalate(
+                EscalationReason.CIRCUIT_TRIPPED, action_id, action, circuit_exc.reason
+            )
+            extra["escalation_handled"] = outcome_er.handled
+        elif exhausted:
+            outcome_er = await self._escalate(
+                self._exhaustion_reason(),
+                action_id,
+                action,
+                "budget or carbon ceiling reached after action",
+            )
+            extra["escalation_handled"] = outcome_er.handled
 
         # ---- SITE 3: Post-Action Auditor (log + retrain) -----------------
         record = self.auditor.record(
@@ -214,22 +235,12 @@ class GreenGovernor:
             carbon_remaining=self.budget.remaining_carbon(),
             carbon_intensity=intensity,
             circuit_tripped=circuit_exc is not None,
-            escalated=circuit_exc is not None or self._is_exhausted(),
+            escalated=escalated,
+            extra=extra,
         )
 
-        # ---- SITE 4: Escalation Router -----------------------------------
         if circuit_exc is not None:
-            await self._escalate(
-                EscalationReason.CIRCUIT_TRIPPED, action_id, action, circuit_exc.reason
-            )
             raise circuit_exc
-        if self._is_exhausted():
-            await self._escalate(
-                self._exhaustion_reason(),
-                action_id,
-                action,
-                "budget or carbon ceiling reached after action",
-            )
 
         return GovernedResult(
             result=outcome.result,
@@ -241,6 +252,35 @@ class GreenGovernor:
         )
 
     # -- helpers ----------------------------------------------------------
+
+    def _record_blocked(
+        self,
+        action_id: str,
+        action: Action,
+        decision: GateDecision,
+        intensity: float,
+        escalated: bool,
+        extra: dict[str, Any],
+        *,
+        circuit_tripped: bool = False,
+    ) -> None:
+        """Write an audit record for an action that did not run (cost = 0)."""
+        self.auditor.record(
+            action_id=action_id,
+            action_kind=action.kind,
+            model=action.model,
+            region=action.region,
+            forecast=decision.forecast,
+            decision=decision,
+            actual_cost=0.0,
+            actual_carbon=0.0,
+            budget_remaining_tokens=self.budget.remaining_tokens(),
+            carbon_remaining=self.budget.remaining_carbon(),
+            carbon_intensity=intensity,
+            circuit_tripped=circuit_tripped,
+            escalated=escalated,
+            extra=extra,
+        )
 
     def _is_exhausted(self) -> bool:
         return self.budget.is_token_exhausted() or self.budget.is_carbon_exhausted()

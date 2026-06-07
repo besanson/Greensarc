@@ -27,7 +27,7 @@ from typing import Any, Dict, Optional, Tuple
 from green_sarc._ttl_map import TTLMap
 from green_sarc.auditor import PostActionAuditor
 from green_sarc.estimator import Estimator
-from green_sarc.forecast import GateDecision
+from green_sarc.forecast import GateDecision, Verdict
 from green_sarc.gate import PreActionGate
 from green_sarc.pricing import CarbonModel, CostModel, carbon_for_tokens
 from green_sarc.state import Action, Budget, GovernanceContext
@@ -61,7 +61,7 @@ class GreenSarcMCPService:
         self.carbon_model = carbon_model
         self.gate = PreActionGate(estimator)
         self.auditor = PostActionAuditor(store or MemoryAuditStore(), estimator)
-        self._pending: TTLMap[str, Tuple[Action, GateDecision]] = TTLMap()
+        self._pending: TTLMap[str, Tuple[Action, GateDecision, float, float]] = TTLMap()
 
     def pre_action_gate(
         self,
@@ -82,10 +82,19 @@ class GreenSarcMCPService:
         )
         ctx = GovernanceContext(budget=self.budget)
         decision = self.gate.evaluate(action, ctx)
-        action_id = uuid.uuid4().hex
-        self._pending.put(action_id, (action, decision))
         out = decision.to_dict()
-        out["action_id"] = action_id
+        if decision.admitted:
+            reserve_tokens = self.gate.cost_upper_bound(decision.forecast, self.budget.delta)
+            reserve_carbon = decision.forecast.carbon_hat
+            if self.budget.reserve(reserve_tokens, reserve_carbon):
+                action_id = uuid.uuid4().hex
+                self._pending.put(action_id, (action, decision, reserve_tokens, reserve_carbon))
+                out["action_id"] = action_id
+            else:
+                # Raced out by a concurrent reservation; downgrade to a reject.
+                out["verdict"] = Verdict.REJECT.value
+                out["admitted"] = False
+                out["reason"] = "insufficient budget after concurrent reservations"
         out["budget_remaining_tokens"] = self.budget.remaining_tokens()
         out["carbon_remaining"] = self.budget.remaining_carbon()
         return out
@@ -101,7 +110,7 @@ class GreenSarcMCPService:
         pending = self._pending.pop(action_id, None)
         if pending is None:
             return {"ok": False, "error": f"unknown action_id {action_id!r}"}
-        action, decision = pending
+        action, decision, reserve_tokens, reserve_carbon = pending
         intensity = self.carbon_model.carbon_intensity(action.region)
         carbon = (
             float(actual_carbon)
@@ -114,7 +123,7 @@ class GreenSarcMCPService:
                 action.region,
             )
         )
-        self.budget.spend(float(actual_tokens), carbon)
+        self.budget.commit(reserve_tokens, reserve_carbon, float(actual_tokens), carbon)
         rec = self.auditor.record(
             action_id=action_id,
             action_kind=action.kind,

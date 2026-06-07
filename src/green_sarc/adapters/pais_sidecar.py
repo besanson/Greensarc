@@ -34,7 +34,7 @@ from typing import Any, Awaitable, Callable, Dict, List, Optional, Tuple
 from green_sarc._ttl_map import TTLMap
 from green_sarc.auditor import AuditRecord, PostActionAuditor
 from green_sarc.estimator import Estimator
-from green_sarc.forecast import GateDecision
+from green_sarc.forecast import GateDecision, Verdict
 from green_sarc.gate import PreActionGate
 from green_sarc.pricing import CarbonModel, CostModel, carbon_for_tokens
 from green_sarc.state import Action, Budget, GovernanceContext
@@ -121,7 +121,9 @@ class SidecarGate:
     prompt_token_counter: Callable[[List[Dict[str, Any]]], int] = count_message_tokens
     gate: PreActionGate = field(init=False)
     auditor: PostActionAuditor = field(init=False)
-    _pending: TTLMap[str, Tuple[Action, GateDecision]] = field(default_factory=TTLMap)
+    _pending: TTLMap[str, Tuple[Action, GateDecision, float, float]] = field(
+        default_factory=TTLMap
+    )
 
     def __post_init__(self) -> None:
         self.gate = PreActionGate(self.estimator)
@@ -143,7 +145,18 @@ class SidecarGate:
         )
         decision = self.gate.evaluate(action, GovernanceContext(budget=self.budget))
         action_id = uuid.uuid4().hex
-        self._pending.put(action_id, (action, decision))
+        if decision.admitted:
+            reserve_tokens = self.gate.cost_upper_bound(decision.forecast, self.budget.delta)
+            reserve_carbon = decision.forecast.carbon_hat
+            if self.budget.reserve(reserve_tokens, reserve_carbon):
+                self._pending.put(action_id, (action, decision, reserve_tokens, reserve_carbon))
+            else:
+                # Raced out by a concurrent reservation: reject (the middleware 429s).
+                decision = GateDecision(
+                    verdict=Verdict.REJECT,
+                    forecast=decision.forecast,
+                    reason="insufficient budget after concurrent reservations",
+                )
         return decision, action_id
 
     def audit_response(
@@ -162,7 +175,7 @@ class SidecarGate:
         pending = self._pending.pop(action_id, None)
         if pending is None:
             return None
-        action, decision = pending
+        action, decision, reserve_tokens, reserve_carbon = pending
 
         if actual_tokens is None:
             actual_tokens = extract_usage_tokens(response)
@@ -174,7 +187,7 @@ class SidecarGate:
         carbon = carbon_for_tokens(
             self.cost_model, self.carbon_model, action.model, float(actual_tokens), action.region
         )
-        self.budget.spend(float(actual_tokens), carbon)
+        self.budget.commit(reserve_tokens, reserve_carbon, float(actual_tokens), carbon)
         return self.auditor.record(
             action_id=action_id,
             action_kind=action.kind,

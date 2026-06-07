@@ -16,6 +16,7 @@ The core is framework-agnostic: nothing here imports an agent framework.
 
 from __future__ import annotations
 
+import threading
 from dataclasses import dataclass, field
 from typing import Any, Dict, Optional
 
@@ -61,27 +62,70 @@ class Budget:
     carbon_spent: float = 0.0
     delta: float = 0.05
     latency_headroom: Optional[float] = None
+    reserved_tokens: float = 0.0
+    reserved_carbon: float = 0.0
+    _lock: Any = field(default_factory=threading.Lock, repr=False, compare=False)
 
     def remaining_tokens(self) -> float:
-        """Remaining token budget ``b_tok``."""
-        return self.token_budget
+        """Remaining token budget ``b_tok`` net of in-flight reservations."""
+        return self.token_budget - self.reserved_tokens
 
     def remaining_carbon(self) -> float:
-        """Remaining carbon headroom ``B_co2 - carbon_spent`` (gCO2e)."""
-        return self.carbon_ceiling - self.carbon_spent
+        """Remaining carbon headroom (gCO2e) net of in-flight reservations."""
+        return self.carbon_ceiling - self.carbon_spent - self.reserved_carbon
 
     def is_token_exhausted(self) -> bool:
         """True once no token budget remains."""
-        return self.token_budget <= 0.0
+        return self.remaining_tokens() <= 0.0
 
     def is_carbon_exhausted(self) -> bool:
         """True once the carbon ceiling has been reached."""
         return self.remaining_carbon() <= 0.0
 
+    def reserve(self, tokens: float, carbon: float) -> bool:
+        """Atomically hold ``tokens``/``carbon`` against the budget.
+
+        Returns ``False`` (reserving nothing) if either amount would exceed the
+        remaining budget, so concurrent callers cannot collectively over-admit
+        between their gate check and their spend (audit P0-1).
+        """
+        with self._lock:
+            if tokens > self.token_budget - self.reserved_tokens:
+                return False
+            if carbon > self.carbon_ceiling - self.carbon_spent - self.reserved_carbon:
+                return False
+            self.reserved_tokens += tokens
+            self.reserved_carbon += carbon
+            return True
+
+    def release(self, tokens: float, carbon: float) -> None:
+        """Return a reservation without spending (e.g. the action did not run)."""
+        with self._lock:
+            self.reserved_tokens = max(0.0, self.reserved_tokens - tokens)
+            self.reserved_carbon = max(0.0, self.reserved_carbon - carbon)
+
+    def commit(
+        self,
+        reserve_tokens: float,
+        reserve_carbon: float,
+        actual_tokens: float,
+        actual_carbon: float,
+    ) -> None:
+        """Release a reservation and spend the action's actual cost atomically."""
+        with self._lock:
+            self.reserved_tokens = max(0.0, self.reserved_tokens - reserve_tokens)
+            self.reserved_carbon = max(0.0, self.reserved_carbon - reserve_carbon)
+            self.token_budget -= actual_tokens
+            self.carbon_spent += actual_carbon
+
     def spend(self, tokens: float, carbon: float) -> None:
-        """Decrement ``b_tok`` and accumulate carbon after an action fires."""
-        self.token_budget -= tokens
-        self.carbon_spent += carbon
+        """Spend actual cost with no prior reservation, atomically.
+
+        Retained for callers that do not use the reserve/commit protocol.
+        """
+        with self._lock:
+            self.token_budget -= tokens
+            self.carbon_spent += carbon
 
 
 @dataclass
