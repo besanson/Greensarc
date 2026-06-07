@@ -33,6 +33,14 @@ Senior-review hardening (audit items P0/P1).
 - **P1-10** Sidecar path matched by regex (`GREEN_SARC_PATH_REGEX`).
 - Docs: `SECURITY.md`, `CONTRIBUTING.md`.
 
+### Deferred (intentional — see roadmap)
+Infrastructure/release items deferred until there is a deployment or release that
+needs them, rather than shipping unused machinery: Prometheus `/metrics` endpoints
+(P1-3), a standalone OTLP receiver (P1-5; the in-process `GreenSarcSpanProcessor`
+covers the common case), transport-level MCP auth (P1-7; threat documented in
+`SECURITY.md`), a PyPI trusted-publishing workflow (P2-3), and `mypy --strict`
+(P2-6).
+
 ## [0.1.0] — 2026-06-07
 
 Phase 1: per-action predictive cost + carbon governance.
