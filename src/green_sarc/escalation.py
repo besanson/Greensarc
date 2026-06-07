@@ -13,13 +13,14 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Awaitable, Callable, Dict, Optional
+from typing import Any, Awaitable, Callable, Dict, List, Optional
 
 __all__ = [
     "EscalationReason",
     "EscalationEvent",
     "EscalationHandler",
     "EscalationRouter",
+    "RouteOutcome",
     "DeterministicFallbackHandler",
     "log_only_handler",
 ]
@@ -91,19 +92,41 @@ class DeterministicFallbackHandler:
         event.metadata["fallback_result"] = self.fallback(event)
 
 
+@dataclass
+class RouteOutcome:
+    """The result of routing an escalation event.
+
+    ``handled`` is ``False`` when the handler raised (the error is still
+    suppressed so it cannot break the agent loop, but the caller is told). This
+    closes the audit's P0-5 finding: escalation success/failure is now a signal,
+    not a silently swallowed exception.
+    """
+
+    handled: bool
+    fallback_result: Any = None
+    errors: List[Exception] = field(default_factory=list)
+
+
 class EscalationRouter:
     """Routes escalation events to a pluggable async handler (best-effort)."""
 
     def __init__(self, handler: Optional[EscalationHandler] = None) -> None:
         self.handler: EscalationHandler = handler if handler is not None else log_only_handler
 
-    async def route(self, event: EscalationEvent) -> None:
-        """Dispatch ``event``; never propagate a handler error to the caller."""
+    async def route(self, event: EscalationEvent) -> RouteOutcome:
+        """Dispatch ``event`` and report the outcome.
+
+        A handler error is logged and suppressed (it must never break the calling
+        agent loop), but it is surfaced as ``RouteOutcome(handled=False, ...)`` so
+        the caller can react.
+        """
         try:
             await self.handler(event)
-        except Exception:  # pragma: no cover - defensive
+        except Exception as exc:  # defensive: never propagate into the agent loop
             logger.exception(
                 "escalation handler raised for action=%s reason=%s — suppressed",
                 event.action_id,
                 event.reason.value,
             )
+            return RouteOutcome(handled=False, errors=[exc])
+        return RouteOutcome(handled=True, fallback_result=event.metadata.get("fallback_result"))

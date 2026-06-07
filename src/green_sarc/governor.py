@@ -20,7 +20,12 @@ from typing import Any, Awaitable, Callable, Optional
 
 from green_sarc.auditor import AuditRecord, PostActionAuditor
 from green_sarc.estimator import Estimator
-from green_sarc.escalation import EscalationEvent, EscalationReason, EscalationRouter
+from green_sarc.escalation import (
+    EscalationEvent,
+    EscalationReason,
+    EscalationRouter,
+    RouteOutcome,
+)
 from green_sarc.forecast import GateDecision
 from green_sarc.gate import PreActionGate
 from green_sarc.monitor import ActionTimeMonitor, CircuitTripped
@@ -251,8 +256,8 @@ class GreenGovernor:
         action_id: str,
         action: Action,
         detail: str,
-    ) -> None:
-        await self.router.route(
+    ) -> RouteOutcome:
+        return await self.router.route(
             EscalationEvent(
                 reason=reason,
                 action_id=action_id,

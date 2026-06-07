@@ -26,13 +26,28 @@ async def test_router_dispatches_to_handler():
     assert seen[0].reason is EscalationReason.TOKEN_EXHAUSTED
 
 
-async def test_router_suppresses_handler_errors():
+async def test_router_suppresses_handler_errors_but_reports_them():
     async def boom(event: EscalationEvent) -> None:
         raise RuntimeError("handler failed")
 
     router = EscalationRouter(boom)
-    # Must not propagate — a broken handler can never break the agent loop.
-    await router.route(_event())
+    # Must not propagate — a broken handler can never break the agent loop —
+    # but the failure is surfaced as handled=False (P0-5).
+    outcome = await router.route(_event())
+    assert outcome.handled is False
+    assert len(outcome.errors) == 1
+    assert isinstance(outcome.errors[0], RuntimeError)
+
+
+async def test_router_reports_handled_and_fallback_result():
+    def fallback(event: EscalationEvent) -> str:
+        return "cached"
+
+    router = EscalationRouter(DeterministicFallbackHandler(fallback))
+    outcome = await router.route(_event())
+    assert outcome.handled is True
+    assert outcome.fallback_result == "cached"
+    assert outcome.errors == []
 
 
 async def test_deterministic_fallback_handler():
