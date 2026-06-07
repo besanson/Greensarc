@@ -94,41 +94,63 @@ class ColdStartEstimator:
 
 
 @dataclass
-class _Stat:
-    """Online mean/variance accumulator (Welford)."""
+class _RegStats:
+    """Online simple linear regression of ``y`` on ``x`` (least squares)."""
 
     n: int = 0
-    mean: float = 0.0
-    m2: float = 0.0
+    sx: float = 0.0
+    sy: float = 0.0
+    sxx: float = 0.0
+    sxy: float = 0.0
+    syy: float = 0.0
 
-    def add(self, x: float) -> None:
+    def update(self, x: float, y: float) -> None:
         self.n += 1
-        delta = x - self.mean
-        self.mean += delta / self.n
-        self.m2 += delta * (x - self.mean)
+        self.sx += x
+        self.sy += y
+        self.sxx += x * x
+        self.sxy += x * y
+        self.syy += y * y
 
-    @property
-    def std(self) -> float:
-        if self.n < 2:
-            return 0.0
-        return math.sqrt(self.m2 / (self.n - 1))
+    def predict(self, x: float) -> Tuple[float, float]:
+        """Return ``(y_hat, residual_std)`` at ``x``.
+
+        Falls back to the mean of ``y`` (with its sample std) when there is too
+        little spread in ``x`` to fit a slope.
+        """
+        mean_y = self.sy / self.n if self.n else 0.0
+        denom = self.n * self.sxx - self.sx * self.sx
+        if self.n < 3 or denom <= 0.0:
+            if self.n < 2:
+                return (mean_y, 0.0)
+            var = max((self.syy - self.sy * self.sy / self.n) / (self.n - 1), 0.0)
+            return (mean_y, math.sqrt(var))
+        beta = (self.n * self.sxy - self.sx * self.sy) / denom
+        alpha = (self.sy - beta * self.sx) / self.n
+        y_hat = alpha + beta * x
+        sse = max(self.syy - alpha * self.sy - beta * self.sxy, 0.0)
+        sigma = math.sqrt(sse / max(self.n - 2, 1))
+        return (y_hat, sigma)
 
 
 @dataclass
 class LearnedEstimator:
-    """Online per-key estimator that retrains on logged actuals.
+    """Online estimator that regresses completion tokens on prompt tokens.
 
-    Predicts the total token cost of an action from the running mean of observed
-    actuals for its ``(kind, model)`` key, with the standard deviation supplied
-    to the gate so it can form a ``1 - delta`` upper bound.  Until a key has at
-    least ``min_samples`` observations it defers to :class:`ColdStartEstimator`.
+    Completion length correlates with prompt length, so per ``(kind, model)`` key
+    this fits an online least-squares line ``completion ~ alpha + beta *
+    prompt_tokens`` and predicts ``cost_hat = prompt_tokens + completion`` (the
+    completion clamped to ``[0, max_tokens]``).  The regression's residual
+    standard deviation is supplied to the gate as ``cost_std`` for its
+    ``1 - delta`` upper bound.  Until a key has ``min_samples`` observations it
+    defers to the conservative :class:`ColdStartEstimator`.
     """
 
     cost_model: CostModel
     carbon_model: CarbonModel
     min_samples: int = 3
     cold_start: ColdStartEstimator = field(init=False)
-    _stats: Dict[Tuple[str, str], _Stat] = field(default_factory=dict)
+    _stats: Dict[Tuple[str, str], _RegStats] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         self.cold_start = ColdStartEstimator(self.cost_model, self.carbon_model)
@@ -137,8 +159,12 @@ class LearnedEstimator:
         stat = self._stats.get(_key(action))
         if stat is None or stat.n < self.min_samples:
             return self.cold_start.predict(action, ctx)
-        cost_hat = stat.mean
-        # Confidence grows with sample count, saturating below 1.0.
+        prompt = float(action.prompt_tokens or 0)
+        completion_hat, sigma = stat.predict(prompt)
+        completion_hat = max(0.0, completion_hat)
+        if action.max_tokens is not None:
+            completion_hat = min(completion_hat, float(action.max_tokens))
+        cost_hat = prompt + completion_hat
         confidence = min(0.99, 1.0 - 1.0 / (1.0 + stat.n))
         carbon_hat = carbon_for_tokens(
             self.cost_model,
@@ -152,14 +178,16 @@ class LearnedEstimator:
             cost_hat=cost_hat,
             carbon_hat=carbon_hat,
             confidence=confidence,
-            cost_std=stat.std,
+            cost_std=sigma if sigma > 0.0 else None,
             source="learned",
         )
 
     def update(self, record: AuditRecord) -> None:
         key = (record.action_kind, record.model)
-        stat = self._stats.setdefault(key, _Stat())
-        stat.add(record.actual_cost)
+        stat = self._stats.setdefault(key, _RegStats())
+        prompt = float(record.prompt_tokens)
+        completion = max(0.0, record.actual_cost - prompt)
+        stat.update(prompt, completion)
 
     def samples(self, action: Action) -> int:
         """Number of observations learned for ``action``'s key (introspection)."""

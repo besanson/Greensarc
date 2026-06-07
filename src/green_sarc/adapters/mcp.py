@@ -136,6 +136,7 @@ class GreenSarcMCPService:
             budget_remaining_tokens=self.budget.remaining_tokens(),
             carbon_remaining=self.budget.remaining_carbon(),
             carbon_intensity=intensity,
+            prompt_tokens=action.prompt_tokens or 0,
         )
         return {
             "ok": True,

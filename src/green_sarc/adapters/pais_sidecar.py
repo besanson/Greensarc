@@ -200,6 +200,7 @@ class SidecarGate:
             budget_remaining_tokens=self.budget.remaining_tokens(),
             carbon_remaining=self.budget.remaining_carbon(),
             carbon_intensity=self.carbon_model.carbon_intensity(action.region),
+            prompt_tokens=action.prompt_tokens or 0,
         )
 
 

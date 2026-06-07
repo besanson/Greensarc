@@ -52,6 +52,7 @@ class AuditRecord:
     carbon_intensity: float
     admitted: bool
     verdict: str
+    prompt_tokens: int = 0
     circuit_tripped: bool = False
     escalated: bool = False
     forecast_source: str = "estimator"
@@ -80,6 +81,7 @@ class AuditRecord:
             "confidence": self.confidence,
             "actual_cost": self.actual_cost,
             "actual_carbon": self.actual_carbon,
+            "prompt_tokens": self.prompt_tokens,
             "cost_error": self.cost_error,
             "carbon_error": self.carbon_error,
             "budget_remaining_tokens": self.budget_remaining_tokens,
@@ -112,6 +114,7 @@ class AuditRecord:
             confidence=float(data.get("confidence", 0.0)),
             actual_cost=float(data["actual_cost"]),
             actual_carbon=float(data["actual_carbon"]),
+            prompt_tokens=int(data.get("prompt_tokens", 0)),
             budget_remaining_tokens=float(data.get("budget_remaining_tokens", 0.0)),
             carbon_remaining=float(data.get("carbon_remaining", 0.0)),
             carbon_intensity=float(data.get("carbon_intensity", 0.0)),
@@ -159,6 +162,7 @@ class PostActionAuditor:
         budget_remaining_tokens: float,
         carbon_remaining: float,
         carbon_intensity: float,
+        prompt_tokens: int = 0,
         circuit_tripped: bool = False,
         escalated: bool = False,
         extra: Optional[Dict[str, Any]] = None,
@@ -177,6 +181,7 @@ class PostActionAuditor:
             budget_remaining_tokens=budget_remaining_tokens,
             carbon_remaining=carbon_remaining,
             carbon_intensity=carbon_intensity,
+            prompt_tokens=prompt_tokens,
             admitted=decision.admitted,
             verdict=decision.verdict.value,
             circuit_tripped=circuit_tripped,
