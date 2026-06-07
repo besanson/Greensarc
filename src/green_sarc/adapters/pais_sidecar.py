@@ -128,6 +128,14 @@ class SidecarGate:
     def __post_init__(self) -> None:
         self.gate = PreActionGate(self.estimator)
         self.auditor = PostActionAuditor(self.store, self.estimator)
+        self._pending = TTLMap(on_evict=self._release_pending)
+
+    def _release_pending(
+        self, _key: str, value: Tuple[Action, GateDecision, float, float]
+    ) -> None:
+        """Return the budget reservation an orphaned (un-audited) gate held."""
+        _action, _decision, reserve_tokens, reserve_carbon = value
+        self.budget.release(reserve_tokens, reserve_carbon)
 
     def gate_request(self, body: Dict[str, Any]) -> Tuple[GateDecision, str]:
         """Gate an OpenAI-style chat-completion request body.
@@ -165,6 +173,7 @@ class SidecarGate:
         response: Dict[str, Any],
         *,
         actual_tokens: Optional[float] = None,
+        actuals_source: str = "usage",
     ) -> Optional[AuditRecord]:
         """Record actuals for a previously gated request; spend the budget.
 
@@ -201,6 +210,7 @@ class SidecarGate:
             carbon_remaining=self.budget.remaining_carbon(),
             carbon_intensity=self.carbon_model.carbon_intensity(action.region),
             prompt_tokens=action.prompt_tokens or 0,
+            extra={"actuals_source": actuals_source},
         )
 
 
@@ -212,12 +222,48 @@ Send = Callable[[Message], Awaitable[None]]
 ASGIApp = Callable[[Scope, Receive, Send], Awaitable[None]]
 
 
+def _scan_sse_usage(data: bytes) -> Tuple[float, bytes, bool]:
+    """Scan complete SSE lines for the latest ``usage.total_tokens``.
+
+    Returns ``(max_usage_seen, trailing_partial_line, saw_done)``.  OpenAI-style
+    streaming with ``stream_options.include_usage`` emits a final ``data:`` event
+    whose ``usage`` carries the cumulative total, so we take the maximum usage
+    seen rather than summing.
+    """
+    usage = 0.0
+    seen_done = False
+    *lines, residual = data.split(b"\n")
+    for raw_line in lines:
+        line = raw_line.strip()
+        if not line.startswith(b"data:"):
+            continue
+        payload = line[len(b"data:") :].strip()
+        if payload == b"[DONE]":
+            seen_done = True
+            continue
+        try:
+            obj = json.loads(payload)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(obj, dict):
+            usage = max(usage, extract_usage_tokens(obj))
+    return usage, residual, seen_done
+
+
 class GreenSarcASGIMiddleware:
     """Dependency-free ASGI middleware that hard-gates one HTTP path.
 
     Wrap a PAIS ASGI ``app`` so every ``POST`` to ``path`` is gated: rejected
     calls get ``429`` and never reach the app; admitted calls are forwarded and
     their response is read to write the audit record.
+
+    Responses are streamed through unchanged (each chunk is forwarded
+    immediately), so Server-Sent-Event (``text/event-stream``) chat completions
+    are not broken or buffered: token usage is parsed from the SSE ``data:``
+    events on the fly and the audit is written once the stream ends (audit P0-6).
+    Non-streaming JSON bodies are mirrored into a bounded buffer
+    (``max_buffer_bytes``) for usage parsing; past the cap the audit falls back to
+    an estimate tagged ``actuals_source="estimate_overflow"``.
     """
 
     def __init__(
@@ -226,10 +272,14 @@ class GreenSarcASGIMiddleware:
         sidecar: SidecarGate,
         *,
         path: str = "/v1/chat/completions",
+        max_buffer_bytes: int = 8 * 1024 * 1024,
+        stream_passthrough: bool = True,
     ) -> None:
         self.app = app
         self.sidecar = sidecar
         self.path = path
+        self.max_buffer_bytes = max_buffer_bytes
+        self.stream_passthrough = stream_passthrough
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         if (
@@ -253,30 +303,63 @@ class GreenSarcASGIMiddleware:
             await self._reject(send, decision)
             return
 
-        captured: Dict[str, Any] = {"start": None, "body": bytearray()}
+        state: Dict[str, Any] = {
+            "streaming": False,
+            "buf": bytearray(),
+            "overflow": False,
+            "sse_usage": 0.0,
+            "residual": b"",
+            "done": False,
+        }
 
         async def capture_send(message: Message) -> None:
             mtype = message["type"]
             if mtype == "http.response.start":
-                captured["start"] = message
+                headers = {k.lower(): v for k, v in message.get("headers", [])}
+                content_type = headers.get(b"content-type", b"").decode().lower()
+                transfer = headers.get(b"transfer-encoding", b"").decode().lower()
+                state["streaming"] = self.stream_passthrough and (
+                    content_type.startswith("text/event-stream") or "chunked" in transfer
+                )
+                await send(message)  # forward headers immediately
             elif mtype == "http.response.body":
-                captured["body"].extend(message.get("body", b""))
-                if message.get("more_body"):
-                    return
-                await self._flush_and_audit(send, captured, action_id)
+                await send(message)  # passthrough: forward each chunk immediately
+                chunk = message.get("body", b"")
+                if state["streaming"]:
+                    usage, state["residual"], _done = _scan_sse_usage(state["residual"] + chunk)
+                    state["sse_usage"] = max(state["sse_usage"], usage)
+                elif not state["overflow"]:
+                    if len(state["buf"]) + len(chunk) <= self.max_buffer_bytes:
+                        state["buf"].extend(chunk)
+                    else:
+                        state["overflow"] = True
+                if not message.get("more_body", False) and not state["done"]:
+                    state["done"] = True
+                    self._audit(action_id, state)
 
         await self.app(scope, self._replay(body), capture_send)
+        if not state["done"]:  # app sent no terminal body chunk; audit best-effort
+            self._audit(action_id, state)
 
-    async def _flush_and_audit(self, send: Send, captured: Dict[str, Any], action_id: str) -> None:
-        raw = bytes(captured["body"])
+    def _audit(self, action_id: str, state: Dict[str, Any]) -> None:
+        if state["streaming"]:
+            if state["sse_usage"] > 0.0:
+                self.sidecar.audit_response(
+                    action_id, {}, actual_tokens=state["sse_usage"], actuals_source="sse_usage"
+                )
+            else:
+                self.sidecar.audit_response(action_id, {}, actuals_source="estimate_stream")
+            return
+        if state["overflow"]:
+            self.sidecar.audit_response(action_id, {}, actuals_source="estimate_overflow")
+            return
+        raw = bytes(state["buf"])
         try:
             response = json.loads(raw) if raw else {}
         except json.JSONDecodeError:
             response = {}
-        self.sidecar.audit_response(action_id, response)
-        if captured["start"] is not None:
-            await send(captured["start"])
-        await send({"type": "http.response.body", "body": raw, "more_body": False})
+        source = "usage" if extract_usage_tokens(response) > 0.0 else "estimate_text"
+        self.sidecar.audit_response(action_id, response, actuals_source=source)
 
     async def _reject(self, send: Send, decision: GateDecision) -> None:
         payload = json.dumps(

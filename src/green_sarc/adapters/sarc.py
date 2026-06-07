@@ -111,8 +111,16 @@ class SarcCostCarbonGovernance:
     def __post_init__(self) -> None:
         self.gate = PreActionGate(self.estimator)
         self.auditor = PostActionAuditor(self.store, self.estimator)
+        self._pending = TTLMap(on_evict=self._release_pending)
         if self.action_factory is None:
             self.action_factory = self._default_action
+
+    def _release_pending(
+        self, _key: int, value: Tuple[Action, GateDecision, float, float]
+    ) -> None:
+        """Return the budget reservation an orphaned (un-audited) gate held."""
+        _action, _decision, reserve_tokens, reserve_carbon = value
+        self.budget.release(reserve_tokens, reserve_carbon)
 
     def _default_action(self, tool: str, args: Dict[str, Any]) -> Action:
         return Action(

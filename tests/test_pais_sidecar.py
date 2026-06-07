@@ -189,3 +189,85 @@ async def test_middleware_passes_through_other_paths(cost_model, carbon_model):
     assert state["called"] is True
     assert messages[0]["status"] == 200
     assert len(sc.store.list()) == 0  # not gated/audited
+
+
+# -- streaming (SSE) --------------------------------------------------------
+
+
+def _make_sse_pais(total_tokens: int = 250):
+    """A mock PAIS that streams an OpenAI-style SSE chat completion with usage."""
+    state = {"called": False}
+
+    async def app(scope, receive, send):
+        state["called"] = True
+        more = True
+        while more:
+            msg = await receive()
+            more = msg.get("more_body", False) if msg["type"] == "http.request" else False
+        await send(
+            {
+                "type": "http.response.start",
+                "status": 200,
+                "headers": [(b"content-type", b"text/event-stream")],
+            }
+        )
+        chunks = [
+            b'data: {"choices":[{"delta":{"content":"Hel"}}]}\n\n',
+            b'data: {"choices":[{"delta":{"content":"lo"}}]}\n\n',
+            b'data: {"choices":[],"usage":{"total_tokens":%d}}\n\n' % total_tokens,
+            b"data: [DONE]\n\n",
+        ]
+        for i, c in enumerate(chunks):
+            await send({"type": "http.response.body", "body": c, "more_body": i < len(chunks) - 1})
+
+    return app, state
+
+
+async def test_sse_stream_passthrough_and_usage_audited(cost_model, carbon_model):
+    budget = Budget(token_budget=10_000.0, carbon_ceiling=100.0)
+    sc = _sidecar(budget, cost_model, carbon_model)
+    pais, state = _make_sse_pais(total_tokens=250)
+    app = GreenSarcASGIMiddleware(pais, sc)
+
+    messages = await _drive(app, json.dumps(_chat_request()).encode())
+
+    assert state["called"] is True
+    assert messages[0]["status"] == 200
+    # Streaming preserved: each upstream chunk was forwarded (not buffered into one).
+    body_chunks = [m for m in messages if m["type"] == "http.response.body"]
+    assert len(body_chunks) >= 3
+    # Usage parsed from the SSE stream and audited after it ended.
+    rec = sc.store.list()[-1]
+    assert rec.actual_cost == 250.0
+    assert rec.extra.get("actuals_source") == "sse_usage"
+    assert budget.remaining_tokens() == 10_000.0 - 250.0
+
+
+async def test_non_streaming_overflow_falls_back_to_estimate(cost_model, carbon_model):
+    budget = Budget(token_budget=10_000.0, carbon_ceiling=100.0)
+    sc = _sidecar(budget, cost_model, carbon_model)
+    pais, _ = _make_mock_pais(usage_total=250)
+    # A tiny buffer cap forces the non-streaming overflow path.
+    app = GreenSarcASGIMiddleware(pais, sc, max_buffer_bytes=8)
+
+    await _drive(app, json.dumps(_chat_request()).encode())
+    rec = sc.store.list()[-1]
+    assert rec.extra.get("actuals_source") == "estimate_overflow"
+
+
+def test_orphan_gate_releases_reservation(cost_model, carbon_model):
+    from green_sarc._ttl_map import TTLMap
+
+    budget = Budget(token_budget=10_000.0, carbon_ceiling=100.0)
+    sc = _sidecar(budget, cost_model, carbon_model)
+    # Force the orphan path: a 1-entry pending map evicts the first reservation.
+    sc._pending = TTLMap(max_size=1, on_evict=sc._release_pending)
+
+    d1, _ = sc.gate_request(_chat_request())
+    assert d1.admitted
+    reserved = budget.reserved_tokens
+    assert reserved > 0.0
+
+    d2, _ = sc.gate_request(_chat_request())  # evicts the first, releasing its reservation
+    assert d2.admitted
+    assert budget.reserved_tokens == reserved  # one reservation outstanding, not two

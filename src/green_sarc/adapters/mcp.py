@@ -61,7 +61,16 @@ class GreenSarcMCPService:
         self.carbon_model = carbon_model
         self.gate = PreActionGate(estimator)
         self.auditor = PostActionAuditor(store or MemoryAuditStore(), estimator)
-        self._pending: TTLMap[str, Tuple[Action, GateDecision, float, float]] = TTLMap()
+        self._pending: TTLMap[str, Tuple[Action, GateDecision, float, float]] = TTLMap(
+            on_evict=self._release_pending
+        )
+
+    def _release_pending(
+        self, _key: str, value: Tuple[Action, GateDecision, float, float]
+    ) -> None:
+        """Return the budget reservation an orphaned (un-audited) gate held."""
+        _action, _decision, reserve_tokens, reserve_carbon = value
+        self.budget.release(reserve_tokens, reserve_carbon)
 
     def pre_action_gate(
         self,

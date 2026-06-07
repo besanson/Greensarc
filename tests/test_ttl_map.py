@@ -41,6 +41,29 @@ def test_max_size_evicts_oldest():
     assert m.evicted == 1
 
 
+def test_on_evict_fires_on_size_eviction_not_on_pop():
+    evicted: list[str] = []
+    m: TTLMap[str, int] = TTLMap(ttl_s=1e9, max_size=2, on_evict=lambda k, v: evicted.append(k))
+    m.put("a", 1)
+    m.put("b", 2)
+    m.put("c", 3)  # over cap -> evict "a" -> on_evict("a")
+    assert evicted == ["a"]
+    assert m.pop("b") == 2  # explicit pop must NOT trigger on_evict
+    assert evicted == ["a"]
+
+
+def test_on_evict_fires_on_ttl_sweep():
+    clock = {"now": 0.0}
+    evicted: list[str] = []
+    m: TTLMap[str, int] = TTLMap(
+        ttl_s=10.0, clock=lambda: clock["now"], on_evict=lambda k, v: evicted.append(k)
+    )
+    m.put("a", 1)
+    clock["now"] = 20.0
+    m.put("b", 2)  # sweep evicts "a"
+    assert evicted == ["a"]
+
+
 def test_orphaned_entries_stay_bounded():
     # Simulate gate calls whose audit never arrives: the map must not grow without bound.
     m: TTLMap[int, int] = TTLMap(ttl_s=1e9, max_size=100)
