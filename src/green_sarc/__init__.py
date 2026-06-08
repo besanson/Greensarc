@@ -53,6 +53,7 @@ from green_sarc.pricing import (
     default_carbon_model,
     default_cost_model,
 )
+from green_sarc.scoping import AdapterNode
 from green_sarc.state import Action, Budget, GovernanceContext
 from green_sarc.stores import (
     AuditStore,
@@ -74,6 +75,7 @@ __all__ = [
     "Action",
     "Budget",
     "GovernanceContext",
+    "AdapterNode",
     # forecast
     "Forecast",
     "GateDecision",

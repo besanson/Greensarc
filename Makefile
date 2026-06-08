@@ -1,6 +1,6 @@
-LINT_PATHS = src tests examples
+LINT_PATHS = src tests examples benchmarks
 
-.PHONY: install test lint format-check format typecheck demo quality clean
+.PHONY: install test lint format-check format typecheck demo reproduce benchmark-smoke quality clean
 
 install:
 	pip install -e ".[dev]"
@@ -25,6 +25,12 @@ quality: lint format-check typecheck test
 
 demo:
 	python examples/standalone_agent_loop/run_demo.py
+
+reproduce:
+	python -m benchmarks.reproduce
+
+benchmark-smoke:
+	python -m pytest -q tests/test_benchmark_smoke.py
 
 clean:
 	rm -rf artifacts dist build .pytest_cache .mypy_cache .ruff_cache *.egg-info

@@ -33,6 +33,14 @@ Senior-review hardening (audit items P0/P1).
 - **P1-10** Sidecar path matched by regex (`GREEN_SARC_PATH_REGEX`).
 - Docs: `SECURITY.md`, `CONTRIBUTING.md`.
 
+### Added (working paper §8)
+- `AdapterNode` (`scoping.py`) — bounded state scoping that caps the per-hop prompt
+  growth `p`, collapsing the State-Snowball `Θ(depth²)` cost toward linear.
+- `benchmarks/` — reproducible synthetic **IBP** benchmark (baseline State-Snowball vs.
+  Green SARC over N seeds) exercising the real gate/estimator/budget/breaker; reports
+  token/USD/carbon reductions (≈ −47% / −68% / −67%), breaker trips, and forecast
+  MAE/WAPE. `make reproduce` · `make benchmark-smoke`.
+
 ### Hardening (second-pass audit follow-ups)
 - `LearnedEstimator` guards `_stats` with a `threading.Lock` (safe under a threaded
   server, not just a single event loop).

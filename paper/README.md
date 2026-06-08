@@ -27,6 +27,8 @@ pdflatex green-sarc.tex   # second pass resolves cross-references
 | Per-trajectory cost/carbon log — Post-Action Auditor (§5.3, Table 1) | [`auditor.py`](../src/green_sarc/auditor.py) |
 | Escalation to human / deterministic fallback (Table 1) | [`escalation.py`](../src/green_sarc/escalation.py) |
 | Phase 1 per-action ("Bike"); Phase 2 trajectory ("Car") (§5.4) | Phase 1 implemented; Phase 2 stub in [`trajectory.py`](../src/green_sarc/trajectory.py) |
+| State-Snowball `Θ(n²)` theorem & Adapter Nodes (§4, §6) | [`scoping.py`](../src/green_sarc/scoping.py) `AdapterNode` |
+| Synthetic IBP evaluation (§8) | [`benchmarks/ibp.py`](../benchmarks/ibp.py), [`benchmarks/reproduce.py`](../benchmarks/reproduce.py) |
 
 ## Scope notes (implementation vs. paper)
 
@@ -43,5 +45,7 @@ pdflatex green-sarc.tex   # second pass resolves cross-references
   the core has no dependency on SARC and composes with it via shared enforcement
   sites rather than importing it. See
   [`docs/relationship-to-sarc.md`](../docs/relationship-to-sarc.md).
-- The synthetic IBP evaluation (§8) is framed in the paper but not yet included
-  as a runnable benchmark in this repository.
+- The synthetic IBP evaluation (§8) is reproducible: see [`benchmarks/`](../benchmarks/)
+  (`make reproduce`). The §4/§6 **Adapter Nodes** (state scoping that bounds the
+  per-hop increment `p`) are implemented in [`scoping.py`](../src/green_sarc/scoping.py)
+  and exercised by the benchmark's treatment condition.

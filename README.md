@@ -25,6 +25,19 @@ and carbon ceiling are enforced in the same loop:
 
 A ~50× reduction — this is the `predict → act → log → retrain` loop working.
 
+And on the reproducible §8 **IBP benchmark** (`make reproduce`, 20 seeds, 400 SKUs,
+baseline State-Snowball vs. Green SARC), enforcement placement — Adapter-Node
+state scoping + energy-aware routing + the circuit breaker — yields:
+
+| Metric | Reduction vs. baseline |
+|---|---|
+| Total tokens | **−47%** |
+| Total USD | **−68%** |
+| Carbon (fixed & time-varying κ) | **−67%** |
+
+…with **0 gate rejections** (the savings come from *where* enforcement sits, not
+from chance rejection) and forecast WAPE ≈ 4.5%. See [`benchmarks/`](benchmarks/).
+
 ## Documentation
 
 Full docs live in [`docs/`](docs/):

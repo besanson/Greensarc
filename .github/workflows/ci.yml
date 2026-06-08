@@ -21,9 +21,9 @@ jobs:
       - name: Install
         run: pip install -e ".[dev]"
       - name: Lint
-        run: ruff check src tests examples
+        run: ruff check src tests examples benchmarks
       - name: Format check
-        run: ruff format --check src tests examples
+        run: ruff format --check src tests examples benchmarks
       - name: Type check
         run: mypy src/green_sarc
       - name: Test
