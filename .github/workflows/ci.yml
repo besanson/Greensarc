@@ -28,3 +28,6 @@ jobs:
         run: mypy src/green_sarc benchmarks
       - name: Test
         run: pytest -q
+      - name: Verify benchmark reference
+        if: matrix.python-version == '3.12'
+        run: make verify

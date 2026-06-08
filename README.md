@@ -42,6 +42,11 @@ scoping alone is −43% tokens, energy-aware routing drives the USD/carbon cut, 
 the circuit breaker adds the rest. Run `make reproduce`; a reference run is
 checked in at [`benchmarks/reference_summary.json`](benchmarks/reference_summary.json).
 
+**Reproducibility.** Run `make verify` to reproduce the 20-seed ablation and check
+the headline numbers against `benchmarks/reference_summary.json` (2% tolerance per
+condition × metric, plus the `+full` token reduction within 1.5 pp). CI runs this
+on every push, so any change that drifts the numbers fails.
+
 ## Documentation
 
 Full docs live in [`docs/`](docs/):

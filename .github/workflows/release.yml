@@ -8,15 +8,22 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: ${{ matrix.python-version }}
       - run: pip install -e ".[dev]"
       - run: ruff check src tests examples benchmarks
       - run: mypy src/green_sarc benchmarks
       - run: pytest -q
+      - name: Verify benchmark reference
+        if: matrix.python-version == '3.12'
+        run: make verify
 
   build-and-publish:
     needs: test  # never publish a tag whose tests are red

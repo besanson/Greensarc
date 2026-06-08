@@ -1,6 +1,6 @@
 LINT_PATHS = src tests examples benchmarks
 
-.PHONY: install test lint format-check format typecheck demo reproduce benchmark-smoke quality clean
+.PHONY: install test lint format-check format typecheck demo reproduce verify benchmark-smoke quality clean
 
 install:
 	pip install -e ".[dev]"
@@ -28,6 +28,11 @@ demo:
 
 reproduce:
 	python -m benchmarks.reproduce
+
+verify:
+	python -m benchmarks.reproduce --seeds 20 \
+	  --out artifacts/ibp_summary.json \
+	  --verify benchmarks/reference_summary.json
 
 benchmark-smoke:
 	python -m pytest -q tests/test_benchmark_smoke.py
