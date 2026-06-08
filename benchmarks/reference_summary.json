@@ -1,0 +1,58 @@
+{
+  "seeds": 20,
+  "config": {
+    "n_skus": 400,
+    "depth": 10,
+    "base_prompt": 200,
+    "per_step_increment": 120,
+    "scope_cap": 360,
+    "max_tokens": 4000,
+    "completion_intercept": 60.0,
+    "completion_slope": 0.45,
+    "completion_noise": 25.0,
+    "runaway_fraction": 0.05,
+    "max_loops_factor": 1.5,
+    "simple_fraction": 0.5,
+    "delta": 0.1
+  },
+  "conditions": {
+    "baseline": {
+      "usd": 100.67738000000028,
+      "admitted": 0.0,
+      "carbon_tv_g": 896.9585881923907,
+      "carbon_fixed_g": 1257.8256599999995,
+      "tokens": 5989646.0,
+      "breaker_trips": 0.0,
+      "rejections": 0.0
+    },
+    "+scope": {
+      "usd": 58.842680000000016,
+      "admitted": 0.0,
+      "carbon_tv_g": 511.41559668753223,
+      "carbon_fixed_g": 715.7547599999962,
+      "tokens": 3408356.0,
+      "breaker_trips": 0.0,
+      "rejections": 0.0
+    },
+    "+scope+route": {
+      "usd": 35.09860520000001,
+      "admitted": 0.0,
+      "carbon_tv_g": 317.7849548021471,
+      "carbon_fixed_g": 444.9617891249985,
+      "tokens": 3408356.0,
+      "breaker_trips": 0.0,
+      "rejections": 0.0
+    },
+    "+full": {
+      "usd": 32.5746631,
+      "admitted": 4101.0,
+      "carbon_tv_g": 293.70192449942795,
+      "carbon_fixed_g": 412.7309497499987,
+      "tokens": 3156276.05,
+      "forecast_mae_tokens": 34.5048271562334,
+      "breaker_trips": 20.2,
+      "rejections": 0.0,
+      "forecast_wape": 0.044832913330423954
+    }
+  }
+}

@@ -15,6 +15,16 @@ for your provider contract and your real grid data.
 
 Nothing here is required: the core has zero data baked in. This module just
 spares you hand-building tables to get started.
+
+Sources (all approximate, retrieved 2025; verify before relying on them):
+
+- OpenAI list prices — https://openai.com/api/pricing/
+- Anthropic list prices — https://www.anthropic.com/pricing
+- Grid carbon intensity — Ember / Electricity Maps annual averages
+  (https://ember-energy.org/, https://app.electricitymaps.com/); for live data wire
+  an :class:`~green_sarc.pricing.IntensityProvider`.
+- Inference energy is a rough proxy; published estimates span an order of
+  magnitude (e.g. Patterson et al. 2021, arXiv:2104.10350).
 """
 
 from __future__ import annotations
@@ -23,6 +33,7 @@ from green_sarc.pricing import ModelProfile, TableCarbonModel, TableCostModel
 
 __all__ = [
     "DEFAULT_REGION",
+    "canonical_model_id",
     "default_pricing",
     "default_carbon",
 ]
@@ -72,13 +83,51 @@ _INTENSITIES = {
 }
 
 
+def canonical_model_id(model: str) -> str:
+    """Map a real/dated model id to a table slug (so live traffic hits the table).
+
+    e.g. ``gpt-4o-2024-08-06`` -> ``gpt-4o``, ``claude-3-5-sonnet-20241022`` ->
+    ``claude-sonnet``.  Unknown ids are returned unchanged (they fall back to the
+    default profile).
+    """
+    m = model.lower()
+    # Order matters: check the more specific "mini"/size variants first.
+    rules = [
+        ("gpt-4o-mini", "gpt-4o-mini"),
+        ("gpt-4o", "gpt-4o"),
+        ("gpt-4.1-mini", "gpt-4.1-mini"),
+        ("gpt-4.1", "gpt-4.1"),
+        ("claude-3-5-sonnet", "claude-sonnet"),
+        ("claude-3.5-sonnet", "claude-sonnet"),
+        ("claude-sonnet", "claude-sonnet"),
+        ("claude-3-5-haiku", "claude-haiku"),
+        ("claude-3-haiku", "claude-haiku"),
+        ("claude-haiku", "claude-haiku"),
+        ("claude-3-opus", "claude-opus"),
+        ("claude-opus", "claude-opus"),
+    ]
+    for prefix, slug in rules:
+        if m.startswith(prefix):
+            return slug
+    if "llama" in m and "70b" in m:
+        return "llama-3.1-70b"
+    if "llama" in m and "8b" in m:
+        return "llama-3.1-8b"
+    return model
+
+
 def default_pricing() -> TableCostModel:
-    """A :class:`TableCostModel` seeded with approximate list prices (override me)."""
+    """A :class:`TableCostModel` seeded with approximate list prices (override me).
+
+    Real/dated model ids are normalised via :func:`canonical_model_id`, so e.g.
+    ``gpt-4o-2024-08-06`` and ``claude-3-5-sonnet-20241022`` resolve to the table.
+    """
     return TableCostModel(
         profiles=dict(_PROFILES),
         default_profile=ModelProfile(
             3.0e-7, usd_per_prompt_token=2.0e-6, usd_per_completion_token=8.0e-6
         ),
+        alias=canonical_model_id,
     )
 
 

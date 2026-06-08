@@ -25,6 +25,6 @@ jobs:
       - name: Format check
         run: ruff format --check src tests examples benchmarks
       - name: Type check
-        run: mypy src/green_sarc
+        run: mypy src/green_sarc benchmarks
       - name: Test
         run: pytest -q

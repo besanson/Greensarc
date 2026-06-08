@@ -8,18 +8,39 @@ from pathlib import Path
 # Make the repo-root `benchmarks` package importable from the test.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from benchmarks.ibp import IBPConfig, run_condition, run_pair  # noqa: E402
+from benchmarks.ibp import FEATURES_FULL, IBPConfig, run_condition, run_pair  # noqa: E402
 from green_sarc.scoping import AdapterNode  # noqa: E402
 
 
 def test_adapter_node_caps_the_snowball():
     node = AdapterNode(max_scope_tokens=400)
-    assert node.scope(100) == 100.0  # below the cap -> unchanged
-    assert node.scope(5000) == 400.0  # snowballed context capped
+    assert node.bound(100) == 100.0  # below the cap -> unchanged
+    assert node.bound(5000) == 400.0  # snowballed context capped
+    assert node.scope(5000) == 400.0  # backwards-compatible alias
     # The cap is what turns Theta(n^2) cumulative cost into ~linear.
-    capped = sum(node.scope(i * 120) for i in range(50))
+    capped = sum(node.bound(i * 120) for i in range(50))
     uncapped = sum(i * 120 for i in range(50))
     assert capped < uncapped
+
+
+def test_adapter_node_scope_messages_truncates_oldest():
+    node = AdapterNode(max_scope_tokens=20)  # ~ a couple of short messages
+    messages = [{"role": "system", "content": "you are helpful"}] + [
+        {"role": "user", "content": "x" * 40} for _ in range(6)
+    ]
+    kept = node.scope_messages(messages)
+    assert kept[0]["role"] == "system"  # system message preserved
+    assert len(kept) < len(messages)  # oldest turns dropped to fit the cap
+
+
+def test_ablation_each_lever_helps():
+    cfg = IBPConfig(n_skus=30, depth=8, runaway_fraction=0.2)
+    base = run_condition(0, cfg, frozenset())
+    scope = run_condition(0, cfg, frozenset({"scope"}))
+    full = run_condition(0, cfg, FEATURES_FULL)
+    # Scoping alone already cuts tokens; the full stack cuts more.
+    assert scope["tokens"] < base["tokens"]
+    assert full["tokens"] <= scope["tokens"]
 
 
 def test_treatment_is_cheaper_than_baseline():
@@ -33,7 +54,7 @@ def test_treatment_is_cheaper_than_baseline():
 
 def test_treatment_exercises_governance():
     cfg = IBPConfig(n_skus=40, depth=6, runaway_fraction=0.3)
-    treatment = run_condition(seed=1, cfg=cfg, governed=True)
+    treatment = run_condition(seed=1, cfg=cfg, features=FEATURES_FULL)
     assert treatment["admitted"] > 0
     assert treatment["breaker_trips"] > 0  # runaway SKUs are capped by the breaker
     assert "forecast_mae_tokens" in treatment  # the estimator learned and was audited
@@ -41,7 +62,7 @@ def test_treatment_exercises_governance():
 
 def test_carbon_reported_under_fixed_and_time_varying_kappa():
     cfg = IBPConfig(n_skus=10, depth=4)
-    m = run_condition(seed=2, cfg=cfg, governed=True)
+    m = run_condition(seed=2, cfg=cfg, features=FEATURES_FULL)
     assert m["carbon_fixed_g"] > 0.0
     assert m["carbon_tv_g"] > 0.0
     assert m["carbon_fixed_g"] != m["carbon_tv_g"]  # the daily curve matters

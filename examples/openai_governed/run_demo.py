@@ -81,6 +81,11 @@ async def main() -> None:
         except GateRejected as exc:
             print(f"[block] {prompt[:40]:<40} {exc.decision.reason}")
 
+    print(
+        f"\nSpent: ${gov.budget.usd_spent:.4f}, {gov.budget.carbon_spent:.4f} gCO2e "
+        f"across {len(gov.store.list())} audited calls; "
+        f"{gov.budget.remaining_tokens():.0f} tokens left"
+    )
     print("\nAudit log (the ESG record + the estimator's training data):")
     for rec in gov.store.list():
         print(

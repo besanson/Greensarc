@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import warnings
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Protocol, Set, Tuple, runtime_checkable
+from typing import Callable, Dict, List, Optional, Protocol, Set, Tuple, runtime_checkable
 
 __all__ = [
     "ModelProfile",
@@ -75,11 +75,13 @@ class TableCostModel:
         default_factory=lambda: ModelProfile(energy_per_token_kwh=3.0e-7)
     )
     strict: bool = False
+    alias: Optional[Callable[[str], str]] = None
     _warned: Set[str] = field(default_factory=set, repr=False, compare=False)
 
     def _profile(self, model: str) -> ModelProfile:
-        if model in self.profiles:
-            return self.profiles[model]
+        key = self.alias(model) if self.alias is not None else model
+        if key in self.profiles:
+            return self.profiles[key]
         if self.strict:
             raise KeyError(f"TableCostModel: unknown model {model!r} (strict mode)")
         if model not in self._warned:

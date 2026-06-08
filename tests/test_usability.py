@@ -12,6 +12,7 @@ from green_sarc import (
     default_carbon,
     default_pricing,
 )
+from green_sarc.data import canonical_model_id
 
 
 def test_default_pricing_has_known_models():
@@ -21,6 +22,54 @@ def test_default_pricing_has_known_models():
     assert usd == 1000 * 2.5e-6 + 1000 * 1.0e-5
     # Unknown model: falls back to the default profile (no crash).
     assert cost.usd("some-future-model", 100, 100) > 0.0
+
+
+def test_canonical_model_id_normalises_real_ids():
+    assert canonical_model_id("gpt-4o-2024-08-06") == "gpt-4o"
+    assert canonical_model_id("gpt-4o-mini-2024-07-18") == "gpt-4o-mini"
+    assert canonical_model_id("claude-3-5-sonnet-20241022") == "claude-sonnet"
+    assert canonical_model_id("claude-3-haiku-20240307") == "claude-haiku"
+    assert canonical_model_id("meta-llama/Llama-3.1-70B-Instruct".lower()) == "llama-3.1-70b"
+    assert canonical_model_id("some-unknown") == "some-unknown"
+
+
+def test_default_pricing_resolves_dated_ids():
+    cost = default_pricing()
+    # A dated id must price the same as its canonical slug, not the fallback.
+    assert cost.usd("gpt-4o-2024-08-06", 1000, 1000) == cost.usd("gpt-4o", 1000, 1000)
+
+
+def test_with_defaults_bootstrap_from_jsonl(tmp_path):
+    from green_sarc.auditor import AuditRecord
+    from green_sarc.stores.jsonl import JSONLAuditStore
+
+    log = tmp_path / "audit.jsonl"
+    store = JSONLAuditStore(log)
+    for prompt, total in [(100, 250.0), (200, 450.0), (300, 650.0)]:
+        store.append(
+            AuditRecord(
+                action_id="a",
+                action_kind="chat.completion",
+                model="gpt-4o",
+                region="us-east-1",
+                predicted_cost=0.0,
+                predicted_carbon=0.0,
+                confidence=0.0,
+                actual_cost=total,
+                actual_carbon=0.0,
+                budget_remaining_tokens=0.0,
+                carbon_remaining=0.0,
+                carbon_intensity=370.0,
+                admitted=True,
+                verdict="admit",
+                prompt_tokens=prompt,
+            )
+        )
+    gov = GreenGovernor.with_defaults(token_budget=10_000, bootstrap_jsonl=str(log))
+    assert (
+        gov.estimator.samples(Action(kind="chat.completion", model="gpt-4o", region="us-east-1"))
+        == 3
+    )  # learned state was rehydrated from the log
 
 
 def test_default_carbon_has_known_regions():

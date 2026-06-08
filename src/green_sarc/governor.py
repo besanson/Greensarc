@@ -111,6 +111,8 @@ class GreenGovernor:
         delta: float = 0.05,
         cost_model: Optional[CostModel] = None,
         carbon_model: Optional[CarbonModel] = None,
+        estimator: Optional[Estimator] = None,
+        bootstrap_jsonl: Optional[str] = None,
         store: Optional[AuditStore] = None,
         max_loops: int = 50,
         max_total_cost: Optional[float] = None,
@@ -123,13 +125,17 @@ class GreenGovernor:
             gov = GreenGovernor.with_defaults(token_budget=200_000, usd_budget=5.0)
 
         Pass your own ``cost_model`` / ``carbon_model`` for real provider prices
-        and grid data.
+        and grid data, a pre-built ``estimator``, or a ``bootstrap_jsonl`` path to
+        rehydrate the forecaster from a prior audit log.
         """
         from green_sarc.data import default_carbon, default_pricing
         from green_sarc.estimator import LearnedEstimator
 
         costs = cost_model if cost_model is not None else default_pricing()
         carbon = carbon_model if carbon_model is not None else default_carbon()
+        est = estimator if estimator is not None else LearnedEstimator(costs, carbon)
+        if bootstrap_jsonl is not None and hasattr(est, "bootstrap_from_jsonl"):
+            est.bootstrap_from_jsonl(bootstrap_jsonl)
         kwargs: dict[str, Any] = {
             "budget": Budget(
                 token_budget=token_budget,
@@ -137,7 +143,7 @@ class GreenGovernor:
                 usd_budget=usd_budget,
                 delta=delta,
             ),
-            "estimator": LearnedEstimator(costs, carbon),
+            "estimator": est,
             "cost_model": costs,
             "carbon_model": carbon,
             "monitor": ActionTimeMonitor(max_loops=max_loops, max_total_cost=max_total_cost),

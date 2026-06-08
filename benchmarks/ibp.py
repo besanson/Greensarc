@@ -24,7 +24,7 @@ from __future__ import annotations
 import math
 import random
 from dataclasses import dataclass
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 from green_sarc import (
     Action,
@@ -32,6 +32,7 @@ from green_sarc import (
     AdapterNode,
     Budget,
     CircuitTripped,
+    GateDecision,
     GovernanceContext,
     LearnedEstimator,
     ModelProfile,
@@ -61,7 +62,9 @@ class IBPConfig:
     completion_intercept: float = 60.0
     completion_slope: float = 0.45
     completion_noise: float = 25.0
-    runaway_fraction: float = 0.05  # SKUs that try to loop 3x depth
+    # Fraction of SKUs that try to loop 3x depth — a stress scenario for the
+    # circuit breaker (retry/re-plan storms), not a parameter from the paper.
+    runaway_fraction: float = 0.05
     max_loops_factor: float = 1.5  # breaker max_loops = ceil(depth * factor)
     simple_fraction: float = 0.5  # SKUs routed to the small model (treatment)
     delta: float = 0.1
@@ -103,15 +106,40 @@ def _completion(prompt: float, cfg: IBPConfig, rng: random.Random) -> int:
     )
 
 
-def run_condition(seed: int, cfg: IBPConfig, *, governed: bool) -> Dict[str, Any]:
-    """Run one condition over the workload; return aggregate metrics."""
+# Which governance levers are active. Baseline = none; full treatment = all four.
+# The ablation isolates each lever's contribution to the saving (audit F-5).
+FEATURES_FULL = frozenset({"scope", "routing", "gate", "monitor"})
+CONDITIONS = [
+    ("baseline", frozenset()),
+    ("+scope", frozenset({"scope"})),
+    ("+scope+route", frozenset({"scope", "routing"})),
+    ("+full", FEATURES_FULL),
+]
+
+
+def run_condition(
+    seed: int, cfg: IBPConfig, features: "frozenset[str]" = FEATURES_FULL
+) -> Dict[str, Any]:
+    """Run one condition over the workload; return aggregate metrics.
+
+    ``features`` selects which governance levers are active — any subset of
+    ``{"scope", "routing", "gate", "monitor"}`` — so an ablation can attribute the
+    saving to each lever rather than to "governance" as a black box.
+    """
+    use_scope = "scope" in features
+    use_routing = "routing" in features
+    use_gate = "gate" in features
+    use_monitor = "monitor" in features
+
     rng = random.Random(seed)
     cost_model, carbon_fixed, carbon_tv = _models()
     adapter = AdapterNode(cfg.scope_cap)
 
-    gate = estimator = auditor = budget = None
-    store = None
-    if governed:
+    gate: Optional[PreActionGate] = None
+    auditor: Optional[PostActionAuditor] = None
+    budget: Optional[Budget] = None
+    store: Optional[MemoryAuditStore] = None
+    if use_gate:
         estimator = LearnedEstimator(cost_model, carbon_fixed, min_samples=8)
         gate = PreActionGate(estimator)
         store = MemoryAuditStore()
@@ -128,23 +156,24 @@ def run_condition(seed: int, cfg: IBPConfig, *, governed: bool) -> Dict[str, Any
         steps = cfg.depth * 3 if runaway else cfg.depth
         monitor = (
             ActionTimeMonitor(max_loops=math.ceil(cfg.depth * cfg.max_loops_factor))
-            if governed
+            if use_monitor
             else None
         )
 
         for i in range(steps):
             accreted = float(i * cfg.per_step_increment)
-            if governed:
-                accreted = adapter.scope(accreted)  # cap the snowball
+            if use_scope:
+                accreted = adapter.bound(accreted)  # cap the snowball
             prompt = float(cfg.base_prompt) + accreted
-            model = SMALL_MODEL if (governed and simple) else BIG_MODEL
+            model = SMALL_MODEL if (use_routing and simple) else BIG_MODEL
             completion = _completion(prompt, cfg, rng)
             actual = prompt + completion
             t = float((gstep % 24) * 3600)
             gstep += 1
 
-            if governed:
-                assert gate is not None and budget is not None and monitor is not None
+            decision: Optional[GateDecision] = None
+            if use_gate:
+                assert gate is not None and budget is not None
                 action = Action(
                     kind="ibp.step",
                     model=model,
@@ -156,6 +185,7 @@ def run_condition(seed: int, cfg: IBPConfig, *, governed: bool) -> Dict[str, Any
                 if not decision.admitted:
                     rejections += 1
                     continue
+            if monitor is not None:
                 try:
                     monitor.before()
                 except CircuitTripped:
@@ -169,8 +199,8 @@ def run_condition(seed: int, cfg: IBPConfig, *, governed: bool) -> Dict[str, Any
             carbon_fx += carbon_step
             carbon_tvv += carbon_for_tokens(cost_model, carbon_tv, model, actual, REGION, t)
 
-            if governed:
-                assert budget is not None and auditor is not None and gate is not None
+            if use_gate:
+                assert budget is not None and auditor is not None and decision is not None
                 budget.spend(actual, carbon_step, usd_step)
                 auditor.record(
                     action_id=f"{seed}-{gstep}",
@@ -188,6 +218,7 @@ def run_condition(seed: int, cfg: IBPConfig, *, governed: bool) -> Dict[str, Any
                     actual_usd=usd_step,
                 )
                 admitted += 1
+            if monitor is not None:
                 try:
                     monitor.after(actual)
                 except CircuitTripped:
@@ -203,7 +234,7 @@ def run_condition(seed: int, cfg: IBPConfig, *, governed: bool) -> Dict[str, Any
         "breaker_trips": breaker_trips,
         "admitted": admitted,
     }
-    if governed and store is not None:
+    if use_gate and store is not None:
         ran = [r for r in store.list() if r.actual_cost > 0]
         if ran:
             abs_err = sum(abs(r.cost_error) for r in ran)
@@ -213,5 +244,5 @@ def run_condition(seed: int, cfg: IBPConfig, *, governed: bool) -> Dict[str, Any
 
 
 def run_pair(seed: int, cfg: IBPConfig) -> Tuple[Dict[str, Any], Dict[str, Any]]:
-    """Return ``(baseline_metrics, treatment_metrics)`` for one seed."""
-    return run_condition(seed, cfg, governed=False), run_condition(seed, cfg, governed=True)
+    """Return ``(baseline_metrics, full_treatment_metrics)`` for one seed."""
+    return run_condition(seed, cfg, frozenset()), run_condition(seed, cfg, FEATURES_FULL)

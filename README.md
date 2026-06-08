@@ -36,7 +36,11 @@ state scoping + energy-aware routing + the circuit breaker — yields:
 | Carbon (fixed & time-varying κ) | **−67%** |
 
 …with **0 gate rejections** (the savings come from *where* enforcement sits, not
-from chance rejection) and forecast WAPE ≈ 4.5%. See [`benchmarks/`](benchmarks/).
+from chance rejection) and forecast WAPE ≈ 4.5% (95% CI on token reduction
+[46.1%, 48.6%], paired bootstrap). An **ablation** isolates each lever: state
+scoping alone is −43% tokens, energy-aware routing drives the USD/carbon cut, and
+the circuit breaker adds the rest. Run `make reproduce`; a reference run is
+checked in at [`benchmarks/reference_summary.json`](benchmarks/reference_summary.json).
 
 ## Documentation
 

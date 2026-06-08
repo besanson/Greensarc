@@ -19,7 +19,7 @@ format:
 	ruff format $(LINT_PATHS)
 
 typecheck:
-	mypy src/green_sarc
+	mypy src/green_sarc benchmarks
 
 quality: lint format-check typecheck test
 

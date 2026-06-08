@@ -2,6 +2,25 @@
 
 All notable changes to this project are documented here.
 
+## [Unreleased]
+
+Third-pass audit follow-ups.
+
+### Changed
+- Benchmark now runs an **ablation** (`baseline → +scope → +scope+route → +full`) so
+  each governance lever's contribution is isolated, with a paired-bootstrap 95% CI on
+  the token reduction; a reference run is checked in at `benchmarks/reference_summary.json`
+  (F-5, F-6).
+- Reference pricing normalises real/dated model ids (`gpt-4o-2024-08-06 → gpt-4o`,
+  `claude-3-5-sonnet-* → claude-sonnet`) via `canonical_model_id`, wired through an
+  optional `TableCostModel.alias` hook (F-1); source citations added to `data.py` (F-2).
+- `AdapterNode`: canonical `bound(tokens)`; new `scope_messages(...)` to truncate a real
+  messages array; `scope` kept as an alias (F-3, F-4).
+- `GreenGovernor.with_defaults` gains `estimator` and `bootstrap_jsonl` kwargs (F-10).
+- `LearnedEstimator._stats` guarded by a `threading.Lock` (N-1); OpenAI example prints a spend summary
+  (F-12); `release.yml` gates publish on the test job (F-13); `benchmarks` is now
+  type-checked (F-8); runaway-SKU parameter documented as a stress scenario (F-7).
+
 ## [0.2.0] — 2026-06-08
 
 Senior-review hardening (audit items P0/P1), the §8 benchmark, and out-of-the-box
