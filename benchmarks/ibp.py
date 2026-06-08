@@ -118,13 +118,21 @@ CONDITIONS = [
 
 
 def run_condition(
-    seed: int, cfg: IBPConfig, features: "frozenset[str]" = FEATURES_FULL
+    seed: int,
+    cfg: IBPConfig,
+    features: "frozenset[str]" = FEATURES_FULL,
+    collect: Optional[list] = None,
 ) -> Dict[str, Any]:
     """Run one condition over the workload; return aggregate metrics.
 
     ``features`` selects which governance levers are active — any subset of
     ``{"scope", "routing", "gate", "monitor"}`` — so an ablation can attribute the
     saving to each lever rather than to "governance" as a black box.
+
+    If ``collect`` is a list, one dict per gated action is appended to it with the
+    raw forecast fields ``{prompt, cost_hat, cost_std, actual, source, admitted}``
+    — the per-action calibration data the paper's conformal/reliability figures
+    consume (the ``AuditRecord`` does not retain ``cost_std``).
     """
     use_scope = "scope" in features
     use_routing = "routing" in features
@@ -182,6 +190,21 @@ def run_condition(
                     max_tokens=cfg.max_tokens,
                 )
                 decision = gate.evaluate(action, GovernanceContext(budget=budget, timestamp=t))
+                if collect is not None:
+                    collect.append(
+                        {
+                            "prompt": float(prompt),
+                            "cost_hat": float(decision.forecast.cost_hat),
+                            "cost_std": (
+                                None
+                                if decision.forecast.cost_std is None
+                                else float(decision.forecast.cost_std)
+                            ),
+                            "actual": float(actual),
+                            "source": decision.forecast.source,
+                            "admitted": bool(decision.admitted),
+                        }
+                    )
                 if not decision.admitted:
                     rejections += 1
                     continue

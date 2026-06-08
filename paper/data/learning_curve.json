@@ -1,0 +1,3217 @@
+{
+  "seed": 7,
+  "n_attempted": 400,
+  "n_recorded": 400,
+  "rejection_rate": 0.0,
+  "ground_truth": {
+    "intercept": 40.0,
+    "slope": 0.6,
+    "noise_std": 15.0
+  },
+  "mae_first_half": 107.35865600279371,
+  "mae_second_half": 11.330200974052495,
+  "wape_first_half": 0.19025440111076522,
+  "wape_second_half": 0.019379790938102926,
+  "history": [
+    {
+      "i": 1,
+      "source": "cold_start",
+      "prompt_tokens": 381,
+      "predicted_cost": 4381.0,
+      "actual_cost": 663.0,
+      "abs_error": 3718.0
+    },
+    {
+      "i": 2,
+      "source": "cold_start",
+      "prompt_tokens": 99,
+      "predicted_cost": 4099.0,
+      "actual_cost": 193.0,
+      "abs_error": 3906.0
+    },
+    {
+      "i": 3,
+      "source": "cold_start",
+      "prompt_tokens": 124,
+      "predicted_cost": 4124.0,
+      "actual_cost": 241.0,
+      "abs_error": 3883.0
+    },
+    {
+      "i": 4,
+      "source": "cold_start",
+      "prompt_tokens": 109,
+      "predicted_cost": 4109.0,
+      "actual_cost": 208.0,
+      "abs_error": 3901.0
+    },
+    {
+      "i": 5,
+      "source": "cold_start",
+      "prompt_tokens": 569,
+      "predicted_cost": 4569.0,
+      "actual_cost": 951.0,
+      "abs_error": 3618.0
+    },
+    {
+      "i": 6,
+      "source": "learned",
+      "prompt_tokens": 478,
+      "predicted_cost": 809.8929619033006,
+      "actual_cost": 811.0,
+      "abs_error": 1.107038096699398
+    },
+    {
+      "i": 7,
+      "source": "learned",
+      "prompt_tokens": 121,
+      "predicted_cost": 232.05775964264762,
+      "actual_cost": 234.0,
+      "abs_error": 1.9422403573523752
+    },
+    {
+      "i": 8,
+      "source": "learned",
+      "prompt_tokens": 110,
+      "predicted_cost": 214.70664304216646,
+      "actual_cost": 234.0,
+      "abs_error": 19.293356957833538
+    },
+    {
+      "i": 9,
+      "source": "learned",
+      "prompt_tokens": 176,
+      "predicted_cost": 324.66827032324204,
+      "actual_cost": 341.0,
+      "abs_error": 16.33172967675796
+    },
+    {
+      "i": 10,
+      "source": "learned",
+      "prompt_tokens": 113,
+      "predicted_cost": 225.6582913540477,
+      "actual_cost": 213.0,
+      "abs_error": 12.658291354047691
+    },
+    {
+      "i": 11,
+      "source": "learned",
+      "prompt_tokens": 456,
+      "predicted_cost": 775.870362316299,
+      "actual_cost": 779.0,
+      "abs_error": 3.1296376837010484
+    },
+    {
+      "i": 12,
+      "source": "learned",
+      "prompt_tokens": 186,
+      "predicted_cost": 341.46228306505657,
+      "actual_cost": 340.0,
+      "abs_error": 1.4622830650565675
+    },
+    {
+      "i": 13,
+      "source": "learned",
+      "prompt_tokens": 346,
+      "predicted_cost": 599.2014137956693,
+      "actual_cost": 577.0,
+      "abs_error": 22.201413795669282
+    },
+    {
+      "i": 14,
+      "source": "learned",
+      "prompt_tokens": 365,
+      "predicted_cost": 627.4258928511822,
+      "actual_cost": 633.0,
+      "abs_error": 5.574107148817802
+    },
+    {
+      "i": 15,
+      "source": "learned",
+      "prompt_tokens": 235,
+      "predicted_cost": 419.0500032652764,
+      "actual_cost": 431.0,
+      "abs_error": 11.949996734723584
+    },
+    {
+      "i": 16,
+      "source": "learned",
+      "prompt_tokens": 242,
+      "predicted_cost": 431.1097925742412,
+      "actual_cost": 438.0,
+      "abs_error": 6.890207425758774
+    },
+    {
+      "i": 17,
+      "source": "learned",
+      "prompt_tokens": 431,
+      "predicted_cost": 735.1239968252706,
+      "actual_cost": 748.0,
+      "abs_error": 12.876003174729362
+    },
+    {
+      "i": 18,
+      "source": "learned",
+      "prompt_tokens": 111,
+      "predicted_cost": 221.03342554789128,
+      "actual_cost": 231.0,
+      "abs_error": 9.966574452108716
+    },
+    {
+      "i": 19,
+      "source": "learned",
+      "prompt_tokens": 260,
+      "predicted_cost": 461.72372411109313,
+      "actual_cost": 437.0,
+      "abs_error": 24.723724111093134
+    },
+    {
+      "i": 20,
+      "source": "learned",
+      "prompt_tokens": 371,
+      "predicted_cost": 638.9125083662357,
+      "actual_cost": 634.0,
+      "abs_error": 4.91250836623567
+    },
+    {
+      "i": 21,
+      "source": "learned",
+      "prompt_tokens": 526,
+      "predicted_cost": 887.5842279664352,
+      "actual_cost": 867.0,
+      "abs_error": 20.58422796643515
+    },
+    {
+      "i": 22,
+      "source": "learned",
+      "prompt_tokens": 356,
+      "predicted_cost": 612.6159890364913,
+      "actual_cost": 601.0,
+      "abs_error": 11.615989036491328
+    },
+    {
+      "i": 23,
+      "source": "learned",
+      "prompt_tokens": 304,
+      "predicted_cost": 529.0409816679411,
+      "actual_cost": 532.0,
+      "abs_error": 2.9590183320589176
+    },
+    {
+      "i": 24,
+      "source": "learned",
+      "prompt_tokens": 299,
+      "predicted_cost": 521.1997607617593,
+      "actual_cost": 496.0,
+      "abs_error": 25.199760761759308
+    },
+    {
+      "i": 25,
+      "source": "learned",
+      "prompt_tokens": 133,
+      "predicted_cost": 255.57627090634873,
+      "actual_cost": 236.0,
+      "abs_error": 19.576270906348725
+    },
+    {
+      "i": 26,
+      "source": "learned",
+      "prompt_tokens": 401,
+      "predicted_cost": 682.5909668917009,
+      "actual_cost": 673.0,
+      "abs_error": 9.590966891700873
+    },
+    {
+      "i": 27,
+      "source": "learned",
+      "prompt_tokens": 509,
+      "predicted_cost": 854.4357075122884,
+      "actual_cost": 844.0,
+      "abs_error": 10.435707512288445
+    },
+    {
+      "i": 28,
+      "source": "learned",
+      "prompt_tokens": 170,
+      "predicted_cost": 313.1415824537402,
+      "actual_cost": 352.0,
+      "abs_error": 38.85841754625977
+    },
+    {
+      "i": 29,
+      "source": "learned",
+      "prompt_tokens": 574,
+      "predicted_cost": 955.9437249323541,
+      "actual_cost": 936.0,
+      "abs_error": 19.943724932354144
+    },
+    {
+      "i": 30,
+      "source": "learned",
+      "prompt_tokens": 205,
+      "predicted_cost": 370.94187414564,
+      "actual_cost": 380.0,
+      "abs_error": 9.058125854360014
+    },
+    {
+      "i": 31,
+      "source": "learned",
+      "prompt_tokens": 550,
+      "predicted_cost": 915.105644077858,
+      "actual_cost": 886.0,
+      "abs_error": 29.10564407785796
+    },
+    {
+      "i": 32,
+      "source": "learned",
+      "prompt_tokens": 129,
+      "predicted_cost": 252.28635806193483,
+      "actual_cost": 264.0,
+      "abs_error": 11.713641938065166
+    },
+    {
+      "i": 33,
+      "source": "learned",
+      "prompt_tokens": 371,
+      "predicted_cost": 631.5293948437842,
+      "actual_cost": 626.0,
+      "abs_error": 5.529394843784189
+    },
+    {
+      "i": 34,
+      "source": "learned",
+      "prompt_tokens": 558,
+      "predicted_cost": 923.6729331331005,
+      "actual_cost": 944.0,
+      "abs_error": 20.327066866899486
+    },
+    {
+      "i": 35,
+      "source": "learned",
+      "prompt_tokens": 517,
+      "predicted_cost": 861.4602332996049,
+      "actual_cost": 873.0,
+      "abs_error": 11.539766700395148
+    },
+    {
+      "i": 36,
+      "source": "learned",
+      "prompt_tokens": 326,
+      "predicted_cost": 562.0673071273999,
+      "actual_cost": 564.0,
+      "abs_error": 1.9326928726001142
+    },
+    {
+      "i": 37,
+      "source": "learned",
+      "prompt_tokens": 535,
+      "predicted_cost": 890.6982580435354,
+      "actual_cost": 894.0,
+      "abs_error": 3.301741956464639
+    },
+    {
+      "i": 38,
+      "source": "learned",
+      "prompt_tokens": 367,
+      "predicted_cost": 626.706203762829,
+      "actual_cost": 622.0,
+      "abs_error": 4.706203762828977
+    },
+    {
+      "i": 39,
+      "source": "learned",
+      "prompt_tokens": 506,
+      "predicted_cost": 845.1706340167677,
+      "actual_cost": 846.0,
+      "abs_error": 0.8293659832322646
+    },
+    {
+      "i": 40,
+      "source": "learned",
+      "prompt_tokens": 405,
+      "predicted_cost": 686.3657438409141,
+      "actual_cost": 702.0,
+      "abs_error": 15.634256159085908
+    },
+    {
+      "i": 41,
+      "source": "learned",
+      "prompt_tokens": 73,
+      "predicted_cost": 164.26259427582775,
+      "actual_cost": 169.0,
+      "abs_error": 4.737405724172248
+    },
+    {
+      "i": 42,
+      "source": "learned",
+      "prompt_tokens": 169,
+      "predicted_cost": 315.657806117536,
+      "actual_cost": 305.0,
+      "abs_error": 10.657806117535984
+    },
+    {
+      "i": 43,
+      "source": "learned",
+      "prompt_tokens": 555,
+      "predicted_cost": 922.9181490067859,
+      "actual_cost": 951.0,
+      "abs_error": 28.08185099321406
+    },
+    {
+      "i": 44,
+      "source": "learned",
+      "prompt_tokens": 182,
+      "predicted_cost": 335.49496463513253,
+      "actual_cost": 340.0,
+      "abs_error": 4.505035364867467
+    },
+    {
+      "i": 45,
+      "source": "learned",
+      "prompt_tokens": 303,
+      "predicted_cost": 526.8181754697052,
+      "actual_cost": 497.0,
+      "abs_error": 29.81817546970524
+    },
+    {
+      "i": 46,
+      "source": "learned",
+      "prompt_tokens": 558,
+      "predicted_cost": 929.0807063524696,
+      "actual_cost": 952.0,
+      "abs_error": 22.919293647530367
+    },
+    {
+      "i": 47,
+      "source": "learned",
+      "prompt_tokens": 132,
+      "predicted_cost": 255.58885716489073,
+      "actual_cost": 258.0,
+      "abs_error": 2.411142835109274
+    },
+    {
+      "i": 48,
+      "source": "learned",
+      "prompt_tokens": 334,
+      "predicted_cost": 575.7264132766798,
+      "actual_cost": 587.0,
+      "abs_error": 11.27358672332025
+    },
+    {
+      "i": 49,
+      "source": "learned",
+      "prompt_tokens": 190,
+      "predicted_cost": 347.812427898941,
+      "actual_cost": 356.0,
+      "abs_error": 8.187572101059004
+    },
+    {
+      "i": 50,
+      "source": "learned",
+      "prompt_tokens": 335,
+      "predicted_cost": 577.6995563160299,
+      "actual_cost": 548.0,
+      "abs_error": 29.699556316029884
+    },
+    {
+      "i": 51,
+      "source": "learned",
+      "prompt_tokens": 475,
+      "predicted_cost": 798.7356393596035,
+      "actual_cost": 822.0,
+      "abs_error": 23.26436064039649
+    },
+    {
+      "i": 52,
+      "source": "learned",
+      "prompt_tokens": 439,
+      "predicted_cost": 742.5346349703424,
+      "actual_cost": 740.0,
+      "abs_error": 2.534634970342381
+    },
+    {
+      "i": 53,
+      "source": "learned",
+      "prompt_tokens": 286,
+      "predicted_cost": 499.84401432466075,
+      "actual_cost": 503.0,
+      "abs_error": 3.1559856753392523
+    },
+    {
+      "i": 54,
+      "source": "learned",
+      "prompt_tokens": 287,
+      "predicted_cost": 501.4923259384467,
+      "actual_cost": 506.0,
+      "abs_error": 4.507674061553303
+    },
+    {
+      "i": 55,
+      "source": "learned",
+      "prompt_tokens": 288,
+      "predicted_cost": 503.16538306266455,
+      "actual_cost": 529.0,
+      "abs_error": 25.834616937335454
+    },
+    {
+      "i": 56,
+      "source": "learned",
+      "prompt_tokens": 236,
+      "predicted_cost": 421.2433668607997,
+      "actual_cost": 419.0,
+      "abs_error": 2.2433668607997106
+    },
+    {
+      "i": 57,
+      "source": "learned",
+      "prompt_tokens": 319,
+      "predicted_cost": 552.7469640473969,
+      "actual_cost": 548.0,
+      "abs_error": 4.746964047396887
+    },
+    {
+      "i": 58,
+      "source": "learned",
+      "prompt_tokens": 597,
+      "predicted_cost": 993.2955746467859,
+      "actual_cost": 1003.0,
+      "abs_error": 9.704425353214106
+    },
+    {
+      "i": 59,
+      "source": "learned",
+      "prompt_tokens": 428,
+      "predicted_cost": 725.7974209939727,
+      "actual_cost": 714.0,
+      "abs_error": 11.79742099397265
+    },
+    {
+      "i": 60,
+      "source": "learned",
+      "prompt_tokens": 178,
+      "predicted_cost": 328.99274240961034,
+      "actual_cost": 316.0,
+      "abs_error": 12.992742409610344
+    },
+    {
+      "i": 61,
+      "source": "learned",
+      "prompt_tokens": 577,
+      "predicted_cost": 961.9548894954023,
+      "actual_cost": 984.0,
+      "abs_error": 22.045110504597687
+    },
+    {
+      "i": 62,
+      "source": "learned",
+      "prompt_tokens": 105,
+      "predicted_cost": 212.23144440865352,
+      "actual_cost": 201.0,
+      "abs_error": 11.231444408653516
+    },
+    {
+      "i": 63,
+      "source": "learned",
+      "prompt_tokens": 517,
+      "predicted_cost": 867.9130094001981,
+      "actual_cost": 888.0,
+      "abs_error": 20.08699059980188
+    },
+    {
+      "i": 64,
+      "source": "learned",
+      "prompt_tokens": 451,
+      "predicted_cost": 763.4147026871142,
+      "actual_cost": 746.0,
+      "abs_error": 17.414702687114186
+    },
+    {
+      "i": 65,
+      "source": "learned",
+      "prompt_tokens": 457,
+      "predicted_cost": 772.5401137293192,
+      "actual_cost": 765.0,
+      "abs_error": 7.54011372931916
+    },
+    {
+      "i": 66,
+      "source": "learned",
+      "prompt_tokens": 460,
+      "predicted_cost": 777.1281525345357,
+      "actual_cost": 780.0,
+      "abs_error": 2.8718474654642705
+    },
+    {
+      "i": 67,
+      "source": "learned",
+      "prompt_tokens": 113,
+      "predicted_cost": 224.2612313392109,
+      "actual_cost": 236.0,
+      "abs_error": 11.738768660789106
+    },
+    {
+      "i": 68,
+      "source": "learned",
+      "prompt_tokens": 501,
+      "predicted_cost": 842.4449803344253,
+      "actual_cost": 881.0,
+      "abs_error": 38.55501966557472
+    },
+    {
+      "i": 69,
+      "source": "learned",
+      "prompt_tokens": 216,
+      "predicted_cost": 388.8572972097315,
+      "actual_cost": 401.0,
+      "abs_error": 12.142702790268515
+    },
+    {
+      "i": 70,
+      "source": "learned",
+      "prompt_tokens": 154,
+      "predicted_cost": 290.2362911163116,
+      "actual_cost": 299.0,
+      "abs_error": 8.763708883688423
+    },
+    {
+      "i": 71,
+      "source": "learned",
+      "prompt_tokens": 50,
+      "predicted_cost": 124.72573464579588,
+      "actual_cost": 103.0,
+      "abs_error": 21.72573464579588
+    },
+    {
+      "i": 72,
+      "source": "learned",
+      "prompt_tokens": 422,
+      "predicted_cost": 717.7586066704598,
+      "actual_cost": 707.0,
+      "abs_error": 10.758606670459812
+    },
+    {
+      "i": 73,
+      "source": "learned",
+      "prompt_tokens": 76,
+      "predicted_cost": 165.04267425831756,
+      "actual_cost": 170.0,
+      "abs_error": 4.957325741682439
+    },
+    {
+      "i": 74,
+      "source": "learned",
+      "prompt_tokens": 435,
+      "predicted_cost": 738.3067356000153,
+      "actual_cost": 740.0,
+      "abs_error": 1.6932643999847414
+    },
+    {
+      "i": 75,
+      "source": "learned",
+      "prompt_tokens": 202,
+      "predicted_cost": 366.4025595817328,
+      "actual_cost": 338.0,
+      "abs_error": 28.402559581732817
+    },
+    {
+      "i": 76,
+      "source": "learned",
+      "prompt_tokens": 422,
+      "predicted_cost": 717.3897748555199,
+      "actual_cost": 687.0,
+      "abs_error": 30.38977485551993
+    },
+    {
+      "i": 77,
+      "source": "learned",
+      "prompt_tokens": 535,
+      "predicted_cost": 897.2399751139645,
+      "actual_cost": 916.0,
+      "abs_error": 18.760024886035467
+    },
+    {
+      "i": 78,
+      "source": "learned",
+      "prompt_tokens": 527,
+      "predicted_cost": 885.115994164466,
+      "actual_cost": 903.0,
+      "abs_error": 17.884005835534026
+    },
+    {
+      "i": 79,
+      "source": "learned",
+      "prompt_tokens": 541,
+      "predicted_cost": 908.1037449036913,
+      "actual_cost": 899.0,
+      "abs_error": 9.103744903691336
+    },
+    {
+      "i": 80,
+      "source": "learned",
+      "prompt_tokens": 154,
+      "predicted_cost": 288.83574858281895,
+      "actual_cost": 287.0,
+      "abs_error": 1.835748582818951
+    },
+    {
+      "i": 81,
+      "source": "learned",
+      "prompt_tokens": 400,
+      "predicted_cost": 682.2686038497696,
+      "actual_cost": 678.0,
+      "abs_error": 4.268603849769647
+    },
+    {
+      "i": 82,
+      "source": "learned",
+      "prompt_tokens": 215,
+      "predicted_cost": 386.32056040924954,
+      "actual_cost": 366.0,
+      "abs_error": 20.320560409249538
+    },
+    {
+      "i": 83,
+      "source": "learned",
+      "prompt_tokens": 578,
+      "predicted_cost": 966.9228301495854,
+      "actual_cost": 1001.0,
+      "abs_error": 34.077169850414634
+    },
+    {
+      "i": 84,
+      "source": "learned",
+      "prompt_tokens": 590,
+      "predicted_cost": 987.5515362963658,
+      "actual_cost": 989.0,
+      "abs_error": 1.448463703634161
+    },
+    {
+      "i": 85,
+      "source": "learned",
+      "prompt_tokens": 420,
+      "predicted_cost": 714.8359538371308,
+      "actual_cost": 723.0,
+      "abs_error": 8.164046162869226
+    },
+    {
+      "i": 86,
+      "source": "learned",
+      "prompt_tokens": 77,
+      "predicted_cost": 164.48684386775216,
+      "actual_cost": 178.0,
+      "abs_error": 13.513156132247843
+    },
+    {
+      "i": 87,
+      "source": "learned",
+      "prompt_tokens": 590,
+      "predicted_cost": 987.5553200029144,
+      "actual_cost": 977.0,
+      "abs_error": 10.555320002914414
+    },
+    {
+      "i": 88,
+      "source": "learned",
+      "prompt_tokens": 143,
+      "predicted_cost": 270.9495118446066,
+      "actual_cost": 289.0,
+      "abs_error": 18.050488155393396
+    },
+    {
+      "i": 89,
+      "source": "learned",
+      "prompt_tokens": 317,
+      "predicted_cost": 549.9645737650998,
+      "actual_cost": 514.0,
+      "abs_error": 35.96457376509977
+    },
+    {
+      "i": 90,
+      "source": "learned",
+      "prompt_tokens": 414,
+      "predicted_cost": 704.8562683113778,
+      "actual_cost": 698.0,
+      "abs_error": 6.856268311377789
+    },
+    {
+      "i": 91,
+      "source": "learned",
+      "prompt_tokens": 278,
+      "predicted_cost": 487.0532175294351,
+      "actual_cost": 459.0,
+      "abs_error": 28.053217529435074
+    },
+    {
+      "i": 92,
+      "source": "learned",
+      "prompt_tokens": 387,
+      "predicted_cost": 661.2666091437137,
+      "actual_cost": 653.0,
+      "abs_error": 8.266609143713708
+    },
+    {
+      "i": 93,
+      "source": "learned",
+      "prompt_tokens": 278,
+      "predicted_cost": 486.62962918331743,
+      "actual_cost": 464.0,
+      "abs_error": 22.629629183317434
+    },
+    {
+      "i": 94,
+      "source": "learned",
+      "prompt_tokens": 249,
+      "predicted_cost": 439.9059957009059,
+      "actual_cost": 421.0,
+      "abs_error": 18.90599570090592
+    },
+    {
+      "i": 95,
+      "source": "learned",
+      "prompt_tokens": 295,
+      "predicted_cost": 513.3623741772876,
+      "actual_cost": 522.0,
+      "abs_error": 8.63762582271238
+    },
+    {
+      "i": 96,
+      "source": "learned",
+      "prompt_tokens": 282,
+      "predicted_cost": 492.62826841056597,
+      "actual_cost": 468.0,
+      "abs_error": 24.628268410565965
+    },
+    {
+      "i": 97,
+      "source": "learned",
+      "prompt_tokens": 254,
+      "predicted_cost": 447.46832065233883,
+      "actual_cost": 432.0,
+      "abs_error": 15.468320652338832
+    },
+    {
+      "i": 98,
+      "source": "learned",
+      "prompt_tokens": 79,
+      "predicted_cost": 166.69502602512887,
+      "actual_cost": 164.0,
+      "abs_error": 2.6950260251288682
+    },
+    {
+      "i": 99,
+      "source": "learned",
+      "prompt_tokens": 78,
+      "predicted_cost": 164.99670684670315,
+      "actual_cost": 169.0,
+      "abs_error": 4.003293153296852
+    },
+    {
+      "i": 100,
+      "source": "learned",
+      "prompt_tokens": 248,
+      "predicted_cost": 437.673090155717,
+      "actual_cost": 420.0,
+      "abs_error": 17.673090155716977
+    },
+    {
+      "i": 101,
+      "source": "learned",
+      "prompt_tokens": 402,
+      "predicted_cost": 684.4262655493958,
+      "actual_cost": 649.0,
+      "abs_error": 35.426265549395794
+    },
+    {
+      "i": 102,
+      "source": "learned",
+      "prompt_tokens": 407,
+      "predicted_cost": 692.0077670547148,
+      "actual_cost": 702.0,
+      "abs_error": 9.992232945285195
+    },
+    {
+      "i": 103,
+      "source": "learned",
+      "prompt_tokens": 423,
+      "predicted_cost": 717.7784624061634,
+      "actual_cost": 722.0,
+      "abs_error": 4.221537593836615
+    },
+    {
+      "i": 104,
+      "source": "learned",
+      "prompt_tokens": 531,
+      "predicted_cost": 890.9712373927249,
+      "actual_cost": 892.0,
+      "abs_error": 1.0287626072750982
+    },
+    {
+      "i": 105,
+      "source": "learned",
+      "prompt_tokens": 251,
+      "predicted_cost": 442.1018419141417,
+      "actual_cost": 432.0,
+      "abs_error": 10.101841914141687
+    },
+    {
+      "i": 106,
+      "source": "learned",
+      "prompt_tokens": 51,
+      "predicted_cost": 121.28333026810941,
+      "actual_cost": 136.0,
+      "abs_error": 14.71666973189059
+    },
+    {
+      "i": 107,
+      "source": "learned",
+      "prompt_tokens": 540,
+      "predicted_cost": 905.2106786717654,
+      "actual_cost": 915.0,
+      "abs_error": 9.789321328234564
+    },
+    {
+      "i": 108,
+      "source": "learned",
+      "prompt_tokens": 136,
+      "predicted_cost": 257.950173594332,
+      "actual_cost": 250.0,
+      "abs_error": 7.950173594332
+    },
+    {
+      "i": 109,
+      "source": "learned",
+      "prompt_tokens": 172,
+      "predicted_cost": 315.49196254212677,
+      "actual_cost": 337.0,
+      "abs_error": 21.50803745787323
+    },
+    {
+      "i": 110,
+      "source": "learned",
+      "prompt_tokens": 254,
+      "predicted_cost": 447.24241160992347,
+      "actual_cost": 432.0,
+      "abs_error": 15.242411609923465
+    },
+    {
+      "i": 111,
+      "source": "learned",
+      "prompt_tokens": 539,
+      "predicted_cost": 903.7915368708666,
+      "actual_cost": 914.0,
+      "abs_error": 10.208463129133406
+    },
+    {
+      "i": 112,
+      "source": "learned",
+      "prompt_tokens": 390,
+      "predicted_cost": 665.1588591677291,
+      "actual_cost": 653.0,
+      "abs_error": 12.158859167729133
+    },
+    {
+      "i": 113,
+      "source": "learned",
+      "prompt_tokens": 138,
+      "predicted_cost": 261.0776167007406,
+      "actual_cost": 273.0,
+      "abs_error": 11.922383299259423
+    },
+    {
+      "i": 114,
+      "source": "learned",
+      "prompt_tokens": 455,
+      "predicted_cost": 769.2333690825762,
+      "actual_cost": 729.0,
+      "abs_error": 40.233369082576246
+    },
+    {
+      "i": 115,
+      "source": "learned",
+      "prompt_tokens": 524,
+      "predicted_cost": 879.0811545405252,
+      "actual_cost": 848.0,
+      "abs_error": 31.081154540525176
+    },
+    {
+      "i": 116,
+      "source": "learned",
+      "prompt_tokens": 212,
+      "predicted_cost": 379.71128733274645,
+      "actual_cost": 400.0,
+      "abs_error": 20.28871266725355
+    },
+    {
+      "i": 117,
+      "source": "learned",
+      "prompt_tokens": 224,
+      "predicted_cost": 399.1474132413128,
+      "actual_cost": 401.0,
+      "abs_error": 1.8525867586872096
+    },
+    {
+      "i": 118,
+      "source": "learned",
+      "prompt_tokens": 526,
+      "predicted_cost": 881.6231729268311,
+      "actual_cost": 881.0,
+      "abs_error": 0.6231729268311028
+    },
+    {
+      "i": 119,
+      "source": "learned",
+      "prompt_tokens": 199,
+      "predicted_cost": 359.23150450704793,
+      "actual_cost": 342.0,
+      "abs_error": 17.23150450704793
+    },
+    {
+      "i": 120,
+      "source": "learned",
+      "prompt_tokens": 535,
+      "predicted_cost": 895.9935163426389,
+      "actual_cost": 882.0,
+      "abs_error": 13.99351634263894
+    },
+    {
+      "i": 121,
+      "source": "learned",
+      "prompt_tokens": 408,
+      "predicted_cost": 692.8288244571336,
+      "actual_cost": 703.0,
+      "abs_error": 10.171175542866422
+    },
+    {
+      "i": 122,
+      "source": "learned",
+      "prompt_tokens": 71,
+      "predicted_cost": 154.56542896654577,
+      "actual_cost": 169.0,
+      "abs_error": 14.434571033454233
+    },
+    {
+      "i": 123,
+      "source": "learned",
+      "prompt_tokens": 64,
+      "predicted_cost": 143.8094479905615,
+      "actual_cost": 149.0,
+      "abs_error": 5.190552009438505
+    },
+    {
+      "i": 124,
+      "source": "learned",
+      "prompt_tokens": 155,
+      "predicted_cost": 289.1916022187412,
+      "actual_cost": 265.0,
+      "abs_error": 24.191602218741195
+    },
+    {
+      "i": 125,
+      "source": "learned",
+      "prompt_tokens": 589,
+      "predicted_cost": 981.966717168629,
+      "actual_cost": 982.0,
+      "abs_error": 0.03328283137102517
+    },
+    {
+      "i": 126,
+      "source": "learned",
+      "prompt_tokens": 249,
+      "predicted_cost": 438.92142103388744,
+      "actual_cost": 430.0,
+      "abs_error": 8.921421033887441
+    },
+    {
+      "i": 127,
+      "source": "learned",
+      "prompt_tokens": 266,
+      "predicted_cost": 465.9909578216351,
+      "actual_cost": 475.0,
+      "abs_error": 9.009042178364894
+    },
+    {
+      "i": 128,
+      "source": "learned",
+      "prompt_tokens": 563,
+      "predicted_cost": 940.4515333157736,
+      "actual_cost": 942.0,
+      "abs_error": 1.548466684226355
+    },
+    {
+      "i": 129,
+      "source": "learned",
+      "prompt_tokens": 296,
+      "predicted_cost": 513.9971511700319,
+      "actual_cost": 514.0,
+      "abs_error": 0.0028488299681157514
+    },
+    {
+      "i": 130,
+      "source": "learned",
+      "prompt_tokens": 479,
+      "predicted_cost": 806.3120440330198,
+      "actual_cost": 793.0,
+      "abs_error": 13.312044033019788
+    },
+    {
+      "i": 131,
+      "source": "learned",
+      "prompt_tokens": 184,
+      "predicted_cost": 335.07674508879313,
+      "actual_cost": 357.0,
+      "abs_error": 21.923254911206868
+    },
+    {
+      "i": 132,
+      "source": "learned",
+      "prompt_tokens": 519,
+      "predicted_cost": 869.9813235310171,
+      "actual_cost": 879.0,
+      "abs_error": 9.018676468982903
+    },
+    {
+      "i": 133,
+      "source": "learned",
+      "prompt_tokens": 579,
+      "predicted_cost": 965.92593335885,
+      "actual_cost": 936.0,
+      "abs_error": 29.92593335884999
+    },
+    {
+      "i": 134,
+      "source": "learned",
+      "prompt_tokens": 563,
+      "predicted_cost": 939.6638524256683,
+      "actual_cost": 956.0,
+      "abs_error": 16.336147574331676
+    },
+    {
+      "i": 135,
+      "source": "learned",
+      "prompt_tokens": 183,
+      "predicted_cost": 333.82411457798463,
+      "actual_cost": 314.0,
+      "abs_error": 19.82411457798463
+    },
+    {
+      "i": 136,
+      "source": "learned",
+      "prompt_tokens": 69,
+      "predicted_cost": 151.60364697102324,
+      "actual_cost": 146.0,
+      "abs_error": 5.603646971023238
+    },
+    {
+      "i": 137,
+      "source": "learned",
+      "prompt_tokens": 500,
+      "predicted_cost": 839.5463558336957,
+      "actual_cost": 843.0,
+      "abs_error": 3.4536441663043433
+    },
+    {
+      "i": 138,
+      "source": "learned",
+      "prompt_tokens": 203,
+      "predicted_cost": 365.3943292801597,
+      "actual_cost": 344.0,
+      "abs_error": 21.394329280159695
+    },
+    {
+      "i": 139,
+      "source": "learned",
+      "prompt_tokens": 226,
+      "predicted_cost": 401.8881198363682,
+      "actual_cost": 414.0,
+      "abs_error": 12.111880163631781
+    },
+    {
+      "i": 140,
+      "source": "learned",
+      "prompt_tokens": 173,
+      "predicted_cost": 317.36578954353,
+      "actual_cost": 332.0,
+      "abs_error": 14.634210456469987
+    },
+    {
+      "i": 141,
+      "source": "learned",
+      "prompt_tokens": 113,
+      "predicted_cost": 221.77610992559806,
+      "actual_cost": 212.0,
+      "abs_error": 9.776109925598064
+    },
+    {
+      "i": 142,
+      "source": "learned",
+      "prompt_tokens": 544,
+      "predicted_cost": 909.892161375886,
+      "actual_cost": 926.0,
+      "abs_error": 16.107838624114038
+    },
+    {
+      "i": 143,
+      "source": "learned",
+      "prompt_tokens": 158,
+      "predicted_cost": 293.41476629744614,
+      "actual_cost": 296.0,
+      "abs_error": 2.5852337025538645
+    },
+    {
+      "i": 144,
+      "source": "learned",
+      "prompt_tokens": 245,
+      "predicted_cost": 432.45909944673485,
+      "actual_cost": 428.0,
+      "abs_error": 4.459099446734854
+    },
+    {
+      "i": 145,
+      "source": "learned",
+      "prompt_tokens": 333,
+      "predicted_cost": 573.0341738429723,
+      "actual_cost": 579.0,
+      "abs_error": 5.965826157027664
+    },
+    {
+      "i": 146,
+      "source": "learned",
+      "prompt_tokens": 513,
+      "predicted_cost": 860.6959475326083,
+      "actual_cost": 862.0,
+      "abs_error": 1.3040524673916707
+    },
+    {
+      "i": 147,
+      "source": "learned",
+      "prompt_tokens": 78,
+      "predicted_cost": 165.60645989086697,
+      "actual_cost": 166.0,
+      "abs_error": 0.3935401091330277
+    },
+    {
+      "i": 148,
+      "source": "learned",
+      "prompt_tokens": 503,
+      "predicted_cost": 844.7352939386788,
+      "actual_cost": 811.0,
+      "abs_error": 33.73529393867875
+    },
+    {
+      "i": 149,
+      "source": "learned",
+      "prompt_tokens": 383,
+      "predicted_cost": 652.6701991981797,
+      "actual_cost": 639.0,
+      "abs_error": 13.670199198179716
+    },
+    {
+      "i": 150,
+      "source": "learned",
+      "prompt_tokens": 574,
+      "predicted_cost": 957.4493883488431,
+      "actual_cost": 946.0,
+      "abs_error": 11.449388348843058
+    },
+    {
+      "i": 151,
+      "source": "learned",
+      "prompt_tokens": 254,
+      "predicted_cost": 446.6271957866437,
+      "actual_cost": 440.0,
+      "abs_error": 6.627195786643711
+    },
+    {
+      "i": 152,
+      "source": "learned",
+      "prompt_tokens": 596,
+      "predicted_cost": 992.2925094283464,
+      "actual_cost": 978.0,
+      "abs_error": 14.29250942834642
+    },
+    {
+      "i": 153,
+      "source": "learned",
+      "prompt_tokens": 539,
+      "predicted_cost": 901.0521009101677,
+      "actual_cost": 891.0,
+      "abs_error": 10.052100910167724
+    },
+    {
+      "i": 154,
+      "source": "learned",
+      "prompt_tokens": 585,
+      "predicted_cost": 974.2171755964283,
+      "actual_cost": 975.0,
+      "abs_error": 0.7828244035716807
+    },
+    {
+      "i": 155,
+      "source": "learned",
+      "prompt_tokens": 315,
+      "predicted_cost": 543.7754560559692,
+      "actual_cost": 572.0,
+      "abs_error": 28.224543944030756
+    },
+    {
+      "i": 156,
+      "source": "learned",
+      "prompt_tokens": 257,
+      "predicted_cost": 451.49711968489424,
+      "actual_cost": 436.0,
+      "abs_error": 15.497119684894244
+    },
+    {
+      "i": 157,
+      "source": "learned",
+      "prompt_tokens": 508,
+      "predicted_cost": 851.5844202510171,
+      "actual_cost": 857.0,
+      "abs_error": 5.41557974898285
+    },
+    {
+      "i": 158,
+      "source": "learned",
+      "prompt_tokens": 502,
+      "predicted_cost": 842.0897453703565,
+      "actual_cost": 848.0,
+      "abs_error": 5.910254629643532
+    },
+    {
+      "i": 159,
+      "source": "learned",
+      "prompt_tokens": 373,
+      "predicted_cost": 636.4236346795512,
+      "actual_cost": 646.0,
+      "abs_error": 9.576365320448758
+    },
+    {
+      "i": 160,
+      "source": "learned",
+      "prompt_tokens": 124,
+      "predicted_cost": 239.33515509902122,
+      "actual_cost": 243.0,
+      "abs_error": 3.6648449009787782
+    },
+    {
+      "i": 161,
+      "source": "learned",
+      "prompt_tokens": 267,
+      "predicted_cost": 467.452897425134,
+      "actual_cost": 454.0,
+      "abs_error": 13.452897425133983
+    },
+    {
+      "i": 162,
+      "source": "learned",
+      "prompt_tokens": 208,
+      "predicted_cost": 373.2504046488321,
+      "actual_cost": 349.0,
+      "abs_error": 24.250404648832102
+    },
+    {
+      "i": 163,
+      "source": "learned",
+      "prompt_tokens": 424,
+      "predicted_cost": 717.6869866287179,
+      "actual_cost": 737.0,
+      "abs_error": 19.313013371282068
+    },
+    {
+      "i": 164,
+      "source": "learned",
+      "prompt_tokens": 528,
+      "predicted_cost": 883.8373328190816,
+      "actual_cost": 909.0,
+      "abs_error": 25.162667180918447
+    },
+    {
+      "i": 165,
+      "source": "learned",
+      "prompt_tokens": 274,
+      "predicted_cost": 478.5152427215879,
+      "actual_cost": 478.0,
+      "abs_error": 0.5152427215879243
+    },
+    {
+      "i": 166,
+      "source": "learned",
+      "prompt_tokens": 548,
+      "predicted_cost": 916.1489600306738,
+      "actual_cost": 910.0,
+      "abs_error": 6.148960030673834
+    },
+    {
+      "i": 167,
+      "source": "learned",
+      "prompt_tokens": 216,
+      "predicted_cost": 385.87084126527736,
+      "actual_cost": 413.0,
+      "abs_error": 27.129158734722637
+    },
+    {
+      "i": 168,
+      "source": "learned",
+      "prompt_tokens": 215,
+      "predicted_cost": 384.5204103841422,
+      "actual_cost": 382.0,
+      "abs_error": 2.520410384142224
+    },
+    {
+      "i": 169,
+      "source": "learned",
+      "prompt_tokens": 491,
+      "predicted_cost": 825.0705990743218,
+      "actual_cost": 840.0,
+      "abs_error": 14.929400925678237
+    },
+    {
+      "i": 170,
+      "source": "learned",
+      "prompt_tokens": 481,
+      "predicted_cost": 809.2725516896282,
+      "actual_cost": 809.0,
+      "abs_error": 0.2725516896282443
+    },
+    {
+      "i": 171,
+      "source": "learned",
+      "prompt_tokens": 250,
+      "predicted_cost": 440.41149459387225,
+      "actual_cost": 435.0,
+      "abs_error": 5.4114945938722485
+    },
+    {
+      "i": 172,
+      "source": "learned",
+      "prompt_tokens": 424,
+      "predicted_cost": 718.2300429704001,
+      "actual_cost": 723.0,
+      "abs_error": 4.7699570295999365
+    },
+    {
+      "i": 173,
+      "source": "learned",
+      "prompt_tokens": 69,
+      "predicted_cost": 151.33758245976207,
+      "actual_cost": 141.0,
+      "abs_error": 10.337582459762075
+    },
+    {
+      "i": 174,
+      "source": "learned",
+      "prompt_tokens": 68,
+      "predicted_cost": 149.5248058401979,
+      "actual_cost": 162.0,
+      "abs_error": 12.4751941598021
+    },
+    {
+      "i": 175,
+      "source": "learned",
+      "prompt_tokens": 443,
+      "predicted_cost": 748.6075873531407,
+      "actual_cost": 738.0,
+      "abs_error": 10.60758735314073
+    },
+    {
+      "i": 176,
+      "source": "learned",
+      "prompt_tokens": 574,
+      "predicted_cost": 957.6769328085206,
+      "actual_cost": 976.0,
+      "abs_error": 18.323067191479367
+    },
+    {
+      "i": 177,
+      "source": "learned",
+      "prompt_tokens": 115,
+      "predicted_cost": 224.72958766268192,
+      "actual_cost": 249.0,
+      "abs_error": 24.270412337318078
+    },
+    {
+      "i": 178,
+      "source": "learned",
+      "prompt_tokens": 284,
+      "predicted_cost": 494.90465650390877,
+      "actual_cost": 516.0,
+      "abs_error": 21.095343496091232
+    },
+    {
+      "i": 179,
+      "source": "learned",
+      "prompt_tokens": 157,
+      "predicted_cost": 292.3104903340461,
+      "actual_cost": 301.0,
+      "abs_error": 8.689509665953892
+    },
+    {
+      "i": 180,
+      "source": "learned",
+      "prompt_tokens": 235,
+      "predicted_cost": 416.89583097129565,
+      "actual_cost": 422.0,
+      "abs_error": 5.104169028704348
+    },
+    {
+      "i": 181,
+      "source": "learned",
+      "prompt_tokens": 326,
+      "predicted_cost": 562.1543409785958,
+      "actual_cost": 562.0,
+      "abs_error": 0.15434097859576923
+    },
+    {
+      "i": 182,
+      "source": "learned",
+      "prompt_tokens": 314,
+      "predicted_cost": 543.0035186164057,
+      "actual_cost": 514.0,
+      "abs_error": 29.0035186164057
+    },
+    {
+      "i": 183,
+      "source": "learned",
+      "prompt_tokens": 465,
+      "predicted_cost": 783.8277520712468,
+      "actual_cost": 803.0,
+      "abs_error": 19.172247928753222
+    },
+    {
+      "i": 184,
+      "source": "learned",
+      "prompt_tokens": 556,
+      "predicted_cost": 929.2801806665614,
+      "actual_cost": 956.0,
+      "abs_error": 26.719819333438636
+    },
+    {
+      "i": 185,
+      "source": "learned",
+      "prompt_tokens": 384,
+      "predicted_cost": 654.8978716438253,
+      "actual_cost": 658.0,
+      "abs_error": 3.102128356174717
+    },
+    {
+      "i": 186,
+      "source": "learned",
+      "prompt_tokens": 237,
+      "predicted_cost": 420.05479469277054,
+      "actual_cost": 421.0,
+      "abs_error": 0.9452053072294575
+    },
+    {
+      "i": 187,
+      "source": "learned",
+      "prompt_tokens": 485,
+      "predicted_cost": 816.2860286495174,
+      "actual_cost": 825.0,
+      "abs_error": 8.713971350482552
+    },
+    {
+      "i": 188,
+      "source": "learned",
+      "prompt_tokens": 67,
+      "predicted_cost": 148.43184040832804,
+      "actual_cost": 139.0,
+      "abs_error": 9.431840408328043
+    },
+    {
+      "i": 189,
+      "source": "learned",
+      "prompt_tokens": 140,
+      "predicted_cost": 264.93690578755445,
+      "actual_cost": 265.0,
+      "abs_error": 0.06309421244554869
+    },
+    {
+      "i": 190,
+      "source": "learned",
+      "prompt_tokens": 277,
+      "predicted_cost": 483.92375859721335,
+      "actual_cost": 477.0,
+      "abs_error": 6.92375859721335
+    },
+    {
+      "i": 191,
+      "source": "learned",
+      "prompt_tokens": 118,
+      "predicted_cost": 229.72020725252224,
+      "actual_cost": 228.0,
+      "abs_error": 1.7202072525222434
+    },
+    {
+      "i": 192,
+      "source": "learned",
+      "prompt_tokens": 61,
+      "predicted_cost": 138.57707173671224,
+      "actual_cost": 145.0,
+      "abs_error": 6.4229282632877585
+    },
+    {
+      "i": 193,
+      "source": "learned",
+      "prompt_tokens": 397,
+      "predicted_cost": 675.711189098118,
+      "actual_cost": 690.0,
+      "abs_error": 14.288810901882016
+    },
+    {
+      "i": 194,
+      "source": "learned",
+      "prompt_tokens": 324,
+      "predicted_cost": 559.1120463630641,
+      "actual_cost": 557.0,
+      "abs_error": 2.1120463630641098
+    },
+    {
+      "i": 195,
+      "source": "learned",
+      "prompt_tokens": 182,
+      "predicted_cost": 332.1222202462239,
+      "actual_cost": 353.0,
+      "abs_error": 20.87777975377611
+    },
+    {
+      "i": 196,
+      "source": "learned",
+      "prompt_tokens": 162,
+      "predicted_cost": 300.356461070835,
+      "actual_cost": 305.0,
+      "abs_error": 4.643538929165004
+    },
+    {
+      "i": 197,
+      "source": "learned",
+      "prompt_tokens": 215,
+      "predicted_cost": 385.08306638534225,
+      "actual_cost": 383.0,
+      "abs_error": 2.0830663853422493
+    },
+    {
+      "i": 198,
+      "source": "learned",
+      "prompt_tokens": 369,
+      "predicted_cost": 631.1227566841785,
+      "actual_cost": 639.0,
+      "abs_error": 7.877243315821488
+    },
+    {
+      "i": 199,
+      "source": "learned",
+      "prompt_tokens": 362,
+      "predicted_cost": 619.9805203809519,
+      "actual_cost": 609.0,
+      "abs_error": 10.98052038095193
+    },
+    {
+      "i": 200,
+      "source": "learned",
+      "prompt_tokens": 506,
+      "predicted_cost": 849.9987275784426,
+      "actual_cost": 847.0,
+      "abs_error": 2.99872757844264
+    },
+    {
+      "i": 201,
+      "source": "learned",
+      "prompt_tokens": 562,
+      "predicted_cost": 939.43397895289,
+      "actual_cost": 933.0,
+      "abs_error": 6.4339789528900155
+    },
+    {
+      "i": 202,
+      "source": "learned",
+      "prompt_tokens": 68,
+      "predicted_cost": 150.23646736144954,
+      "actual_cost": 138.0,
+      "abs_error": 12.236467361449542
+    },
+    {
+      "i": 203,
+      "source": "learned",
+      "prompt_tokens": 306,
+      "predicted_cost": 530.3371841667349,
+      "actual_cost": 532.0,
+      "abs_error": 1.6628158332650855
+    },
+    {
+      "i": 204,
+      "source": "learned",
+      "prompt_tokens": 567,
+      "predicted_cost": 947.4096150927944,
+      "actual_cost": 947.0,
+      "abs_error": 0.4096150927944109
+    },
+    {
+      "i": 205,
+      "source": "learned",
+      "prompt_tokens": 244,
+      "predicted_cost": 431.2723063831062,
+      "actual_cost": 419.0,
+      "abs_error": 12.272306383106184
+    },
+    {
+      "i": 206,
+      "source": "learned",
+      "prompt_tokens": 507,
+      "predicted_cost": 851.5013358781325,
+      "actual_cost": 850.0,
+      "abs_error": 1.5013358781325223
+    },
+    {
+      "i": 207,
+      "source": "learned",
+      "prompt_tokens": 158,
+      "predicted_cost": 293.7597454890074,
+      "actual_cost": 280.0,
+      "abs_error": 13.7597454890074
+    },
+    {
+      "i": 208,
+      "source": "learned",
+      "prompt_tokens": 556,
+      "predicted_cost": 929.8203927199592,
+      "actual_cost": 911.0,
+      "abs_error": 18.82039271995916
+    },
+    {
+      "i": 209,
+      "source": "learned",
+      "prompt_tokens": 452,
+      "predicted_cost": 763.3929971955356,
+      "actual_cost": 775.0,
+      "abs_error": 11.6070028044644
+    },
+    {
+      "i": 210,
+      "source": "learned",
+      "prompt_tokens": 270,
+      "predicted_cost": 472.64746697118915,
+      "actual_cost": 469.0,
+      "abs_error": 3.6474669711891465
+    },
+    {
+      "i": 211,
+      "source": "learned",
+      "prompt_tokens": 285,
+      "predicted_cost": 496.5980801791865,
+      "actual_cost": 480.0,
+      "abs_error": 16.598080179186525
+    },
+    {
+      "i": 212,
+      "source": "learned",
+      "prompt_tokens": 193,
+      "predicted_cost": 349.4841696787521,
+      "actual_cost": 372.0,
+      "abs_error": 22.515830321247904
+    },
+    {
+      "i": 213,
+      "source": "learned",
+      "prompt_tokens": 464,
+      "predicted_cost": 782.6148787750617,
+      "actual_cost": 824.0,
+      "abs_error": 41.3851212249383
+    },
+    {
+      "i": 214,
+      "source": "learned",
+      "prompt_tokens": 182,
+      "predicted_cost": 332.1389043597794,
+      "actual_cost": 328.0,
+      "abs_error": 4.138904359779417
+    },
+    {
+      "i": 215,
+      "source": "learned",
+      "prompt_tokens": 64,
+      "predicted_cost": 143.4571753926753,
+      "actual_cost": 164.0,
+      "abs_error": 20.54282460732469
+    },
+    {
+      "i": 216,
+      "source": "learned",
+      "prompt_tokens": 311,
+      "predicted_cost": 538.4471039166789,
+      "actual_cost": 548.0,
+      "abs_error": 9.552896083321116
+    },
+    {
+      "i": 217,
+      "source": "learned",
+      "prompt_tokens": 491,
+      "predicted_cost": 826.0839236693214,
+      "actual_cost": 828.0,
+      "abs_error": 1.9160763306786066
+    },
+    {
+      "i": 218,
+      "source": "learned",
+      "prompt_tokens": 440,
+      "predicted_cost": 744.6143909041318,
+      "actual_cost": 749.0,
+      "abs_error": 4.385609095868176
+    },
+    {
+      "i": 219,
+      "source": "learned",
+      "prompt_tokens": 568,
+      "predicted_cost": 949.1717482765946,
+      "actual_cost": 942.0,
+      "abs_error": 7.171748276594599
+    },
+    {
+      "i": 220,
+      "source": "learned",
+      "prompt_tokens": 298,
+      "predicted_cost": 517.7224181491766,
+      "actual_cost": 506.0,
+      "abs_error": 11.722418149176633
+    },
+    {
+      "i": 221,
+      "source": "learned",
+      "prompt_tokens": 350,
+      "predicted_cost": 600.7446064580142,
+      "actual_cost": 609.0,
+      "abs_error": 8.255393541985768
+    },
+    {
+      "i": 222,
+      "source": "learned",
+      "prompt_tokens": 325,
+      "predicted_cost": 560.8407657243023,
+      "actual_cost": 562.0,
+      "abs_error": 1.1592342756977132
+    },
+    {
+      "i": 223,
+      "source": "learned",
+      "prompt_tokens": 506,
+      "predicted_cost": 850.0244785612958,
+      "actual_cost": 863.0,
+      "abs_error": 12.975521438704163
+    },
+    {
+      "i": 224,
+      "source": "learned",
+      "prompt_tokens": 386,
+      "predicted_cost": 658.3838586878138,
+      "actual_cost": 657.0,
+      "abs_error": 1.383858687813813
+    },
+    {
+      "i": 225,
+      "source": "learned",
+      "prompt_tokens": 381,
+      "predicted_cost": 650.3867169510484,
+      "actual_cost": 650.0,
+      "abs_error": 0.38671695104835635
+    },
+    {
+      "i": 226,
+      "source": "learned",
+      "prompt_tokens": 366,
+      "predicted_cost": 626.4141794861832,
+      "actual_cost": 664.0,
+      "abs_error": 37.58582051381677
+    },
+    {
+      "i": 227,
+      "source": "learned",
+      "prompt_tokens": 273,
+      "predicted_cost": 477.9494324029878,
+      "actual_cost": 476.0,
+      "abs_error": 1.9494324029877816
+    },
+    {
+      "i": 228,
+      "source": "learned",
+      "prompt_tokens": 440,
+      "predicted_cost": 744.8538592814218,
+      "actual_cost": 744.0,
+      "abs_error": 0.8538592814218191
+    },
+    {
+      "i": 229,
+      "source": "learned",
+      "prompt_tokens": 135,
+      "predicted_cost": 257.3753472968692,
+      "actual_cost": 238.0,
+      "abs_error": 19.375347296869222
+    },
+    {
+      "i": 230,
+      "source": "learned",
+      "prompt_tokens": 255,
+      "predicted_cost": 449.03559889096863,
+      "actual_cost": 450.0,
+      "abs_error": 0.9644011090313711
+    },
+    {
+      "i": 231,
+      "source": "learned",
+      "prompt_tokens": 304,
+      "predicted_cost": 527.3866545722213,
+      "actual_cost": 524.0,
+      "abs_error": 3.386654572221346
+    },
+    {
+      "i": 232,
+      "source": "learned",
+      "prompt_tokens": 320,
+      "predicted_cost": 552.9542058196924,
+      "actual_cost": 551.0,
+      "abs_error": 1.9542058196924472
+    },
+    {
+      "i": 233,
+      "source": "learned",
+      "prompt_tokens": 141,
+      "predicted_cost": 266.73999941487574,
+      "actual_cost": 277.0,
+      "abs_error": 10.26000058512426
+    },
+    {
+      "i": 234,
+      "source": "learned",
+      "prompt_tokens": 453,
+      "predicted_cost": 765.6054097465628,
+      "actual_cost": 780.0,
+      "abs_error": 14.394590253437173
+    },
+    {
+      "i": 235,
+      "source": "learned",
+      "prompt_tokens": 73,
+      "predicted_cost": 158.12563642505984,
+      "actual_cost": 150.0,
+      "abs_error": 8.125636425059838
+    },
+    {
+      "i": 236,
+      "source": "learned",
+      "prompt_tokens": 136,
+      "predicted_cost": 258.7552865903526,
+      "actual_cost": 277.0,
+      "abs_error": 18.244713409647375
+    },
+    {
+      "i": 237,
+      "source": "learned",
+      "prompt_tokens": 591,
+      "predicted_cost": 986.3320882933376,
+      "actual_cost": 990.0,
+      "abs_error": 3.6679117066623803
+    },
+    {
+      "i": 238,
+      "source": "learned",
+      "prompt_tokens": 448,
+      "predicted_cost": 757.7580077456587,
+      "actual_cost": 749.0,
+      "abs_error": 8.758007745658688
+    },
+    {
+      "i": 239,
+      "source": "learned",
+      "prompt_tokens": 383,
+      "predicted_cost": 653.7891203895242,
+      "actual_cost": 649.0,
+      "abs_error": 4.789120389524214
+    },
+    {
+      "i": 240,
+      "source": "learned",
+      "prompt_tokens": 340,
+      "predicted_cost": 585.0268379121118,
+      "actual_cost": 566.0,
+      "abs_error": 19.026837912111773
+    },
+    {
+      "i": 241,
+      "source": "learned",
+      "prompt_tokens": 198,
+      "predicted_cost": 357.95001050644373,
+      "actual_cost": 384.0,
+      "abs_error": 26.049989493556268
+    },
+    {
+      "i": 242,
+      "source": "learned",
+      "prompt_tokens": 575,
+      "predicted_cost": 960.5843292915188,
+      "actual_cost": 967.0,
+      "abs_error": 6.41567070848123
+    },
+    {
+      "i": 243,
+      "source": "learned",
+      "prompt_tokens": 489,
+      "predicted_cost": 823.2209686614781,
+      "actual_cost": 819.0,
+      "abs_error": 4.220968661478082
+    },
+    {
+      "i": 244,
+      "source": "learned",
+      "prompt_tokens": 192,
+      "predicted_cost": 348.5310768716681,
+      "actual_cost": 319.0,
+      "abs_error": 29.53107687166812
+    },
+    {
+      "i": 245,
+      "source": "learned",
+      "prompt_tokens": 586,
+      "predicted_cost": 978.2533516173198,
+      "actual_cost": 977.0,
+      "abs_error": 1.2533516173198223
+    },
+    {
+      "i": 246,
+      "source": "learned",
+      "prompt_tokens": 66,
+      "predicted_cost": 146.87873390798342,
+      "actual_cost": 126.0,
+      "abs_error": 20.878733907983417
+    },
+    {
+      "i": 247,
+      "source": "learned",
+      "prompt_tokens": 285,
+      "predicted_cost": 496.88457541561843,
+      "actual_cost": 499.0,
+      "abs_error": 2.1154245843815715
+    },
+    {
+      "i": 248,
+      "source": "learned",
+      "prompt_tokens": 419,
+      "predicted_cost": 711.2407189092597,
+      "actual_cost": 712.0,
+      "abs_error": 0.7592810907402736
+    },
+    {
+      "i": 249,
+      "source": "learned",
+      "prompt_tokens": 157,
+      "predicted_cost": 292.1457419420886,
+      "actual_cost": 279.0,
+      "abs_error": 13.145741942088591
+    },
+    {
+      "i": 250,
+      "source": "learned",
+      "prompt_tokens": 101,
+      "predicted_cost": 202.4346985389318,
+      "actual_cost": 213.0,
+      "abs_error": 10.565301461068202
+    },
+    {
+      "i": 251,
+      "source": "learned",
+      "prompt_tokens": 69,
+      "predicted_cost": 151.37355996237568,
+      "actual_cost": 134.0,
+      "abs_error": 17.37355996237568
+    },
+    {
+      "i": 252,
+      "source": "learned",
+      "prompt_tokens": 551,
+      "predicted_cost": 922.4618733132708,
+      "actual_cost": 905.0,
+      "abs_error": 17.461873313270758
+    },
+    {
+      "i": 253,
+      "source": "learned",
+      "prompt_tokens": 320,
+      "predicted_cost": 552.7334974750622,
+      "actual_cost": 578.0,
+      "abs_error": 25.266502524937778
+    },
+    {
+      "i": 254,
+      "source": "learned",
+      "prompt_tokens": 565,
+      "predicted_cost": 944.7503529265653,
+      "actual_cost": 944.0,
+      "abs_error": 0.750352926565256
+    },
+    {
+      "i": 255,
+      "source": "learned",
+      "prompt_tokens": 598,
+      "predicted_cost": 997.5290830507138,
+      "actual_cost": 1012.0,
+      "abs_error": 14.47091694928622
+    },
+    {
+      "i": 256,
+      "source": "learned",
+      "prompt_tokens": 535,
+      "predicted_cost": 896.9260796177061,
+      "actual_cost": 906.0,
+      "abs_error": 9.073920382293863
+    },
+    {
+      "i": 257,
+      "source": "learned",
+      "prompt_tokens": 308,
+      "predicted_cost": 533.7085497173805,
+      "actual_cost": 543.0,
+      "abs_error": 9.291450282619508
+    },
+    {
+      "i": 258,
+      "source": "learned",
+      "prompt_tokens": 290,
+      "predicted_cost": 504.9373867014362,
+      "actual_cost": 476.0,
+      "abs_error": 28.937386701436196
+    },
+    {
+      "i": 259,
+      "source": "learned",
+      "prompt_tokens": 260,
+      "predicted_cost": 456.79960114165783,
+      "actual_cost": 458.0,
+      "abs_error": 1.2003988583421688
+    },
+    {
+      "i": 260,
+      "source": "learned",
+      "prompt_tokens": 521,
+      "predicted_cost": 874.5634849107578,
+      "actual_cost": 895.0,
+      "abs_error": 20.43651508924222
+    },
+    {
+      "i": 261,
+      "source": "learned",
+      "prompt_tokens": 555,
+      "predicted_cost": 929.189273004936,
+      "actual_cost": 931.0,
+      "abs_error": 1.8107269950639875
+    },
+    {
+      "i": 262,
+      "source": "learned",
+      "prompt_tokens": 344,
+      "predicted_cost": 591.3495499345049,
+      "actual_cost": 585.0,
+      "abs_error": 6.349549934504921
+    },
+    {
+      "i": 263,
+      "source": "learned",
+      "prompt_tokens": 97,
+      "predicted_cost": 195.8238898648338,
+      "actual_cost": 179.0,
+      "abs_error": 16.823889864833802
+    },
+    {
+      "i": 264,
+      "source": "learned",
+      "prompt_tokens": 129,
+      "predicted_cost": 246.88452577463295,
+      "actual_cost": 231.0,
+      "abs_error": 15.884525774632948
+    },
+    {
+      "i": 265,
+      "source": "learned",
+      "prompt_tokens": 200,
+      "predicted_cost": 360.4915417839278,
+      "actual_cost": 349.0,
+      "abs_error": 11.4915417839278
+    },
+    {
+      "i": 266,
+      "source": "learned",
+      "prompt_tokens": 361,
+      "predicted_cost": 618.415827708465,
+      "actual_cost": 636.0,
+      "abs_error": 17.58417229153497
+    },
+    {
+      "i": 267,
+      "source": "learned",
+      "prompt_tokens": 186,
+      "predicted_cost": 338.04111112062304,
+      "actual_cost": 342.0,
+      "abs_error": 3.958888879376957
+    },
+    {
+      "i": 268,
+      "source": "learned",
+      "prompt_tokens": 325,
+      "predicted_cost": 560.8083453056673,
+      "actual_cost": 560.0,
+      "abs_error": 0.8083453056673306
+    },
+    {
+      "i": 269,
+      "source": "learned",
+      "prompt_tokens": 151,
+      "predicted_cost": 281.9785913902643,
+      "actual_cost": 273.0,
+      "abs_error": 8.978591390264285
+    },
+    {
+      "i": 270,
+      "source": "learned",
+      "prompt_tokens": 347,
+      "predicted_cost": 596.0299989620321,
+      "actual_cost": 574.0,
+      "abs_error": 22.029998962032096
+    },
+    {
+      "i": 271,
+      "source": "learned",
+      "prompt_tokens": 578,
+      "predicted_cost": 966.153058229853,
+      "actual_cost": 961.0,
+      "abs_error": 5.153058229852945
+    },
+    {
+      "i": 272,
+      "source": "learned",
+      "prompt_tokens": 171,
+      "predicted_cost": 313.89537307686385,
+      "actual_cost": 329.0,
+      "abs_error": 15.104626923136152
+    },
+    {
+      "i": 273,
+      "source": "learned",
+      "prompt_tokens": 254,
+      "predicted_cost": 446.97877438603916,
+      "actual_cost": 443.0,
+      "abs_error": 3.978774386039163
+    },
+    {
+      "i": 274,
+      "source": "learned",
+      "prompt_tokens": 534,
+      "predicted_cost": 895.5632540463098,
+      "actual_cost": 900.0,
+      "abs_error": 4.436745953690206
+    },
+    {
+      "i": 275,
+      "source": "learned",
+      "prompt_tokens": 67,
+      "predicted_cost": 147.3420777227165,
+      "actual_cost": 145.0,
+      "abs_error": 2.3420777227165104
+    },
+    {
+      "i": 276,
+      "source": "learned",
+      "prompt_tokens": 568,
+      "predicted_cost": 950.0941534890738,
+      "actual_cost": 954.0,
+      "abs_error": 3.9058465109261533
+    },
+    {
+      "i": 277,
+      "source": "learned",
+      "prompt_tokens": 510,
+      "predicted_cost": 857.1942821809221,
+      "actual_cost": 870.0,
+      "abs_error": 12.805717819077927
+    },
+    {
+      "i": 278,
+      "source": "learned",
+      "prompt_tokens": 265,
+      "predicted_cost": 464.61068474991396,
+      "actual_cost": 463.0,
+      "abs_error": 1.6106847499139576
+    },
+    {
+      "i": 279,
+      "source": "learned",
+      "prompt_tokens": 126,
+      "predicted_cost": 241.81281538697152,
+      "actual_cost": 234.0,
+      "abs_error": 7.812815386971522
+    },
+    {
+      "i": 280,
+      "source": "learned",
+      "prompt_tokens": 586,
+      "predicted_cost": 979.1342673876177,
+      "actual_cost": 973.0,
+      "abs_error": 6.134267387617683
+    },
+    {
+      "i": 281,
+      "source": "learned",
+      "prompt_tokens": 318,
+      "predicted_cost": 549.5033399624074,
+      "actual_cost": 556.0,
+      "abs_error": 6.496660037592619
+    },
+    {
+      "i": 282,
+      "source": "learned",
+      "prompt_tokens": 570,
+      "predicted_cost": 953.4341927940536,
+      "actual_cost": 949.0,
+      "abs_error": 4.434192794053615
+    },
+    {
+      "i": 283,
+      "source": "learned",
+      "prompt_tokens": 336,
+      "predicted_cost": 578.3607126819976,
+      "actual_cost": 595.0,
+      "abs_error": 16.639287318002403
+    },
+    {
+      "i": 284,
+      "source": "learned",
+      "prompt_tokens": 286,
+      "predicted_cost": 498.2856499252847,
+      "actual_cost": 482.0,
+      "abs_error": 16.2856499252847
+    },
+    {
+      "i": 285,
+      "source": "learned",
+      "prompt_tokens": 559,
+      "predicted_cost": 935.781597785621,
+      "actual_cost": 948.0,
+      "abs_error": 12.218402214379012
+    },
+    {
+      "i": 286,
+      "source": "learned",
+      "prompt_tokens": 75,
+      "predicted_cost": 159.98731644664107,
+      "actual_cost": 149.0,
+      "abs_error": 10.987316446641074
+    },
+    {
+      "i": 287,
+      "source": "learned",
+      "prompt_tokens": 212,
+      "predicted_cost": 379.5356158563411,
+      "actual_cost": 396.0,
+      "abs_error": 16.46438414365889
+    },
+    {
+      "i": 288,
+      "source": "learned",
+      "prompt_tokens": 511,
+      "predicted_cost": 858.9960507907031,
+      "actual_cost": 857.0,
+      "abs_error": 1.996050790703066
+    },
+    {
+      "i": 289,
+      "source": "learned",
+      "prompt_tokens": 465,
+      "predicted_cost": 785.2331833477404,
+      "actual_cost": 781.0,
+      "abs_error": 4.233183347740351
+    },
+    {
+      "i": 290,
+      "source": "learned",
+      "prompt_tokens": 402,
+      "predicted_cost": 684.2113040374715,
+      "actual_cost": 691.0,
+      "abs_error": 6.78869596252855
+    },
+    {
+      "i": 291,
+      "source": "learned",
+      "prompt_tokens": 435,
+      "predicted_cost": 737.1445200341458,
+      "actual_cost": 724.0,
+      "abs_error": 13.144520034145785
+    },
+    {
+      "i": 292,
+      "source": "learned",
+      "prompt_tokens": 51,
+      "predicted_cost": 121.52123286084044,
+      "actual_cost": 147.0,
+      "abs_error": 25.478767139159558
+    },
+    {
+      "i": 293,
+      "source": "learned",
+      "prompt_tokens": 382,
+      "predicted_cost": 652.1620288354319,
+      "actual_cost": 651.0,
+      "abs_error": 1.1620288354318973
+    },
+    {
+      "i": 294,
+      "source": "learned",
+      "prompt_tokens": 172,
+      "predicted_cost": 315.7166105241461,
+      "actual_cost": 286.0,
+      "abs_error": 29.71661052414612
+    },
+    {
+      "i": 295,
+      "source": "learned",
+      "prompt_tokens": 250,
+      "predicted_cost": 440.5307804967316,
+      "actual_cost": 432.0,
+      "abs_error": 8.530780496731609
+    },
+    {
+      "i": 296,
+      "source": "learned",
+      "prompt_tokens": 346,
+      "predicted_cost": 594.3625994051977,
+      "actual_cost": 562.0,
+      "abs_error": 32.36259940519767
+    },
+    {
+      "i": 297,
+      "source": "learned",
+      "prompt_tokens": 309,
+      "predicted_cost": 534.9514336059808,
+      "actual_cost": 523.0,
+      "abs_error": 11.95143360598081
+    },
+    {
+      "i": 298,
+      "source": "learned",
+      "prompt_tokens": 128,
+      "predicted_cost": 244.81124445579627,
+      "actual_cost": 255.0,
+      "abs_error": 10.18875554420373
+    },
+    {
+      "i": 299,
+      "source": "learned",
+      "prompt_tokens": 419,
+      "predicted_cost": 711.224847485467,
+      "actual_cost": 732.0,
+      "abs_error": 20.775152514533033
+    },
+    {
+      "i": 300,
+      "source": "learned",
+      "prompt_tokens": 99,
+      "predicted_cost": 198.4410151440398,
+      "actual_cost": 187.0,
+      "abs_error": 11.441015144039795
+    },
+    {
+      "i": 301,
+      "source": "learned",
+      "prompt_tokens": 337,
+      "predicted_cost": 579.8555438969544,
+      "actual_cost": 602.0,
+      "abs_error": 22.144456103045627
+    },
+    {
+      "i": 302,
+      "source": "learned",
+      "prompt_tokens": 342,
+      "predicted_cost": 587.9446983965188,
+      "actual_cost": 604.0,
+      "abs_error": 16.05530160348121
+    },
+    {
+      "i": 303,
+      "source": "learned",
+      "prompt_tokens": 202,
+      "predicted_cost": 363.56281612307987,
+      "actual_cost": 363.0,
+      "abs_error": 0.5628161230798696
+    },
+    {
+      "i": 304,
+      "source": "learned",
+      "prompt_tokens": 573,
+      "predicted_cost": 958.3168696479013,
+      "actual_cost": 968.0,
+      "abs_error": 9.683130352098715
+    },
+    {
+      "i": 305,
+      "source": "learned",
+      "prompt_tokens": 373,
+      "predicted_cost": 637.7376610253735,
+      "actual_cost": 642.0,
+      "abs_error": 4.262338974626459
+    },
+    {
+      "i": 306,
+      "source": "learned",
+      "prompt_tokens": 488,
+      "predicted_cost": 822.1476466764057,
+      "actual_cost": 834.0,
+      "abs_error": 11.852353323594343
+    },
+    {
+      "i": 307,
+      "source": "learned",
+      "prompt_tokens": 79,
+      "predicted_cost": 166.32316617784107,
+      "actual_cost": 174.0,
+      "abs_error": 7.676833822158926
+    },
+    {
+      "i": 308,
+      "source": "learned",
+      "prompt_tokens": 258,
+      "predicted_cost": 453.42151256256216,
+      "actual_cost": 433.0,
+      "abs_error": 20.421512562562157
+    },
+    {
+      "i": 309,
+      "source": "learned",
+      "prompt_tokens": 132,
+      "predicted_cost": 251.28762912455184,
+      "actual_cost": 274.0,
+      "abs_error": 22.71237087544816
+    },
+    {
+      "i": 310,
+      "source": "learned",
+      "prompt_tokens": 511,
+      "predicted_cost": 859.0292746368204,
+      "actual_cost": 865.0,
+      "abs_error": 5.970725363179554
+    },
+    {
+      "i": 311,
+      "source": "learned",
+      "prompt_tokens": 191,
+      "predicted_cost": 346.0504363998436,
+      "actual_cost": 338.0,
+      "abs_error": 8.05043639984359
+    },
+    {
+      "i": 312,
+      "source": "learned",
+      "prompt_tokens": 100,
+      "predicted_cost": 200.10294856920666,
+      "actual_cost": 190.0,
+      "abs_error": 10.10294856920666
+    },
+    {
+      "i": 313,
+      "source": "learned",
+      "prompt_tokens": 180,
+      "predicted_cost": 328.29560710370623,
+      "actual_cost": 335.0,
+      "abs_error": 6.7043928962937684
+    },
+    {
+      "i": 314,
+      "source": "learned",
+      "prompt_tokens": 338,
+      "predicted_cost": 581.6858868087769,
+      "actual_cost": 594.0,
+      "abs_error": 12.3141131912231
+    },
+    {
+      "i": 315,
+      "source": "learned",
+      "prompt_tokens": 354,
+      "predicted_cost": 607.3813259517094,
+      "actual_cost": 605.0,
+      "abs_error": 2.381325951709414
+    },
+    {
+      "i": 316,
+      "source": "learned",
+      "prompt_tokens": 316,
+      "predicted_cost": 546.4407014850929,
+      "actual_cost": 570.0,
+      "abs_error": 23.55929851490714
+    },
+    {
+      "i": 317,
+      "source": "learned",
+      "prompt_tokens": 465,
+      "predicted_cost": 785.4316530474017,
+      "actual_cost": 776.0,
+      "abs_error": 9.43165304740171
+    },
+    {
+      "i": 318,
+      "source": "learned",
+      "prompt_tokens": 453,
+      "predicted_cost": 766.1409539683082,
+      "actual_cost": 754.0,
+      "abs_error": 12.140953968308168
+    },
+    {
+      "i": 319,
+      "source": "learned",
+      "prompt_tokens": 172,
+      "predicted_cost": 315.60170604308115,
+      "actual_cost": 319.0,
+      "abs_error": 3.398293956918849
+    },
+    {
+      "i": 320,
+      "source": "learned",
+      "prompt_tokens": 262,
+      "predicted_cost": 459.8979231034186,
+      "actual_cost": 466.0,
+      "abs_error": 6.102076896581423
+    },
+    {
+      "i": 321,
+      "source": "learned",
+      "prompt_tokens": 562,
+      "predicted_cost": 940.8245452443034,
+      "actual_cost": 953.0,
+      "abs_error": 12.175454755696592
+    },
+    {
+      "i": 322,
+      "source": "learned",
+      "prompt_tokens": 275,
+      "predicted_cost": 480.77916212089747,
+      "actual_cost": 470.0,
+      "abs_error": 10.779162120897468
+    },
+    {
+      "i": 323,
+      "source": "learned",
+      "prompt_tokens": 513,
+      "predicted_cost": 862.356257878313,
+      "actual_cost": 902.0,
+      "abs_error": 39.643742121686955
+    },
+    {
+      "i": 324,
+      "source": "learned",
+      "prompt_tokens": 510,
+      "predicted_cost": 857.8250862777227,
+      "actual_cost": 827.0,
+      "abs_error": 30.825086277722676
+    },
+    {
+      "i": 325,
+      "source": "learned",
+      "prompt_tokens": 487,
+      "predicted_cost": 820.7280862702723,
+      "actual_cost": 825.0,
+      "abs_error": 4.2719137297276575
+    },
+    {
+      "i": 326,
+      "source": "learned",
+      "prompt_tokens": 142,
+      "predicted_cost": 267.4744481781951,
+      "actual_cost": 274.0,
+      "abs_error": 6.525551821804925
+    },
+    {
+      "i": 327,
+      "source": "learned",
+      "prompt_tokens": 228,
+      "predicted_cost": 405.42787218414713,
+      "actual_cost": 401.0,
+      "abs_error": 4.427872184147134
+    },
+    {
+      "i": 328,
+      "source": "learned",
+      "prompt_tokens": 294,
+      "predicted_cost": 511.2477380254992,
+      "actual_cost": 515.0,
+      "abs_error": 3.7522619745008114
+    },
+    {
+      "i": 329,
+      "source": "learned",
+      "prompt_tokens": 427,
+      "predicted_cost": 724.5387058561099,
+      "actual_cost": 722.0,
+      "abs_error": 2.538705856109914
+    },
+    {
+      "i": 330,
+      "source": "learned",
+      "prompt_tokens": 70,
+      "predicted_cost": 152.05279691595752,
+      "actual_cost": 171.0,
+      "abs_error": 18.947203084042485
+    },
+    {
+      "i": 331,
+      "source": "learned",
+      "prompt_tokens": 472,
+      "predicted_cost": 796.6648564543822,
+      "actual_cost": 776.0,
+      "abs_error": 20.664856454382175
+    },
+    {
+      "i": 332,
+      "source": "learned",
+      "prompt_tokens": 265,
+      "predicted_cost": 464.8023996428882,
+      "actual_cost": 480.0,
+      "abs_error": 15.19760035711181
+    },
+    {
+      "i": 333,
+      "source": "learned",
+      "prompt_tokens": 435,
+      "predicted_cost": 737.2888988830111,
+      "actual_cost": 732.0,
+      "abs_error": 5.288898883011143
+    },
+    {
+      "i": 334,
+      "source": "learned",
+      "prompt_tokens": 560,
+      "predicted_cost": 937.5768886902484,
+      "actual_cost": 960.0,
+      "abs_error": 22.42311130975156
+    },
+    {
+      "i": 335,
+      "source": "learned",
+      "prompt_tokens": 334,
+      "predicted_cost": 575.4847216959633,
+      "actual_cost": 561.0,
+      "abs_error": 14.484721695963344
+    },
+    {
+      "i": 336,
+      "source": "learned",
+      "prompt_tokens": 565,
+      "predicted_cost": 945.7508988050624,
+      "actual_cost": 937.0,
+      "abs_error": 8.750898805062434
+    },
+    {
+      "i": 337,
+      "source": "learned",
+      "prompt_tokens": 591,
+      "predicted_cost": 987.3437546979178,
+      "actual_cost": 965.0,
+      "abs_error": 22.343754697917802
+    },
+    {
+      "i": 338,
+      "source": "learned",
+      "prompt_tokens": 271,
+      "predicted_cost": 474.409157892112,
+      "actual_cost": 451.0,
+      "abs_error": 23.409157892111978
+    },
+    {
+      "i": 339,
+      "source": "learned",
+      "prompt_tokens": 144,
+      "predicted_cost": 270.8331830233211,
+      "actual_cost": 268.0,
+      "abs_error": 2.833183023321112
+    },
+    {
+      "i": 340,
+      "source": "learned",
+      "prompt_tokens": 459,
+      "predicted_cost": 775.5694829245135,
+      "actual_cost": 785.0,
+      "abs_error": 9.430517075486478
+    },
+    {
+      "i": 341,
+      "source": "learned",
+      "prompt_tokens": 506,
+      "predicted_cost": 850.9337604048167,
+      "actual_cost": 837.0,
+      "abs_error": 13.933760404816667
+    },
+    {
+      "i": 342,
+      "source": "learned",
+      "prompt_tokens": 72,
+      "predicted_cost": 155.4633979282078,
+      "actual_cost": 160.0,
+      "abs_error": 4.536602071792203
+    },
+    {
+      "i": 343,
+      "source": "learned",
+      "prompt_tokens": 180,
+      "predicted_cost": 328.54069096311764,
+      "actual_cost": 351.0,
+      "abs_error": 22.45930903688236
+    },
+    {
+      "i": 344,
+      "source": "learned",
+      "prompt_tokens": 534,
+      "predicted_cost": 895.6845683743945,
+      "actual_cost": 899.0,
+      "abs_error": 3.31543162560547
+    },
+    {
+      "i": 345,
+      "source": "learned",
+      "prompt_tokens": 551,
+      "predicted_cost": 922.9404600885014,
+      "actual_cost": 936.0,
+      "abs_error": 13.059539911498632
+    },
+    {
+      "i": 346,
+      "source": "learned",
+      "prompt_tokens": 590,
+      "predicted_cost": 985.5311767479693,
+      "actual_cost": 984.0,
+      "abs_error": 1.5311767479693117
+    },
+    {
+      "i": 347,
+      "source": "learned",
+      "prompt_tokens": 529,
+      "predicted_cost": 887.7873275733284,
+      "actual_cost": 897.0,
+      "abs_error": 9.212672426671588
+    },
+    {
+      "i": 348,
+      "source": "learned",
+      "prompt_tokens": 161,
+      "predicted_cost": 298.2059743608477,
+      "actual_cost": 295.0,
+      "abs_error": 3.2059743608476765
+    },
+    {
+      "i": 349,
+      "source": "learned",
+      "prompt_tokens": 279,
+      "predicted_cost": 487.2649971917141,
+      "actual_cost": 496.0,
+      "abs_error": 8.735002808285913
+    },
+    {
+      "i": 350,
+      "source": "learned",
+      "prompt_tokens": 161,
+      "predicted_cost": 298.220206393285,
+      "actual_cost": 312.0,
+      "abs_error": 13.779793606714975
+    },
+    {
+      "i": 351,
+      "source": "learned",
+      "prompt_tokens": 518,
+      "predicted_cost": 870.2366967962812,
+      "actual_cost": 891.0,
+      "abs_error": 20.763303203718806
+    },
+    {
+      "i": 352,
+      "source": "learned",
+      "prompt_tokens": 51,
+      "predicted_cost": 122.01932511657758,
+      "actual_cost": 134.0,
+      "abs_error": 11.980674883422424
+    },
+    {
+      "i": 353,
+      "source": "learned",
+      "prompt_tokens": 178,
+      "predicted_cost": 325.62201241108704,
+      "actual_cost": 328.0,
+      "abs_error": 2.3779875889129585
+    },
+    {
+      "i": 354,
+      "source": "learned",
+      "prompt_tokens": 361,
+      "predicted_cost": 618.8140958225399,
+      "actual_cost": 651.0,
+      "abs_error": 32.18590417746009
+    },
+    {
+      "i": 355,
+      "source": "learned",
+      "prompt_tokens": 181,
+      "predicted_cost": 330.51643192741227,
+      "actual_cost": 316.0,
+      "abs_error": 14.51643192741227
+    },
+    {
+      "i": 356,
+      "source": "learned",
+      "prompt_tokens": 497,
+      "predicted_cost": 836.8014381390988,
+      "actual_cost": 822.0,
+      "abs_error": 14.801438139098764
+    },
+    {
+      "i": 357,
+      "source": "learned",
+      "prompt_tokens": 164,
+      "predicted_cost": 303.2019762902866,
+      "actual_cost": 312.0,
+      "abs_error": 8.79802370971339
+    },
+    {
+      "i": 358,
+      "source": "learned",
+      "prompt_tokens": 246,
+      "predicted_cost": 434.6157224071161,
+      "actual_cost": 441.0,
+      "abs_error": 6.384277592883905
+    },
+    {
+      "i": 359,
+      "source": "learned",
+      "prompt_tokens": 447,
+      "predicted_cost": 756.6273196244288,
+      "actual_cost": 753.0,
+      "abs_error": 3.6273196244287647
+    },
+    {
+      "i": 360,
+      "source": "learned",
+      "prompt_tokens": 51,
+      "predicted_cost": 122.26329605579821,
+      "actual_cost": 148.0,
+      "abs_error": 25.736703944201793
+    },
+    {
+      "i": 361,
+      "source": "learned",
+      "prompt_tokens": 60,
+      "predicted_cost": 136.95405782458175,
+      "actual_cost": 87.0,
+      "abs_error": 49.95405782458175
+    },
+    {
+      "i": 362,
+      "source": "learned",
+      "prompt_tokens": 335,
+      "predicted_cost": 577.1376927814138,
+      "actual_cost": 564.0,
+      "abs_error": 13.137692781413762
+    },
+    {
+      "i": 363,
+      "source": "learned",
+      "prompt_tokens": 373,
+      "predicted_cost": 637.9973644685122,
+      "actual_cost": 617.0,
+      "abs_error": 20.99736446851216
+    },
+    {
+      "i": 364,
+      "source": "learned",
+      "prompt_tokens": 536,
+      "predicted_cost": 899.1317281593123,
+      "actual_cost": 873.0,
+      "abs_error": 26.131728159312274
+    },
+    {
+      "i": 365,
+      "source": "learned",
+      "prompt_tokens": 588,
+      "predicted_cost": 982.243069844817,
+      "actual_cost": 981.0,
+      "abs_error": 1.2430698448170006
+    },
+    {
+      "i": 366,
+      "source": "learned",
+      "prompt_tokens": 471,
+      "predicted_cost": 794.8155316949164,
+      "actual_cost": 804.0,
+      "abs_error": 9.184468305083556
+    },
+    {
+      "i": 367,
+      "source": "learned",
+      "prompt_tokens": 364,
+      "predicted_cost": 623.4476992987295,
+      "actual_cost": 631.0,
+      "abs_error": 7.552300701270497
+    },
+    {
+      "i": 368,
+      "source": "learned",
+      "prompt_tokens": 480,
+      "predicted_cost": 809.3011598862415,
+      "actual_cost": 811.0,
+      "abs_error": 1.6988401137584788
+    },
+    {
+      "i": 369,
+      "source": "learned",
+      "prompt_tokens": 133,
+      "predicted_cost": 253.40653309352476,
+      "actual_cost": 251.0,
+      "abs_error": 2.4065330935247573
+    },
+    {
+      "i": 370,
+      "source": "learned",
+      "prompt_tokens": 429,
+      "predicted_cost": 727.6044854795601,
+      "actual_cost": 748.0,
+      "abs_error": 20.39551452043986
+    },
+    {
+      "i": 371,
+      "source": "learned",
+      "prompt_tokens": 282,
+      "predicted_cost": 492.14470065164363,
+      "actual_cost": 468.0,
+      "abs_error": 24.14470065164363
+    },
+    {
+      "i": 372,
+      "source": "learned",
+      "prompt_tokens": 480,
+      "predicted_cost": 809.3483286230678,
+      "actual_cost": 809.0,
+      "abs_error": 0.34832862306780044
+    },
+    {
+      "i": 373,
+      "source": "learned",
+      "prompt_tokens": 421,
+      "predicted_cost": 714.8055001398196,
+      "actual_cost": 709.0,
+      "abs_error": 5.805500139819628
+    },
+    {
+      "i": 374,
+      "source": "learned",
+      "prompt_tokens": 349,
+      "predicted_cost": 599.4168227408849,
+      "actual_cost": 589.0,
+      "abs_error": 10.416822740884868
+    },
+    {
+      "i": 375,
+      "source": "learned",
+      "prompt_tokens": 566,
+      "predicted_cost": 947.0923623085212,
+      "actual_cost": 961.0,
+      "abs_error": 13.90763769147884
+    },
+    {
+      "i": 376,
+      "source": "learned",
+      "prompt_tokens": 255,
+      "predicted_cost": 448.7822660117995,
+      "actual_cost": 455.0,
+      "abs_error": 6.217733988200507
+    },
+    {
+      "i": 377,
+      "source": "learned",
+      "prompt_tokens": 369,
+      "predicted_cost": 631.4988886678314,
+      "actual_cost": 631.0,
+      "abs_error": 0.498888667831352
+    },
+    {
+      "i": 378,
+      "source": "learned",
+      "prompt_tokens": 526,
+      "predicted_cost": 883.1053582485908,
+      "actual_cost": 871.0,
+      "abs_error": 12.105358248590846
+    },
+    {
+      "i": 379,
+      "source": "learned",
+      "prompt_tokens": 276,
+      "predicted_cost": 482.437171821658,
+      "actual_cost": 478.0,
+      "abs_error": 4.437171821658012
+    },
+    {
+      "i": 380,
+      "source": "learned",
+      "prompt_tokens": 161,
+      "predicted_cost": 298.1493188740697,
+      "actual_cost": 328.0,
+      "abs_error": 29.850681125930294
+    },
+    {
+      "i": 381,
+      "source": "learned",
+      "prompt_tokens": 557,
+      "predicted_cost": 932.659240469438,
+      "actual_cost": 906.0,
+      "abs_error": 26.659240469438032
+    },
+    {
+      "i": 382,
+      "source": "learned",
+      "prompt_tokens": 546,
+      "predicted_cost": 914.8420754554636,
+      "actual_cost": 893.0,
+      "abs_error": 21.8420754554636
+    },
+    {
+      "i": 383,
+      "source": "learned",
+      "prompt_tokens": 477,
+      "predicted_cost": 804.2302475805755,
+      "actual_cost": 807.0,
+      "abs_error": 2.769752419424549
+    },
+    {
+      "i": 384,
+      "source": "learned",
+      "prompt_tokens": 199,
+      "predicted_cost": 359.20244126340896,
+      "actual_cost": 355.0,
+      "abs_error": 4.202441263408957
+    },
+    {
+      "i": 385,
+      "source": "learned",
+      "prompt_tokens": 452,
+      "predicted_cost": 764.2170983283206,
+      "actual_cost": 766.0,
+      "abs_error": 1.782901671679383
+    },
+    {
+      "i": 386,
+      "source": "learned",
+      "prompt_tokens": 195,
+      "predicted_cost": 352.7820964835675,
+      "actual_cost": 353.0,
+      "abs_error": 0.21790351643250006
+    },
+    {
+      "i": 387,
+      "source": "learned",
+      "prompt_tokens": 475,
+      "predicted_cost": 801.0459942315338,
+      "actual_cost": 805.0,
+      "abs_error": 3.9540057684662315
+    },
+    {
+      "i": 388,
+      "source": "learned",
+      "prompt_tokens": 452,
+      "predicted_cost": 764.2410890076262,
+      "actual_cost": 764.0,
+      "abs_error": 0.24108900762621488
+    },
+    {
+      "i": 389,
+      "source": "learned",
+      "prompt_tokens": 510,
+      "predicted_cost": 857.0976148652984,
+      "actual_cost": 880.0,
+      "abs_error": 22.902385134701603
+    },
+    {
+      "i": 390,
+      "source": "learned",
+      "prompt_tokens": 165,
+      "predicted_cost": 304.7481745010768,
+      "actual_cost": 285.0,
+      "abs_error": 19.74817450107679
+    },
+    {
+      "i": 391,
+      "source": "learned",
+      "prompt_tokens": 131,
+      "predicted_cost": 250.18462687871124,
+      "actual_cost": 261.0,
+      "abs_error": 10.815373121288758
+    },
+    {
+      "i": 392,
+      "source": "learned",
+      "prompt_tokens": 239,
+      "predicted_cost": 423.2167504273086,
+      "actual_cost": 416.0,
+      "abs_error": 7.216750427308625
+    },
+    {
+      "i": 393,
+      "source": "learned",
+      "prompt_tokens": 587,
+      "predicted_cost": 980.5354703493927,
+      "actual_cost": 979.0,
+      "abs_error": 1.5354703493926536
+    },
+    {
+      "i": 394,
+      "source": "learned",
+      "prompt_tokens": 437,
+      "predicted_cost": 740.2935139842045,
+      "actual_cost": 735.0,
+      "abs_error": 5.293513984204537
+    },
+    {
+      "i": 395,
+      "source": "learned",
+      "prompt_tokens": 432,
+      "predicted_cost": 732.2673411936144,
+      "actual_cost": 747.0,
+      "abs_error": 14.732658806385643
+    },
+    {
+      "i": 396,
+      "source": "learned",
+      "prompt_tokens": 161,
+      "predicted_cost": 298.2818970130166,
+      "actual_cost": 296.0,
+      "abs_error": 2.2818970130165894
+    },
+    {
+      "i": 397,
+      "source": "learned",
+      "prompt_tokens": 52,
+      "predicted_cost": 123.6900321363412,
+      "actual_cost": 128.0,
+      "abs_error": 4.309967863658798
+    },
+    {
+      "i": 398,
+      "source": "learned",
+      "prompt_tokens": 480,
+      "predicted_cost": 809.1890852075223,
+      "actual_cost": 810.0,
+      "abs_error": 0.8109147924776607
+    },
+    {
+      "i": 399,
+      "source": "learned",
+      "prompt_tokens": 176,
+      "predicted_cost": 322.32353976346343,
+      "actual_cost": 298.0,
+      "abs_error": 24.32353976346343
+    },
+    {
+      "i": 400,
+      "source": "learned",
+      "prompt_tokens": 439,
+      "predicted_cost": 743.5067813233416,
+      "actual_cost": 732.0,
+      "abs_error": 11.506781323341556
+    }
+  ]
+}

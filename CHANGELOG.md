@@ -13,6 +13,11 @@ Third-pass audit follow-ups.
   `+full` token reduction within 1.5 pp; override via `GREEN_SARC_VERIFY_TOL`). CI
   runs it on every push (3.12), and `release.yml` runs the full test matrix
   (3.11 + 3.12) before publishing.
+- Paper upgraded to an arXiv preprint: split-conformal gate-safety theorem,
+  paired-bootstrap ablation CIs, cold-start/calibration/sensitivity figures, and
+  a soft-penalty-vs-gate comparison — all from reproducible data assets
+  (`paper/scripts/gen_data.py`, `paper/scripts/build_figures.py`, `make paper`);
+  `examples/learning_curve --emit-json` emits the cold-start curve.
 
 ### Changed
 - Benchmark now runs an **ablation** (`baseline → +scope → +scope+route → +full`) so

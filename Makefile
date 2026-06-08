@@ -1,6 +1,6 @@
 LINT_PATHS = src tests examples benchmarks
 
-.PHONY: install test lint format-check format typecheck demo reproduce verify benchmark-smoke quality clean
+.PHONY: install test lint format-check format typecheck demo reproduce verify benchmark-smoke quality clean paper paper-data paper-figures paper-clean
 
 install:
 	pip install -e ".[dev]"
@@ -36,6 +36,16 @@ verify:
 
 benchmark-smoke:
 	python -m pytest -q tests/test_benchmark_smoke.py
+
+# Paper build delegates to paper/Makefile (data -> figures -> PDF).
+paper-data:
+	$(MAKE) -C paper paper-data
+paper-figures:
+	$(MAKE) -C paper paper-figures
+paper:
+	$(MAKE) -C paper paper
+paper-clean:
+	$(MAKE) -C paper paper-clean
 
 clean:
 	rm -rf artifacts dist build .pytest_cache .mypy_cache .ruff_cache *.egg-info
