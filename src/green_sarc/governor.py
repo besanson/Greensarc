@@ -101,6 +101,51 @@ class GreenGovernor:
         self.gate = PreActionGate(self.estimator)
         self.auditor = PostActionAuditor(self.store, self.estimator)
 
+    @classmethod
+    def with_defaults(
+        cls,
+        *,
+        token_budget: float,
+        carbon_ceiling: float = 1.0e9,
+        usd_budget: Optional[float] = None,
+        delta: float = 0.05,
+        cost_model: Optional[CostModel] = None,
+        carbon_model: Optional[CarbonModel] = None,
+        store: Optional[AuditStore] = None,
+        max_loops: int = 50,
+        max_total_cost: Optional[float] = None,
+    ) -> "GreenGovernor":
+        """Build a ready-to-use governor with sensible defaults.
+
+        Wires a learning estimator plus the reference pricing/carbon tables
+        (:mod:`green_sarc.data`) so you only specify your budgets::
+
+            gov = GreenGovernor.with_defaults(token_budget=200_000, usd_budget=5.0)
+
+        Pass your own ``cost_model`` / ``carbon_model`` for real provider prices
+        and grid data.
+        """
+        from green_sarc.data import default_carbon, default_pricing
+        from green_sarc.estimator import LearnedEstimator
+
+        costs = cost_model if cost_model is not None else default_pricing()
+        carbon = carbon_model if carbon_model is not None else default_carbon()
+        kwargs: dict[str, Any] = {
+            "budget": Budget(
+                token_budget=token_budget,
+                carbon_ceiling=carbon_ceiling,
+                usd_budget=usd_budget,
+                delta=delta,
+            ),
+            "estimator": LearnedEstimator(costs, carbon),
+            "cost_model": costs,
+            "carbon_model": carbon,
+            "monitor": ActionTimeMonitor(max_loops=max_loops, max_total_cost=max_total_cost),
+        }
+        if store is not None:
+            kwargs["store"] = store
+        return cls(**kwargs)
+
     def _context(self, principal_id: str, session_id: str) -> GovernanceContext:
         return GovernanceContext(
             budget=self.budget,

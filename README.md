@@ -45,6 +45,7 @@ Full docs live in [`docs/`](docs/):
 - [Architecture](docs/architecture.md) — the four enforcement sites and the `predict → act → log → retrain` loop.
 - [Relationship to SARC](docs/relationship-to-sarc.md) — what is borrowed from the **SARC** framework ([`besanson/sarc-governance`](https://github.com/besanson/sarc-governance)) and what is not.
 - [KAOS integration](docs/kaos-integration.md) — how **KAOS** ([`axsaucedo/kaos`](https://github.com/axsaucedo/kaos)) calls Green SARC, across all three surfaces, with deployment.
+- [**Use it**](docs/usage.md) — govern your own agent in 5 minutes (3-line setup).
 - [Quickstart](docs/quickstart.md) — install, run, govern your own loop.
 
 **Related repositories** (Green SARC depends on neither at runtime):
@@ -82,34 +83,29 @@ executor:
 
 ```python
 import asyncio
-from green_sarc import (
-    Action, ActionOutcome, Budget, GreenGovernor,
-    LearnedEstimator, TableCarbonModel, TableCostModel,
-)
+from green_sarc import Action, ActionOutcome, GateRejected, GreenGovernor
 
-cost_model = TableCostModel()
-carbon_model = TableCarbonModel(intensities={"eu-west": 230.0})  # gCO2e/kWh
-budget = Budget(token_budget=10_000, carbon_ceiling=50.0, delta=0.05)
-
-gov = GreenGovernor(
-    budget=budget,
-    estimator=LearnedEstimator(cost_model, carbon_model),
-    cost_model=cost_model,
-    carbon_model=carbon_model,
-)
+# One line: wires the four sites + reference pricing/carbon tables. Budgets are yours.
+gov = GreenGovernor.with_defaults(token_budget=10_000, usd_budget=0.50)
 
 async def call_model(action: Action) -> ActionOutcome:
     # ... run the real model / tool, then report its actual usage ...
     return ActionOutcome(result="...", actual_tokens=240)
 
 async def main():
-    action = Action(kind="chat.completion", model="gpt-x", region="eu-west",
+    action = Action(kind="chat.completion", model="gpt-4o", region="us-east-1",
                     prompt_tokens=120, max_tokens=180)
-    result = await gov.run_action(action, call_model)  # raises GateRejected if blocked
-    print(result.actual_cost, result.audit.cost_error)
+    try:
+        result = await gov.run_action(action, call_model)
+        print(result.actual_cost, result.audit.cost_error, result.audit.actual_usd)
+    except GateRejected as exc:
+        print("blocked:", exc.decision.reason)  # too expensive: down-route / cheaper model
 
 asyncio.run(main())
 ```
+
+See [docs/usage.md](docs/usage.md) for the full 5-minute guide and a runnable
+OpenAI-compatible example ([`examples/openai_governed`](examples/openai_governed/run_demo.py)).
 
 ## The learning loop: predict → act → log → retrain
 

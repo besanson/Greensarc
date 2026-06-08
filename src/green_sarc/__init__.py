@@ -25,6 +25,7 @@ github.com/besanson/sarc-governance).
 from __future__ import annotations
 
 from green_sarc.auditor import AuditRecord, PostActionAuditor
+from green_sarc.data import DEFAULT_REGION, default_carbon, default_pricing
 from green_sarc.escalation import (
     DeterministicFallbackHandler,
     EscalationEvent,
@@ -67,7 +68,7 @@ from green_sarc.trajectory import (
     TrajectoryEstimator,
 )
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 __all__ = [
     "__version__",
@@ -90,6 +91,9 @@ __all__ = [
     "carbon_for_tokens",
     "default_cost_model",
     "default_carbon_model",
+    "default_pricing",
+    "default_carbon",
+    "DEFAULT_REGION",
     # estimator (Phase 1)
     "Estimator",
     "ColdStartEstimator",

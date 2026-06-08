@@ -2,9 +2,17 @@
 
 All notable changes to this project are documented here.
 
-## [Unreleased]
+## [0.2.0] — 2026-06-08
 
-Senior-review hardening (audit items P0/P1).
+Senior-review hardening (audit items P0/P1), the §8 benchmark, and out-of-the-box
+usability (reference data, one-call constructor, real-LLM example).
+
+### Added (usability)
+- Reference pricing + carbon data (`data.py`): approximate list prices for common
+  models and grid intensity for common regions, so outputs mean something out of the box.
+- `GreenGovernor.with_defaults(...)` — a one-call constructor (budgets in, governor out).
+- `examples/openai_governed/` — govern a real OpenAI-compatible agent loop; `docs/usage.md`.
+- `release` workflow for building and PyPI publishing on tag (OIDC trusted publishing).
 
 ### Fixed (P0 — correctness / safety)
 - **P0-1** Atomic `Budget` reserve/commit closes a concurrent over-spend race; the
