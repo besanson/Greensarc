@@ -6,6 +6,14 @@ All notable changes to this project are documented here.
 
 Third-pass audit follow-ups.
 
+### Added
+- `make verify` / `python -m benchmarks.reproduce --verify REF` — reproduces the
+  20-seed ablation and gates the headline numbers against
+  `benchmarks/reference_summary.json` (2% relative tolerance per condition × metric,
+  `+full` token reduction within 1.5 pp; override via `GREEN_SARC_VERIFY_TOL`). CI
+  runs it on every push (3.12), and `release.yml` runs the full test matrix
+  (3.11 + 3.12) before publishing.
+
 ### Changed
 - Benchmark now runs an **ablation** (`baseline → +scope → +scope+route → +full`) so
   each governance lever's contribution is isolated, with a paired-bootstrap 95% CI on

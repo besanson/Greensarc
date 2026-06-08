@@ -4,17 +4,26 @@ Usage::
 
     python -m benchmarks.reproduce                 # 20 seeds, full ablation
     python -m benchmarks.reproduce --seeds 50 --skus 1000 --depth 12
+    python -m benchmarks.reproduce --verify benchmarks/reference_summary.json
 
 Runs an **ablation** — ``baseline`` → ``+scope`` → ``+scope+route`` → ``+full`` —
 so each lever's contribution is visible, not just "governance helps". Prints a
 table with a paired-bootstrap 95% CI on the full-treatment token reduction and
-writes ``artifacts/ibp_summary.json``. Deterministic per seed.
+writes the summary JSON to ``--out`` (default ``artifacts/ibp_summary.json``).
+Deterministic per seed.
+
+With ``--verify REF`` the fresh summary is compared against a committed reference
+(``tokens``/``usd``/``carbon_fixed_g``/``carbon_tv_g`` for each of the four
+conditions) within a 2% relative tolerance, plus the ``+full`` token-reduction
+within 1.5 percentage points; it exits 2 on drift. Set ``GREEN_SARC_VERIFY_TOL``
+(e.g. ``0.10``) to override the relative tolerance.
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import os
 import random
 import statistics
 from pathlib import Path
@@ -28,6 +37,8 @@ _METRICS = [
     ("carbon_fixed_g", "carbon fixed (g)"),
     ("carbon_tv_g", "carbon time-var (g)"),
 ]
+_VERIFY_METRICS = ["tokens", "usd", "carbon_fixed_g", "carbon_tv_g"]
+_VERIFY_CONDITIONS = [name for name, _ in CONDITIONS]
 
 
 def _fmt(v: float) -> str:
@@ -107,22 +118,69 @@ def _summary(seeds: int, cfg: IBPConfig, per: Dict[str, List[Dict[str, Any]]]) -
     }
 
 
+def _token_reduction(conditions: Dict[str, Any]) -> float:
+    base = float(conditions["baseline"]["tokens"])
+    full = float(conditions["+full"]["tokens"])
+    return 0.0 if base == 0 else 100.0 * (base - full) / base
+
+
+def _verify(new_summary: Dict[str, Any], ref_path: str, tol: float) -> int:
+    """Compare a fresh summary against a committed reference; 0 = OK, 2 = drift."""
+    ref = json.loads(Path(ref_path).read_text(encoding="utf-8"))
+    ref_c = ref["conditions"]
+    new_c = new_summary["conditions"]
+    failures = []
+    for condition in _VERIFY_CONDITIONS:
+        for metric in _VERIFY_METRICS:
+            r = float(ref_c[condition][metric])
+            n = float(new_c[condition][metric])
+            drift = abs(n - r) / max(r, 1.0)
+            if drift > tol:
+                failures.append((condition, metric, r, n, drift))
+
+    ref_red = _token_reduction(ref_c)
+    new_red = _token_reduction(new_c)
+    reduction_drift = abs(new_red - ref_red)
+    reduction_fail = reduction_drift > 1.5
+
+    if failures or reduction_fail:
+        print("verify: FAILED")
+        print(f"  {'condition':<14}{'metric':<18}{'ref':>14}{'new':>14}{'drift':>9}")
+        for condition, metric, r, n, drift in failures:
+            print(f"  {condition:<14}{metric:<18}{r:>14.2f}{n:>14.2f}{drift * 100:>8.2f}%")
+        if reduction_fail:
+            print(
+                f"  +full token-reduction: ref {ref_red:.1f}% vs new {new_red:.1f}% "
+                f"(drift {reduction_drift:.1f}pp > 1.5pp)"
+            )
+        return 2
+
+    print(f"verify: OK (4 conditions x 4 metrics within {tol * 100:.0f}% tolerance)")
+    return 0
+
+
 def main(argv: Any = None) -> int:
     parser = argparse.ArgumentParser(prog="benchmarks.reproduce", description=__doc__)
     parser.add_argument("--seeds", type=int, default=20)
     parser.add_argument("--skus", type=int, default=IBPConfig.n_skus)
     parser.add_argument("--depth", type=int, default=IBPConfig.depth)
     parser.add_argument("--out", default="artifacts/ibp_summary.json")
+    parser.add_argument("--verify", default=None, help="reference summary JSON to check against")
     args = parser.parse_args(argv)
 
     cfg = IBPConfig(n_skus=args.skus, depth=args.depth)
     per = run(args.seeds, cfg)
     _print_table(args.seeds, cfg, per)
 
+    summary = _summary(args.seeds, cfg, per)
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps(_summary(args.seeds, cfg, per), indent=2), encoding="utf-8")
+    out.write_text(json.dumps(summary, indent=2), encoding="utf-8")
     print(f"  wrote {out}\n")
+
+    if args.verify:
+        tol = float(os.environ.get("GREEN_SARC_VERIFY_TOL", "0.02"))
+        return _verify(summary, args.verify, tol)
     return 0
 
 
