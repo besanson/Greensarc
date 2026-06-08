@@ -92,6 +92,20 @@ class SarcCostCarbonGovernance:
     gate forecasts at PAG; the auditor records actuals at PAA — mirroring the
     standalone :class:`~green_sarc.governor.GreenGovernor`, but expressed as SARC
     constraints so they compose with a caller's safety constraints.
+
+    Override hooks (for tool shapes that differ from the defaults):
+
+    - ``action_factory(tool, args) -> Action`` maps a SARC tool call to a Green
+      SARC :class:`~green_sarc.state.Action`.  The default reads ``model`` /
+      ``prompt_tokens`` / ``max_tokens`` from ``args``; supply your own if your
+      tool arguments are shaped differently.
+    - ``usage_extractor(result) -> float`` reads the actual token count from the
+      tool result (default understands an OpenAI-style ``usage`` dict).
+
+    Predicate context contract (what SARC must put in ``ctx``): the PAG predicate
+    reads ``ctx["tool"]`` and ``ctx["args"]``; the PAA predicate additionally
+    reads ``ctx["result"]``.  ``id(args)`` correlates the two within one
+    ``call_tool`` invocation.
     """
 
     budget: Budget

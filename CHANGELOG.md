@@ -33,6 +33,20 @@ Senior-review hardening (audit items P0/P1).
 - **P1-10** Sidecar path matched by regex (`GREEN_SARC_PATH_REGEX`).
 - Docs: `SECURITY.md`, `CONTRIBUTING.md`.
 
+### Hardening (second-pass audit follow-ups)
+- `LearnedEstimator` guards `_stats` with a `threading.Lock` (safe under a threaded
+  server, not just a single event loop).
+- SQLite store: single held connection (`check_same_thread=False`) with WAL, a write
+  lock, indexes on `timestamp` and `(plan_id, timestamp)`, and a `meta.schema_version`.
+- Sidecar fails closed when a worst-case reservation would exceed the remaining budget
+  (explicit reject reason; never an unguarded spend).
+- `PostActionAuditor.record` warns once when `prompt_tokens=0` accompanies a large
+  `actual_cost` (the regression would otherwise degenerate at x=0).
+- SARC adapter documents its `action_factory` / `usage_extractor` override hooks and the
+  predicate `ctx` contract.
+- Docs: Mermaid sequence diagrams for the three adapter paths; README headline result
+  (MAE ≈ 645 → 12); a `paper` workflow renders the working paper to a PDF artifact.
+
 ### Deferred (intentional — see roadmap)
 Infrastructure/release items deferred until there is a deployment or release that
 needs them, rather than shipping unused machinery: Prometheus `/metrics` endpoints

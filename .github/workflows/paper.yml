@@ -1,0 +1,25 @@
+name: paper
+
+on:
+  push:
+    paths:
+      - "paper/**"
+      - ".github/workflows/paper.yml"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile the working paper
+        uses: xu-cheng/latex-action@v3
+        with:
+          working_directory: paper
+          root_file: green-sarc.tex
+      - name: Upload PDF artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: green-sarc-paper
+          path: paper/green-sarc.pdf
+          if-no-files-found: error

@@ -116,3 +116,70 @@ wired to a single provider.
   cannot be built until Phase 1 has produced data. The interface is fixed in
   [`trajectory.py`](../src/green_sarc/trajectory.py) and raises
   `NotImplementedError`.
+
+## Adapter sequence diagrams
+
+How each KAOS integration surface ([kaos-integration.md](kaos-integration.md))
+drives the core.
+
+### MCP server (advisory)
+
+```mermaid
+sequenceDiagram
+    participant Agent as KAOS agent (PAIS)
+    participant GS as Green SARC MCP server
+    participant Model
+    Agent->>GS: pre_action_gate(action)
+    GS-->>Agent: verdict (admit/reject) + forecast
+    alt admitted
+        Agent->>Model: run the step
+        Model-->>Agent: result + usage
+        Agent->>GS: post_action_auditor(action_id, actual_tokens)
+        GS-->>Agent: ok — predicted-vs-actual logged, estimator retrained
+    else rejected
+        Agent->>Agent: back off / down-route
+    end
+```
+
+The agent *chooses* to consult the gate — advisory. For hard enforcement, use the
+sidecar.
+
+### PAIS sidecar (hard, with the SSE branch)
+
+```mermaid
+sequenceDiagram
+    participant Client as KAOS agent loop
+    participant SC as Green SARC sidecar (ASGI)
+    participant PAIS
+    Client->>SC: POST /v1/chat/completions
+    SC->>SC: gate_request → reserve budget
+    alt rejected
+        SC-->>Client: HTTP 429 (never reaches PAIS)
+    else admitted
+        SC->>PAIS: forward request
+        alt streaming (text/event-stream)
+            PAIS-->>SC: SSE chunk
+            SC-->>Client: forward chunk immediately (passthrough)
+            Note over SC: parse usage from data: lines
+            PAIS-->>SC: [DONE]
+        else non-streaming
+            PAIS-->>SC: JSON body (bounded buffer)
+            SC-->>Client: forward body
+        end
+        SC->>SC: commit actuals → audit
+    end
+```
+
+### OpenTelemetry SpanProcessor (observe)
+
+```mermaid
+sequenceDiagram
+    participant PAIS
+    participant TP as OpenTelemetry TracerProvider
+    participant GS as GreenSarcSpanProcessor
+    participant Auditor
+    PAIS->>TP: end span (gen_ai.usage.*, green_sarc.action_id)
+    TP->>GS: on_end(span)
+    GS->>GS: span_to_dict → ingest_span
+    GS->>Auditor: actuals, correlated by action_id
+```

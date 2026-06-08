@@ -186,11 +186,13 @@ class SidecarGate:
             if self.budget.reserve(reserve_tokens, reserve_carbon):
                 self._pending.put(action_id, (action, decision, reserve_tokens, reserve_carbon))
             else:
-                # Raced out by a concurrent reservation: reject (the middleware 429s).
+                # The worst-case reservation would exceed the remaining budget
+                # (or it was raced out): fail closed — the middleware 429s, and we
+                # never fall through to an unguarded spend.
                 decision = GateDecision(
                     verdict=Verdict.REJECT,
                     forecast=decision.forecast,
-                    reason="insufficient budget after concurrent reservations",
+                    reason="reservation would exceed remaining budget",
                 )
         return decision, action_id
 

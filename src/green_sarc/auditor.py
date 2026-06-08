@@ -15,6 +15,7 @@ each record back into ``estimator.update`` so the next forecast is better.
 from __future__ import annotations
 
 import time
+import warnings
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
@@ -193,6 +194,13 @@ class PostActionAuditor:
         extra: Optional[Dict[str, Any]] = None,
     ) -> AuditRecord:
         """Build, persist, and learn from one :class:`AuditRecord`."""
+        if prompt_tokens == 0 and actual_cost > 256.0:
+            warnings.warn(
+                "PostActionAuditor.record() called with prompt_tokens=0 but a large "
+                "actual_cost; wire prompt_tokens so LearnedEstimator can regress on it "
+                "(otherwise the fit degenerates at x=0).",
+                stacklevel=2,
+            )
         rec = AuditRecord(
             action_id=action_id,
             action_kind=action_kind,

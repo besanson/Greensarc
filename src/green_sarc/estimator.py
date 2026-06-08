@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import json
 import math
+import threading
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, Protocol, Tuple, runtime_checkable
@@ -155,21 +156,26 @@ class LearnedEstimator:
     min_samples: int = 3
     cold_start: ColdStartEstimator = field(init=False)
     _stats: Dict[Tuple[str, str], _RegStats] = field(default_factory=dict)
+    _lock: Any = field(default_factory=threading.Lock, repr=False, compare=False)
 
     def __post_init__(self) -> None:
         self.cold_start = ColdStartEstimator(self.cost_model, self.carbon_model)
 
     def predict(self, action: Action, ctx: GovernanceContext) -> Forecast:
-        stat = self._stats.get(_key(action))
-        if stat is None or stat.n < self.min_samples:
-            return self.cold_start.predict(action, ctx)
         prompt = float(action.prompt_tokens or 0)
-        completion_hat, sigma = stat.predict(prompt)
+        # Snapshot the per-key regression under the lock so a concurrent update()
+        # on another thread cannot corrupt the read (audit N-1).
+        with self._lock:
+            stat = self._stats.get(_key(action))
+            if stat is None or stat.n < self.min_samples:
+                return self.cold_start.predict(action, ctx)
+            completion_hat, sigma = stat.predict(prompt)
+            n = stat.n
         completion_hat = max(0.0, completion_hat)
         if action.max_tokens is not None:
             completion_hat = min(completion_hat, float(action.max_tokens))
         cost_hat = prompt + completion_hat
-        confidence = min(0.99, 1.0 - 1.0 / (1.0 + stat.n))
+        confidence = min(0.99, 1.0 - 1.0 / (1.0 + n))
         carbon_hat = carbon_for_tokens(
             self.cost_model,
             self.carbon_model,
@@ -190,45 +196,46 @@ class LearnedEstimator:
 
     def update(self, record: AuditRecord) -> None:
         key = (record.action_kind, record.model)
-        stat = self._stats.setdefault(key, _RegStats())
         prompt = float(record.prompt_tokens)
         completion = max(0.0, record.actual_cost - prompt)
-        stat.update(prompt, completion)
+        with self._lock:
+            stat = self._stats.setdefault(key, _RegStats())
+            stat.update(prompt, completion)
 
     def samples(self, action: Action) -> int:
         """Number of observations learned for ``action``'s key (introspection)."""
-        stat = self._stats.get(_key(action))
-        return stat.n if stat is not None else 0
+        with self._lock:
+            stat = self._stats.get(_key(action))
+            return stat.n if stat is not None else 0
 
     # -- persistence (audit P1-1) ----------------------------------------
 
     def save(self, path: Any) -> None:
         """Persist the learned regression state to a JSON file."""
-        data = {
-            "min_samples": self.min_samples,
-            "stats": [
-                {
-                    "kind": kind,
-                    "model": model,
-                    "n": s.n,
-                    "sx": s.sx,
-                    "sy": s.sy,
-                    "sxx": s.sxx,
-                    "sxy": s.sxy,
-                    "syy": s.syy,
-                }
-                for (kind, model), s in self._stats.items()
-            ],
-        }
+        with self._lock:
+            data = {
+                "min_samples": self.min_samples,
+                "stats": [
+                    {
+                        "kind": kind,
+                        "model": model,
+                        "n": s.n,
+                        "sx": s.sx,
+                        "sy": s.sy,
+                        "sxx": s.sxx,
+                        "sxy": s.sxy,
+                        "syy": s.syy,
+                    }
+                    for (kind, model), s in self._stats.items()
+                ],
+            }
         Path(path).write_text(json.dumps(data), encoding="utf-8")
 
     def load(self, path: Any) -> None:
         """Replace the learned state with one previously :meth:`save`d."""
         data = json.loads(Path(path).read_text(encoding="utf-8"))
-        self.min_samples = int(data.get("min_samples", self.min_samples))
-        self._stats = {}
-        for row in data.get("stats", []):
-            self._stats[(row["kind"], row["model"])] = _RegStats(
+        rebuilt = {
+            (row["kind"], row["model"]): _RegStats(
                 n=int(row["n"]),
                 sx=float(row["sx"]),
                 sy=float(row["sy"]),
@@ -236,6 +243,11 @@ class LearnedEstimator:
                 sxy=float(row["sxy"]),
                 syy=float(row["syy"]),
             )
+            for row in data.get("stats", [])
+        }
+        with self._lock:
+            self.min_samples = int(data.get("min_samples", self.min_samples))
+            self._stats = rebuilt
 
     def bootstrap_from_jsonl(self, path: Any) -> int:
         """Rehydrate the estimator by replaying a JSONL audit log; returns count."""
