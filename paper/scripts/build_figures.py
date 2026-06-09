@@ -563,6 +563,57 @@ def build_grid_sensitivity(ra: Dict[str, Any], stats: Dict[str, Any]) -> None:
     }
 
 
+def build_sensitivity_grid_pareto(sg: Dict[str, Any], stats: Dict[str, Any]) -> None:
+    cells = sg["cells"]
+    x = [c["token_reduction"] for c in cells]
+    y = [c["over_budget_incidence"] * 100 for c in cells]
+    fr = [c for c in cells if c["on_frontier"]]
+    h = sg["headline"]
+    fig, ax = plt.subplots()
+    ax.scatter(x, y, s=14, color=GREY, alpha=0.5, label="80 cells")
+    ax.scatter([c["token_reduction"] for c in fr], [c["over_budget_incidence"] * 100 for c in fr],
+               s=26, color=BLUE, label="Pareto frontier")
+    ax.scatter([h["token_reduction"]], [h["over_budget_incidence"] * 100], s=90, marker="*",
+               color=ORANGE, zorder=5, label="headline (cap $0.5\\times$, route $0.5$, $\\delta{=}0.1$)")
+    ax.set_xlabel("token reduction (%)")
+    ax.set_ylabel("over-budget incidence (%)")
+    ax.set_title("Joint sensitivity: 80 operating points")
+    ax.legend(fontsize=7, loc="upper center")
+    _save(fig, "sensitivity_grid_pareto")
+
+
+def build_sensitivity_grid_heatmap(sg: Dict[str, Any], stats: Dict[str, Any]) -> None:
+    deltas = sg["deltas"]
+    caps = sg["cap_multiples"]
+    routes = sg["route_fractions"]
+    by = {(c["delta"], c["cap_mult"], c["route_fraction"]): c["token_reduction"] for c in sg["cells"]}
+    fig, axes = plt.subplots(1, len(deltas), figsize=(11, 2.8), sharey=True)
+    vmin = min(c["token_reduction"] for c in sg["cells"])
+    vmax = max(c["token_reduction"] for c in sg["cells"])
+    for ax, d in zip(axes, deltas):
+        grid = np.array([[by[(d, m, r)] for r in routes] for m in caps])
+        im = ax.imshow(grid, aspect="auto", cmap="viridis", vmin=vmin, vmax=vmax, origin="lower")
+        ax.set_xticks(range(len(routes)))
+        ax.set_xticklabels([f"{r:g}" for r in routes], fontsize=7)
+        ax.set_yticks(range(len(caps)))
+        ax.set_yticklabels([f"{m:g}$\\times$" for m in caps], fontsize=7)
+        ax.set_xlabel("route frac", fontsize=8)
+        ax.set_title(f"$\\delta={d}$", fontsize=8)
+    axes[0].set_ylabel("scope cap")
+    fig.colorbar(im, ax=axes, label="token reduction (%)", fraction=0.025)
+    fig.suptitle("Token reduction over (scope cap $\\times$ route), per $\\delta$", fontsize=10)
+    _save(fig, "sensitivity_grid_heatmap")
+    stats["sensitivity_grid"] = {
+        "n_cells": sg["n_cells"], "n_frontier": sg["n_frontier"],
+        "headline": sg["headline"], "headline_on_frontier": sg["headline_on_frontier"],
+        "caps": sg["caps"], "median_prompt": sg["median_prompt"],
+        "token_reduction_by_cap": {
+            str(m): statistics.fmean([c["token_reduction"] for c in sg["cells"]
+                                      if c["cap_mult"] == m]) for m in caps},
+        "max_over_budget_pct": max(c["over_budget_incidence"] for c in sg["cells"]) * 100,
+    }
+
+
 def main() -> int:
     ab = json.loads((DATA / "ibp_ablation.json").read_text())
     lc = json.loads((DATA / "learning_curve.json").read_text())
@@ -663,6 +714,13 @@ def main() -> int:
             "full_breaker_trips": C["+full"]["breaker_trips"],
             "binding_budget_points": ra["binding_budget"]["points"],
         }
+
+    sg_path = DATA / "sensitivity_grid.json"
+    if sg_path.exists():
+        sg = json.loads(sg_path.read_text())
+        build_sensitivity_grid_pareto(sg, stats)
+        build_sensitivity_grid_heatmap(sg, stats)
+        n_fig += 2
 
     adv_path = DATA / "adversarial.json"
     if adv_path.exists():

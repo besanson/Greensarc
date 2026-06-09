@@ -564,6 +564,25 @@ The gate's single tunable, the risk level $\delta$, trades admission throughput 
 \label{fig:delta}
 \end{figure}
 
+\subsection{Joint sensitivity over $\delta$, scope cap, and routing fraction}\label{sec:jointsens}
+The $\delta$ sweep above varies one knob. To check that the headline operating point is not a cherry-pick, we sweep all three: $\delta\in\{0.01,0.05,0.1,0.2\}$, scope cap $\in\{0.5,1,2,4\}\times$ the median prompt ($740$ tokens), and routing fraction $\in\{0,0.25,0.5,0.75,1\}$ --- $80$ cells over $20$ seeds. Token/USD/carbon reductions use the benchmark's native forecast noise; over-budget incidence is measured under a binding budget at the elevated noise of the $\delta$ stress above (Figures~\ref{fig:sgpareto},~\ref{fig:sgheat}).
+
+Three findings, two of them null and stated as such. (i) Token reduction is governed almost entirely by the \textbf{scope cap}: $46.7\%$ at $0.5\times$, $28.4\%$ at $1\times$, $20.4\%$ at $2\times$, $20.3\%$ at $4\times$. (ii) Routing fraction does not move the token reduction at all (it reallocates models, changing USD and carbon, not tokens --- the heatmap is flat along the routing axis), and (iii) \textbf{$\delta$ has no measurable effect on either axis in this regime}: the four $\delta$ panels of Figure~\ref{fig:sgheat} are identical, and over-budget incidence never exceeds $0.003\%$ across all $80$ cells. The last is the empirical face of Theorem~\ref{thm:safety}: the gate admits on its $(1-\delta)$ upper bound, so realized over-budget events are vanishingly rare regardless of the operating point; $\delta$ becomes a live throughput-vs-overspend knob only under the higher forecast uncertainty of real residuals (\S\ref{sec:realtrace}). The paper's headline operating point (cap $0.5\times$, routing $0.5$, $\delta=0.1$) achieves the maximum token reduction at $0\%$ over-budget and \textbf{lies on the Pareto frontier} ($20$ of $80$ cells are non-dominated): it is the most aggressive cap at zero safety cost, not an interior cherry-pick.
+
+\begin{figure}[H]
+\centering
+\begin{minipage}{0.48\linewidth}\centering
+\includegraphics[width=\linewidth]{sensitivity_grid_pareto.pdf}
+\caption{All $80$ cells in (token reduction, over-budget) space; the headline point is on the frontier at $0\%$ over-budget.}
+\label{fig:sgpareto}
+\end{minipage}\hfill
+\begin{minipage}{0.48\linewidth}\centering
+\includegraphics[width=\linewidth]{sensitivity_grid_heatmap.pdf}
+\caption{Token reduction over (scope cap $\times$ route), per $\delta$. Flat in route and in $\delta$; driven by the cap.}
+\label{fig:sgheat}
+\end{minipage}
+\end{figure}
+
 \section{Why an Architectural Gate: the Soft-Penalty Baseline}\label{sec:penalty}
 
 The natural alternative to a hard gate is reward shaping: add a Lagrangian cost penalty $-\lambda\,c$ to the objective and let the agent self-limit, admitting an action iff its value exceeds $\lambda$ times its cost. We compare this soft penalty against the architectural gate on a stream with stochastic costs and a hard budget $B$ (Figure~\ref{fig:penalty}). Because the penalty is a per-action threshold blind to the \emph{remaining} budget, no single $\lambda$ both respects $B$ and matches the gate's throughput: small $\lambda$ admits almost everything and overspends ($1.7\times B$); large $\lambda$ under-spends. Crucially, at the $\lambda^\star$ that matches $B$ \emph{in expectation}, realized spend straddles $B$ and breaches it on $\mathbf{91.5\%}$ of seeds. The architectural gate, admitting in arrival order while the calibrated forecast fits the live remaining budget, breaches on $\mathbf{0\%}$ of seeds while filling $99.9\%$ of the budget. This is the cost-domain instance of SARC's thesis that finite penalties cannot substitute for hard runtime constraints.

@@ -5,7 +5,7 @@ PY ?= python
 ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST)))/..)
 TEX := green-sarc.tex
 
-.PHONY: paper paper-data paper-figures paper-binding-budget paper-realtrace paper-real-arrival paper-adversarial paper-grid paper-clean
+.PHONY: paper paper-data paper-figures paper-binding-budget paper-realtrace paper-real-arrival paper-adversarial paper-grid paper-sensitivity-grid paper-clean
 
 # Binding-budget gate sweep (§9): full stack under a finite budget, 20 seeds.
 paper-binding-budget:
@@ -31,13 +31,18 @@ paper-real-arrival:
 paper-grid:
 	cd $(ROOT) && $(PY) paper/scripts/load_grid.py
 
+# Joint sensitivity grid (§12.5): 80 cells (delta x cap x route) x 20 seeds.
+paper-sensitivity-grid:
+	cd $(ROOT) && $(PY) paper/scripts/run_sensitivity_grid.py \
+		--out paper/data/sensitivity_grid.json --seeds 20
+
 # Adversarial robustness study (§13): three attack classes vs the gate.
 paper-adversarial:
 	cd $(ROOT) && $(PY) paper/scripts/run_adversarial.py \
 		--out paper/data/adversarial.json
 
 # Regenerate every reproducible data asset.
-paper-data: paper-binding-budget paper-realtrace paper-real-arrival paper-adversarial
+paper-data: paper-binding-budget paper-realtrace paper-real-arrival paper-sensitivity-grid paper-adversarial
 	cd $(ROOT) && $(PY) examples/learning_curve/run_demo.py \
 		--emit-json paper/data/learning_curve.json --n 400 --seed 7
 	cd $(ROOT) && $(PY) -m paper.scripts.gen_data --seeds 20 \

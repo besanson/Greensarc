@@ -526,6 +526,37 @@
       }
     ]
   },
+  "sensitivity_grid": {
+    "n_cells": 80,
+    "n_frontier": 20,
+    "headline": {
+      "delta": 0.1,
+      "cap_mult": 0.5,
+      "scope_cap": 370,
+      "route_fraction": 0.5,
+      "token_reduction": 46.69889589468226,
+      "usd_reduction": 67.29548196427052,
+      "carbon_reduction": 66.80981501243986,
+      "over_budget_incidence": 0.0,
+      "is_headline": true,
+      "on_frontier": true
+    },
+    "headline_on_frontier": true,
+    "caps": {
+      "0.5": 370,
+      "1.0": 740,
+      "2.0": 1480,
+      "4.0": 2960
+    },
+    "median_prompt": 740.0,
+    "token_reduction_by_cap": {
+      "0.5": 46.69889589468226,
+      "1.0": 28.36426309668384,
+      "2.0": 20.398620385912622,
+      "4.0": 20.261697435875174
+    },
+    "max_over_budget_pct": 0.0025207967318985574
+  },
   "adversarial": {
     "seeds": 20,
     "n_per_class": 200,
