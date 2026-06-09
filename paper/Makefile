@@ -5,7 +5,7 @@ PY ?= python
 ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST)))/..)
 TEX := green-sarc.tex
 
-.PHONY: paper paper-data paper-figures paper-binding-budget paper-realtrace paper-real-arrival paper-adversarial paper-clean
+.PHONY: paper paper-data paper-figures paper-binding-budget paper-realtrace paper-real-arrival paper-adversarial paper-grid paper-clean
 
 # Binding-budget gate sweep (§9): full stack under a finite budget, 20 seeds.
 paper-binding-budget:
@@ -24,6 +24,12 @@ paper-realtrace:
 paper-real-arrival:
 	cd $(ROOT) && $(PY) paper/scripts/run_real_arrival.py \
 		--out paper/data/real_arrival.json
+
+# Real grid intensity (§11.5): fetch + cache GB zones from the UK Carbon
+# Intensity API (no account). The grid_sensitivity block itself is produced by
+# paper-real-arrival, which computes carbon under each cached zone.
+paper-grid:
+	cd $(ROOT) && $(PY) paper/scripts/load_grid.py
 
 # Adversarial robustness study (§13): three attack classes vs the gate.
 paper-adversarial:

@@ -536,6 +536,33 @@ def build_real_arrival_pareto(ra: Dict[str, Any], stats: Dict[str, Any]) -> None
     _save(fig, "real_arrival_pareto")
 
 
+def build_grid_sensitivity(ra: Dict[str, Any], stats: Dict[str, Any]) -> None:
+    """Carbon reduction per condition under each real grid (§11.5), one panel per zone."""
+    gs = ra["grid_sensitivity"]["zones"]
+    zones = ["stipulated", "GB-london", "GB-north-scotland"]
+    conds = ["+scope", "+scope+route", "+full"]
+    fig, axes = plt.subplots(1, len(zones), figsize=(8.2, 3.0), sharey=True)
+    for ax, zone in zip(axes, zones):
+        z = gs[zone]
+        pts = [z["carbon_reduction_ci"][c]["point"] for c in conds]
+        los = [pts[i] - z["carbon_reduction_ci"][c]["lo"] for i, c in enumerate(conds)]
+        his = [z["carbon_reduction_ci"][c]["hi"] - pts[i] for i, c in enumerate(conds)]
+        ax.bar(range(len(conds)), pts, yerr=[los, his], capsize=3,
+               color=[BLUE, ORANGE, GREEN], error_kw={"lw": 0.8})
+        ax.set_xticks(range(len(conds)))
+        ax.set_xticklabels(conds, rotation=20, fontsize=7)
+        ax.set_title(f"{zone}\n$\\bar\\kappa$={z['mean_kappa']:.0f} gCO$_2$e/kWh", fontsize=8)
+    axes[0].set_ylabel("carbon reduction (%)")
+    fig.suptitle("Carbon savings under real grid mixes (BurstGPT)", fontsize=10, y=1.10)
+    fig.tight_layout()
+    _save(fig, "grid_sensitivity")
+    stats["grid_sensitivity"] = {
+        z: {"mean_kappa": gs[z]["mean_kappa"], "carbon_reduction": gs[z]["carbon_reduction"],
+            "carbon_reduction_ci": gs[z]["carbon_reduction_ci"]}
+        for z in zones
+    }
+
+
 def main() -> int:
     ab = json.loads((DATA / "ibp_ablation.json").read_text())
     lc = json.loads((DATA / "learning_curve.json").read_text())
@@ -615,6 +642,9 @@ def main() -> int:
         build_real_arrival_bars(ra, stats)
         build_real_arrival_pareto(ra, stats)
         n_fig += 2
+        if "grid_sensitivity" in ra:
+            build_grid_sensitivity(ra, stats)
+            n_fig += 1
         C = ra["ablation"]["conditions"]
         stats["real_arrival"] = {
             "dataset": ra["dataset"],

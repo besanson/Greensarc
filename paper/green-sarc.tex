@@ -156,7 +156,7 @@ Symbol & Meaning \\
 \midrule
 $a, x$ & proposed action; its context \\
 $\btok$ & live remaining token budget \\
-$\kappa(\rho,t)$ & marginal carbon intensity (gCO\textsubscript{2}e/kWh), region $\rho$, time $t$ \\
+$\kappa(\rho,t)$ & marginal carbon intensity (gCO\textsubscript{2}e/kWh), region $\rho$, time $t$; real grid data used in \S\ref{sec:realgrid}~\cite{ukcarbon}, stipulated by default \\
 $\Delta_{\mathrm{lat}}$ & latency/SLA headroom (declared in the state; not enforced in Phase~1) \\
 $\hat c(a,x),\,\hat e(a,x)$ & forecast token cost; forecast carbon \\
 $c, e$ & realized token cost; realized carbon \\
@@ -521,6 +521,38 @@ We repeat the \S\ref{sec:binding} sweep on the real trace ($\phi\in\{0.5,1.0,1.5
 \subsection{What the synthetic IBP did and did not capture}
 The IBP pipeline tightened two claims and the real trace now corroborates them: the lever \emph{ordering} (scope$\to$tokens, routing$\to$USD/carbon) and the gate's $0\%$ over-budget incidence under binding budgets both reproduce on BurstGPT. Two claims weaken or shift. First, \texttt{+full}'s extra token saving in the IBP ($47.3\%$ vs.\ $43.1\%$) came entirely from the breaker killing \emph{injected} runaway SKUs; real arrivals have no such storms, so that increment vanishes --- consistent with \S\ref{sec:realtrace}'s finding that real cumulative-prompt curvature is negative. Second, on real single-step traffic ``scope'' is simply context truncation: the Adapter Node caps each prompt at $168$ tokens ($2\times$ the median), so the $55.7\%$ token reduction is largely the mechanical consequence of that cap, not an intrinsic property of the architecture. \textbf{The headline percentage should therefore not be read as a free saving Green SARC delivers}: it is a tunable policy knob whose realized magnitude scales with the cap, and whose quality cost (truncated context degrading task utility) is deliberately untracked here (\S\ref{sec:decouple}). A different operator with a less aggressive cap would see a proportionally smaller number. What survives this caveat, and what we therefore present as the load-bearing claims of this section, are the two cap-\emph{independent} results: the lever \emph{ordering} reproduces on real arrivals, and the gate's over-budget incidence is $0\%$ under binding budgets on real data exactly as on synthetic data. The IBP is thus best read as a controlled stress-test of the multi-step regime; BurstGPT confirms the per-request governance levers and the safety property on real distributions, but it is a single-step serving trace and does not exercise the multi-step snowball or breaker dynamics --- a real multi-step agent trace remains the natural next validation (\S\ref{sec:limits}).
 
+\subsection{Carbon savings under real grid mixes}\label{sec:realgrid}
+The carbon results so far use a stipulated intensity curve. We re-compute the BurstGPT carbon reductions under measured grid intensity for two zones with contrasting generation mixes.
+
+\subsubsection*{Setup}
+We had intended ElectricityMaps Italy and US-CAISO, but its historical portal, ENTSO-E, and CAISO OASIS all require an account or are unreachable from a sandboxed run. The one fully-open real source is the UK Carbon Intensity API~\cite{ukcarbon} (no account, half-hourly measured intensity), so the two real zones are GB regions with deliberately contrasting mixes: \textbf{GB-North-Scotland} (mean $\bar\kappa=3.5$\,gCO\textsubscript{2}e/kWh, $\approx$$90\%$ wind/hydro) and \textbf{GB-London} ($\bar\kappa=81.4$), against the stipulated curve ($\bar\kappa=250$). Carbon for each step is $\text{energy\_kwh}(\text{model},\text{tokens})\times\kappa(t)$, with the workload's actions spread across the zone's measured intensity window. \texttt{load\_grid.py} fetches and caches GB data automatically; an operator can drop ElectricityMaps/ENTSO-E/CAISO CSVs into \texttt{paper/data/grid/} to use IT/CAISO instead.
+
+\subsubsection*{Results}
+\begin{table}[H]
+\centering\small
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Condition & stipulated ($250$) & GB-London ($81$) & GB-N-Scotland ($3.5$) \\
+\midrule
+\texttt{+scope}       & $57.9\%$ $[57.4,58.4]$ & $58.4\%$ $[57.8,58.9]$ & $59.2\%$ $[57.2,61.1]$ \\
+\texttt{+scope+route} & $67.2\%$ $[66.6,67.9]$ & $67.6\%$ $[67.0,68.3]$ & $68.8\%$ $[66.3,71.4]$ \\
+\texttt{+full}        & $67.2\%$ & $67.6\%$ & $68.8\%$ \\
+\bottomrule
+\end{tabular}
+\caption{Carbon reduction vs.\ baseline under three grid intensities ($\bar\kappa$ in gCO\textsubscript{2}e/kWh; paired-bootstrap $95\%$ CIs). Figure~\ref{fig:grid}.}
+\label{tab:grid}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.82\linewidth]{grid_sensitivity.pdf}
+\caption{Carbon reduction per lever under the stipulated curve and two real GB grids. The percentage reduction is nearly grid-invariant; the cleanest grid has the widest CI.}
+\label{fig:grid}
+\end{figure}
+
+\subsubsection*{Reading}
+What survives across grids is both the lever ordering and the \emph{percentage} reduction: scope plus routing cuts carbon by $67$--$69\%$ under all three intensities, because the reduction is a ratio of energy and $\kappa$ enters as a common positive multiplier. What changes is twofold. The \emph{absolute} carbon saved scales with $\bar\kappa$: a North-Scotland deployment ($\bar\kappa=3.5$) saves roughly $70\times$ less absolute carbon than the stipulated curve ($\bar\kappa=250$) for the same percentage, so the lever is most consequential on dirty grids. And the cleanest grid has the \emph{widest} CI ($[57.2,61.1]$ vs.\ $[57.4,58.4]$ for \texttt{+scope}), because a small, highly variable $\kappa$ amplifies the relative variance of the time-of-use weighting. The honest reading is that Green SARC's carbon-reduction percentage is robust to grid mix, but its real-world carbon \emph{impact} depends entirely on where and when the compute runs.
+
 \section{Sensitivity Analysis: the $\delta$ Knob}\label{sec:sensitivity}
 
 The gate's single tunable, the risk level $\delta$, trades admission throughput against realized overspend. We pre-train the estimator, then gate a fresh stream against a \emph{binding} token budget over $40$ seeds, sweeping $\delta$ (Figure~\ref{fig:delta}). Tightening $\delta$ from $0.4$ to $0.05$ drives the overspend rate among admitted actions from $0.57\%$ to $0\%$, at a negligible throughput cost (admission $\approx 29\%$ throughout, since the binding budget --- not $\delta$ --- sets the admission ceiling). The practical reading: under a hard budget, a conservative $\delta$ buys an overspend guarantee almost for free.
@@ -627,6 +659,7 @@ Dataset \texttt{anon8231489123/ShareGPT\_Vicuna\_unfiltered} (Hugging Face, perm
 \bibitem{ramdas2023} Ramdas, A., Gr\"unwald, P., Vovk, V., \& Shafer, G. (2023). \emph{Game-theoretic statistics and safe anytime-valid inference.} \emph{Statistical Science}, 38(4), 576--601.
 \bibitem{sharegpt} ShareGPT community (2023). \emph{ShareGPT\_Vicuna\_unfiltered: a corpus of real ChatGPT/GPT-4 conversations.} Hugging Face Hub: \url{https://huggingface.co/datasets/anon8231489123/ShareGPT_Vicuna_unfiltered}.
 \bibitem{burstgpt} Wang, Y., Chen, Y., Li, Z., Kang, X., Fang, Y., Zhou, Y., Zheng, Y., Tang, Z., He, X., Guo, R., Wang, X., Wang, Q., Zhou, A.~C., \& Chu, X. (2025). \emph{BurstGPT: A Real-world Workload Dataset to Optimize LLM Serving Systems.} In \emph{Proc.\ 31st ACM SIGKDD V.2}. arXiv:2401.17644. \url{https://github.com/HPMLL/BurstGPT}.
+\bibitem{ukcarbon} National Grid ESO (2024). \emph{Carbon Intensity API.} \url{https://carbonintensity.org.uk}. Open data, no account required; half-hourly national and regional GB carbon intensity.
 \bibitem{carlini2024} Carlini, N., Nasr, M., Choquette-Choo, C.~A., et al. (2023). \emph{Are aligned neural networks adversarially aligned?} In \emph{Advances in Neural Information Processing Systems (NeurIPS)}.
 \bibitem{greshake2023} Greshake, K., Abdelnabi, S., Mishra, S., et al. (2023). \emph{Not what you've signed up for: Compromising real-world LLM-integrated applications with indirect prompt injection.} In \emph{Proc.\ 16th ACM Workshop on Artificial Intelligence and Security (AISec)}.
 \bibitem{welford1962} Welford, B.~P. (1962). \emph{Note on a Method for Calculating Corrected Sums of Squares and Products.} \emph{Technometrics}, 4(3), 419--420.
