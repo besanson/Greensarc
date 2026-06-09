@@ -30,3 +30,5 @@ paper/data/*.parquet
 .idea/
 .vscode/
 .DS_Store
+paper/data/swe_rebench_subset.parquet
+paper/data/tau_bench_subset.parquet

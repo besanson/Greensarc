@@ -16,6 +16,10 @@ hand-entered. From the repository root:
 make paper-binding-budget  # data/binding_budget_sweep.json (§9, finite-budget sweep)
 make paper-realtrace       # data/realtrace_calibration.json + realtrace_shift.json (§10, ShareGPT)
 make paper-real-arrival    # data/real_arrival.json (§11, BurstGPT Azure trace)
+make paper-multistep       # data/multistep_replay.json (§11.6, SWE-rebench agent plans)
+make paper-grid            # cache GB grid CSVs (§11.5, UK Carbon Intensity API)
+make paper-sensitivity-grid # data/sensitivity_grid.json (§12.5, 80-cell sweep)
+make paper-adversarial     # data/adversarial.json (§13, three attack classes)
 make paper-data            # all of the above + ablation (20 seeds) + learning curve
 make paper-figures         # build the 13 figures (figures/*.pdf) + data/figure_stats.json
 make paper                 # the above, then compile green-sarc.pdf (needs a local LaTeX toolchain)

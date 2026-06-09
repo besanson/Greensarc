@@ -614,6 +614,54 @@ def build_sensitivity_grid_heatmap(sg: Dict[str, Any], stats: Dict[str, Any]) ->
     }
 
 
+def build_multistep_bars(ms: Dict[str, Any], stats: Dict[str, Any]) -> None:
+    conds = ["+scope", "+scope+route", "+full"]
+    metrics = [("tokens", "tokens"), ("usd", "USD"), ("carbon", "carbon")]
+    x = np.arange(len(conds))
+    width = 0.26
+    fig, ax = plt.subplots()
+    C = ms["conditions"]
+    for j, (key, label) in enumerate(metrics):
+        pts = [C[c]["reduction_ci"][key]["point"] for c in conds]
+        los = [pts[i] - C[c]["reduction_ci"][key]["lo"] for i, c in enumerate(conds)]
+        his = [C[c]["reduction_ci"][key]["hi"] - pts[i] for i, c in enumerate(conds)]
+        ax.bar(x + (j - 1) * width, pts, width, yerr=[los, his], capsize=3,
+               color=[BLUE, ORANGE, GREEN][j], label=label, error_kw={"lw": 0.8})
+    ax.set_xticks(x)
+    ax.set_xticklabels(conds)
+    ax.set_ylabel("% reduction vs. baseline")
+    ax.set_title("Multi-step ablation (SWE-rebench, 95% CI)")
+    ax.legend(fontsize=8)
+    _save(fig, "multistep_bars")
+
+
+def build_multistep_snowball_fit(ms: Dict[str, Any], stats: Dict[str, Any]) -> None:
+    sf = ms["snowball_fit"]
+    c2 = np.array(sf["c2_sample"])
+    fig, ax = plt.subplots()
+    ax.hist(c2, bins=60, color=BLUE, alpha=0.8,
+            range=(float(np.percentile(c2, 1)), float(np.percentile(c2, 99))))
+    ax.axvline(sf["median_c2"], color=GREEN, lw=1.5, label=f"median $\\hat c_2$={sf['median_c2']:.0f}")
+    ax.axvline(sf["theoretical_c2_p_over_2"], color=ORANGE, lw=1.5, ls="--",
+               label=f"$p/2$={sf['theoretical_c2_p_over_2']:.0f}")
+    ax.axvline(0, color=GREY, lw=1.0, ls=":")
+    ax.set_xlabel("per-trajectory quadratic coefficient $\\hat c_2$")
+    ax.set_ylabel("trajectories")
+    ax.set_title(f"State-Snowball fit on real plans ({sf['frac_c2_positive']*100:.0f}% have $\\hat c_2>0$)")
+    ax.legend(fontsize=8)
+    _save(fig, "multistep_snowball_fit")
+    stats["multistep"] = {
+        "dataset": ms["dataset"], "n_trajectories": ms["n_trajectories"],
+        "median_depth": ms["median_depth"], "max_depth": ms["max_depth"],
+        "median_prompt_tokens": ms["median_prompt_tokens"], "scope_cap": ms["scope_cap"],
+        "breaker_max_loops": ms["breaker_max_loops"],
+        "reductions": {n: ms["conditions"][n]["reduction_ci"]
+                       for n in ("+scope", "+scope+route", "+full")},
+        "full_breaker_trip_rate": ms["conditions"]["+full"]["breaker_trip_rate"],
+        "snowball_fit": {k: v for k, v in sf.items() if k != "c2_sample"},
+    }
+
+
 def main() -> int:
     ab = json.loads((DATA / "ibp_ablation.json").read_text())
     lc = json.loads((DATA / "learning_curve.json").read_text())
@@ -716,6 +764,13 @@ def main() -> int:
             "full_breaker_trips": C["+full"]["breaker_trips"],
             "binding_budget_points": ra["binding_budget"]["points"],
         }
+
+    ms_path = DATA / "multistep_replay.json"
+    if ms_path.exists():
+        ms = json.loads(ms_path.read_text())
+        build_multistep_bars(ms, stats)
+        build_multistep_snowball_fit(ms, stats)
+        n_fig += 2
 
     sg_path = DATA / "sensitivity_grid.json"
     if sg_path.exists():

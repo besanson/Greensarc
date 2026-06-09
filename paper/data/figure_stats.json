@@ -537,6 +537,76 @@
       }
     ]
   },
+  "multistep": {
+    "dataset": "nebius/SWE-rebench-openhands-trajectories (CC-BY-4.0)",
+    "n_trajectories": 3000,
+    "median_depth": 61.0,
+    "max_depth": 100,
+    "median_prompt_tokens": 21579.0,
+    "scope_cap": 43158,
+    "breaker_max_loops": 92,
+    "reductions": {
+      "+scope": {
+        "tokens": {
+          "point": 2.2671756791827278,
+          "lo": 2.005962634414213,
+          "hi": 2.534908005830156
+        },
+        "usd": {
+          "point": 2.2593819610180894,
+          "lo": 1.997024102131355,
+          "hi": 2.5241833395964073
+        },
+        "carbon": {
+          "point": 2.2671756791827207,
+          "lo": 1.994127198442026,
+          "hi": 2.543577368300007
+        }
+      },
+      "+scope+route": {
+        "tokens": {
+          "point": 2.2671756791827278,
+          "lo": 1.9936065933184661,
+          "hi": 2.534375166012728
+        },
+        "usd": {
+          "point": 42.3428199939009,
+          "lo": 40.720976537711934,
+          "hi": 44.05102425081221
+        },
+        "carbon": {
+          "point": 39.84199783620603,
+          "lo": 38.375748024121606,
+          "hi": 41.21426635931983
+        }
+      },
+      "+full": {
+        "tokens": {
+          "point": 4.564908975994543,
+          "lo": 4.175356008554541,
+          "hi": 4.933268491693974
+        },
+        "usd": {
+          "point": 43.66456138475215,
+          "lo": 42.0967920265883,
+          "hi": 45.24999010157955
+        },
+        "carbon": {
+          "point": 41.225455272945,
+          "lo": 39.75878180016095,
+          "hi": 42.649444928222096
+        }
+      }
+    },
+    "full_breaker_trip_rate": 0.114,
+    "snowball_fit": {
+      "n_trajectories_fit": 3000,
+      "median_c2": 216.05190219278967,
+      "frac_c2_positive": 1.0,
+      "median_per_turn_growth_p": 268.0,
+      "theoretical_c2_p_over_2": 134.0
+    }
+  },
   "sensitivity_grid": {
     "n_cells": 80,
     "n_frontier": 20,

@@ -558,6 +558,48 @@ Condition & stipulated ($250$) & GB-London ($81$) & GB-N-Scotland ($3.5$) \\
 \subsubsection*{Reading}
 What survives across grids is both the lever ordering and the \emph{percentage} reduction: scope plus routing cuts carbon by $67$--$69\%$ under all three intensities, because the reduction is a ratio of energy and $\kappa$ enters as a common positive multiplier. What changes is twofold. The \emph{absolute} carbon saved scales with $\bar\kappa$: a North-Scotland deployment ($\bar\kappa=3.5$) saves roughly $70\times$ less absolute carbon than the stipulated curve ($\bar\kappa=250$) for the same percentage, so the lever is most consequential on dirty grids. And the cleanest grid has the \emph{widest} CI ($[57.2,61.1]$ vs.\ $[57.4,58.4]$ for \texttt{+scope}), because a small, highly variable $\kappa$ amplifies the relative variance of the time-of-use weighting. The honest reading is that Green SARC's carbon-reduction percentage is robust to grid mix, but its real-world carbon \emph{impact} depends entirely on where and when the compute runs.
 
+\subsection{Multi-step real-trace ablation on SWE-rebench}\label{sec:multistep}
+BurstGPT is single-step; \S\ref{sec:realarrival} flagged that it cannot exercise the multi-step snowball or breaker. We close that gap on real agent plans.
+
+\subsubsection*{Dataset}
+We replay SWE-rebench OpenHands trajectories~\cite{swerebench} (CC-BY-4.0; $67$k real agent plans solving GitHub issues with Qwen3-Coder-480B, mapped to the \texttt{frontier} profile), sub-sampled to $3{,}000$ trajectories streamed from the $\sim$$2$\,GB parquet (token counts via \texttt{tiktoken}; no LLM call). These are genuinely multi-step: median depth $61$ assistant turns, maximum $100$, with a median per-turn prompt of $\sim$$21{,}600$ tokens --- the context accretion the State Snowball describes.
+
+\subsubsection*{Results}
+\begin{table}[H]
+\centering\small
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Condition & Token reduction & USD reduction & Carbon reduction \\
+\midrule
+\texttt{+scope}       & $2.3\%$ $[2.0,2.5]$ & $2.3\%$ $[2.0,2.5]$ & $2.3\%$ $[2.0,2.5]$ \\
+\texttt{+scope+route} & $2.3\%$ $[2.0,2.5]$ & $42.3\%$ $[40.7,44.1]$ & $39.8\%$ $[38.4,41.2]$ \\
+\texttt{+full}        & $\mathbf{4.6\%}$ $[4.2,4.9]$ & $43.7\%$ $[42.1,45.2]$ & $41.2\%$ $[39.8,42.6]$ \\
+\bottomrule
+\end{tabular}
+\caption{Multi-step ablation on SWE-rebench ($3{,}000$ plans; paired-bootstrap $95\%$ CIs). Unlike BurstGPT, \texttt{+full} \emph{adds} token saving over \texttt{+scope+route} ($2.3\%\to4.6\%$): the breaker is a live lever (Figure~\ref{fig:multistepbars}).}
+\label{tab:multistep}
+\end{table}
+
+\paragraph{The State-Snowball holds on real plans, and is steeper than the model.} Fitting each plan's cumulative prompt against turn index to $c_1 n + c_2 n^2$, \textbf{every trajectory has $\hat c_2 > 0$} ($100\%$; Figure~\ref{fig:multistepsnow}). The median $\hat c_2 = 216$ \emph{exceeds} the linear-accretion prediction $p/2 = 134$ (with $p$ the median per-turn growth): real agents accrete context \emph{faster} than the constant-increment model of Assumption~\ref{asm:accretion}, because tool outputs and re-reads grow the prompt super-linearly. This is the strongest available confirmation that Theorem~\ref{thm:quad}'s regime is real --- and an honest correction that the closed form is a \emph{lower} bound on real-plan curvature, not an exact match (the synthetic $\hat c_2 = p/2$ of \S\ref{sec:snowball} held only because the simulator was built to Assumption~\ref{asm:accretion}).
+
+\begin{figure}[H]
+\centering
+\begin{minipage}{0.48\linewidth}\centering
+\includegraphics[width=\linewidth]{multistep_bars.pdf}
+\caption{Multi-step ablation; \texttt{+full} exceeds \texttt{+scope+route} on tokens because the breaker fires.}
+\label{fig:multistepbars}
+\end{minipage}\hfill
+\begin{minipage}{0.48\linewidth}\centering
+\includegraphics[width=\linewidth]{multistep_snowball_fit.pdf}
+\caption{Per-plan quadratic coefficient $\hat c_2$: all positive, median above $p/2$.}
+\label{fig:multistepsnow}
+\end{minipage}
+\end{figure}
+
+\paragraph{Breaker activations.} On these real plans the circuit breaker fires on \textbf{$11.4\%$ of trajectories} (the long-plan tail beyond $1.5\times$ the median depth), versus \emph{zero} on BurstGPT. This is the decisive contrast: the breaker is a dormant safeguard on single-step serving traffic but a \emph{live, material lever} on real multi-step agent plans, where it supplies the entire token-saving increment of \texttt{+full} over \texttt{+scope+route}.
+
+\paragraph{What survives, what shifts.} Routing's USD/carbon saving ($\sim$$42\%$/$40\%$) and the lever ordering reproduce here as on BurstGPT and the IBP. Two things differ from BurstGPT. The breaker is no longer dormant ($11.4\%$ vs $0\%$), vindicating its inclusion. And scope yields little here ($2.3\%$) only because the $2\times$-median cap ($\sim$$43$k tokens) rarely binds on these plans; a tighter cap would truncate more but risks dropping the context the agent needs --- the same policy/quality tradeoff named in \S\ref{sec:realarrival}, now with real multi-step stakes. Token reduction is modest precisely because we did not tune the cap aggressively; the load-bearing real-plan findings are the confirmed super-linear snowball and the live breaker.
+
 \section{Sensitivity Analysis: the $\delta$ Knob}\label{sec:sensitivity}
 
 The gate's single tunable, the risk level $\delta$, trades admission throughput against realized overspend. We pre-train the estimator, then gate a fresh stream against a \emph{binding} token budget over $40$ seeds, sweeping $\delta$ (Figure~\ref{fig:delta}). Tightening $\delta$ from $0.4$ to $0.05$ drives the overspend rate among admitted actions from $0.57\%$ to $0\%$, at a negligible throughput cost (admission $\approx 29\%$ throughout, since the binding budget --- not $\delta$ --- sets the admission ceiling). The practical reading: under a hard budget, a conservative $\delta$ buys an overspend guarantee almost for free.
@@ -684,6 +726,7 @@ Dataset \texttt{anon8231489123/ShareGPT\_Vicuna\_unfiltered} (Hugging Face, perm
 \bibitem{sharegpt} ShareGPT community (2023). \emph{ShareGPT\_Vicuna\_unfiltered: a corpus of real ChatGPT/GPT-4 conversations.} Hugging Face Hub: \url{https://huggingface.co/datasets/anon8231489123/ShareGPT_Vicuna_unfiltered}.
 \bibitem{burstgpt} Wang, Y., Chen, Y., Li, Z., Kang, X., Fang, Y., Zhou, Y., Zheng, Y., Tang, Z., He, X., Guo, R., Wang, X., Wang, Q., Zhou, A.~C., \& Chu, X. (2025). \emph{BurstGPT: A Real-world Workload Dataset to Optimize LLM Serving Systems.} In \emph{Proc.\ 31st ACM SIGKDD V.2}. arXiv:2401.17644. \url{https://github.com/HPMLL/BurstGPT}.
 \bibitem{ukcarbon} National Grid ESO (2024). \emph{Carbon Intensity API.} \url{https://carbonintensity.org.uk}. Open data, no account required; half-hourly national and regional GB carbon intensity.
+\bibitem{swerebench} Nebius (2025). \emph{SWE-rebench OpenHands trajectories: 67k agent traces solving real GitHub issues with Qwen3-Coder-480B.} CC-BY-4.0. \url{https://huggingface.co/datasets/nebius/SWE-rebench-openhands-trajectories}.
 \bibitem{carlini2024} Carlini, N., Nasr, M., Choquette-Choo, C.~A., et al. (2023). \emph{Are aligned neural networks adversarially aligned?} In \emph{Advances in Neural Information Processing Systems (NeurIPS)}.
 \bibitem{greshake2023} Greshake, K., Abdelnabi, S., Mishra, S., et al. (2023). \emph{Not what you've signed up for: Compromising real-world LLM-integrated applications with indirect prompt injection.} In \emph{Proc.\ 16th ACM Workshop on Artificial Intelligence and Security (AISec)}.
 \bibitem{welford1962} Welford, B.~P. (1962). \emph{Note on a Method for Calculating Corrected Sums of Squares and Products.} \emph{Technometrics}, 4(3), 419--420.
