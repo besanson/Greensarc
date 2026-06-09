@@ -19,7 +19,9 @@ estimate is treated as the worst case, which is conservative by construction.
 from __future__ import annotations
 
 from statistics import NormalDist
+from typing import Optional
 
+from green_sarc.calibrator import Calibrator
 from green_sarc.estimator import Estimator
 from green_sarc.forecast import Forecast, GateDecision, Verdict
 from green_sarc.state import Action, GovernanceContext
@@ -30,21 +32,36 @@ __all__ = [
 
 
 class PreActionGate:
-    """Admits or rejects a proposed action on a learned cost/carbon forecast."""
+    """Admits or rejects a proposed action on a learned cost/carbon forecast.
 
-    def __init__(self, estimator: Estimator) -> None:
+    By default the token upper bound is the Normal-``sigma`` quantile.  Passing a
+    ``calibrator`` (e.g. :class:`~green_sarc.calibrator.SplitConformal`) replaces
+    that bound with a distribution-free conformal one (working paper, Theorem 2);
+    omitting it preserves the original behaviour exactly.
+    """
+
+    def __init__(self, estimator: Estimator, calibrator: Optional[Calibrator] = None) -> None:
         self.estimator = estimator
+        self.calibrator = calibrator
 
     def cost_upper_bound(self, forecast: Forecast, delta: float) -> float:
         """Upper bound on token cost at confidence ``1 - delta``.
 
-        With a standard deviation this is the ``1 - delta`` quantile of a normal
-        forecast; without one the point estimate is the worst case.
+        With a ``calibrator`` this is the conformal ``1 - delta`` bound; otherwise,
+        with a standard deviation, the ``1 - delta`` quantile of a normal forecast;
+        without either, the point estimate is the worst case.
         """
+        if self.calibrator is not None:
+            return self.calibrator.upper_bound(forecast.cost_hat, delta)
         if forecast.cost_std and forecast.cost_std > 0.0:
             z = NormalDist().inv_cdf(1.0 - delta)
             return forecast.cost_hat + z * forecast.cost_std
         return forecast.cost_hat
+
+    @property
+    def calibrator_decision(self) -> str:
+        """Which bound the gate is using (observability)."""
+        return type(self.calibrator).__name__ if self.calibrator is not None else "normal_sigma"
 
     def evaluate(self, action: Action, ctx: GovernanceContext) -> GateDecision:
         """Forecast ``action`` and return the admission :class:`GateDecision`."""

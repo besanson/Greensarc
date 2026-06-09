@@ -661,6 +661,8 @@ def main() -> int:
             "residuals": cal["residuals"], "deltas": cal["deltas"],
             "coverage_gaussian": cal["coverage_gaussian"],
             "coverage_conformal": cal["coverage_conformal"],
+            "coverage_runtime_conformal": cal.get("coverage_runtime_conformal"),
+            "runtime_vs_papereside_max_gap_pp": cal.get("runtime_vs_papereside_max_gap_pp"),
             "gaussian_dev_at_005_pp": cal["gaussian_dev_at_005_pp"],
             "conformal_dev_at_005_pp": cal["conformal_dev_at_005_pp"],
             "max_conformal_dev_pp": cal["max_conformal_dev_pp"],

@@ -33,6 +33,7 @@ from green_sarc.escalation import (
     EscalationRouter,
     log_only_handler,
 )
+from green_sarc.calibrator import ACIConformal, Calibrator, SplitConformal
 from green_sarc.estimator import ColdStartEstimator, Estimator, LearnedEstimator
 from green_sarc.forecast import Forecast, GateDecision, Verdict
 from green_sarc.gate import PreActionGate
@@ -102,6 +103,10 @@ __all__ = [
     "Plan",
     "TrajectoryEstimator",
     "NotImplementedTrajectoryEstimator",
+    # runtime conformal calibration (opt-in)
+    "Calibrator",
+    "SplitConformal",
+    "ACIConformal",
     # four enforcement sites
     "PreActionGate",
     "ActionTimeMonitor",
