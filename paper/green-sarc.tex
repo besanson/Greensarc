@@ -543,6 +543,37 @@ The natural alternative to a hard gate is reward shaping: add a Lagrangian cost 
 \label{fig:penalty}
 \end{figure}
 
+\section{Threat Model and Adversarial Robustness}\label{sec:threat}
+
+A runtime gate invites the question: what does an attacker who knows the gate do? We give a partial, honest answer with a toy study against the same gate code path the benchmark exercises.
+
+\subsection{Attacker model}
+The attacker is a prompt author with white-box knowledge of the estimator, the scope cap, and the budget, who observes gate decisions (and, via timing channels, possibly residuals). The attacker cannot modify \texttt{src/} or mint tokens from nothing; the cost is always realized by the model provider. This is a \emph{cost-side} adversary, distinct from the safety-side prompt-injection threat studied by \cite{carlini2024,greshake2023}: the goal is not to make the agent misbehave but to make it \emph{overspend} while passing the gate.
+
+\subsection{Three attack classes}
+We construct three attacks ($20$ seeds, $200$ instances each, paired-bootstrap $95\%$ CIs). \textbf{Continuation inflation}: a prompt whose realized completion is $8\times$ the benign law (``continue indefinitely'' semantics). \textbf{Scope-cap-aware padding}: a prompt sized to exactly $\text{cap}-1$ tokens, maximizing admitted work per call. \textbf{Model-substitution gaming}: a prompt that declares the efficient model while the cost is realized at frontier rates (a misreported model id).
+
+\subsection{Results}
+\begin{table}[H]
+\centering\small
+\begin{tabular}{@{}lcccl@{}}
+\toprule
+Attack & Admission & Over-budget & Realized/declared & Gate failure mode \\
+\midrule
+Continuation inflation & $100\%$ & $100\%$ & $3.8\times$ & under-estimates \\
+Scope-cap-aware padding & $100\%$ & $5\%$ & $0.95\times$ & over-admits \\
+Model-substitution gaming & $100\%$ & $100\%$ & $5.0\times$ & under-estimates \\
+\bottomrule
+\end{tabular}
+\caption{Adversarial study ($20$ seeds; CIs in \texttt{figure\_stats.json}). ``Over-budget'' is the rate at which the realized cost exceeds the gate's admitted $(1-\delta)$ bound (USD for the substitution attack).}
+\label{tab:adversarial}
+\end{table}
+
+\subsection{What survives}
+Two honest negatives. First, \textbf{scope-cap-aware padding defeats the gate by staying inside its admission contract}: it pads to just under the cap and extracts maximum legitimate work, so the gate admits it ($100\%$) with no over-budget event ($5\%$, at the $\delta=0.05$ noise floor) and realized cost \emph{below} the bound ($0.95\times$). This is a fundamental limitation of bounded-prompt-only governance and is exactly what the Phase-2 trajectory estimator $\hat F_\theta(\pi,x)$ --- which reasons about the whole plan, not one padded step --- is meant to address. The gate alone is not sufficient here, and we do not claim otherwise.
+
+Second, continuation inflation and model substitution both defeat the \emph{forecast} (realized cost $3.8\times$ and $5.0\times$ the admitted bound), but they are caught \emph{post hoc} by the Post-Action Auditor, which logs predicted-vs-actual and feeds the discrepancy back to the estimator and the Escalation Router. The architectural response to a forecast-defeating attack is audit-then-revoke at the Auditor, not admission-time rejection at the gate; this is the cost-domain instance of SARC's predict--act--log--retrain loop. The gate bounds expected cost; it does not bound an adversary who lies about the future, and the four-site architecture --- not the gate in isolation --- is what makes the residual detectable.
+
 \section{Limitations, Threats to Validity, and Future Work}\label{sec:limits}
 
 \paragraph{Threats to validity.}
@@ -596,6 +627,8 @@ Dataset \texttt{anon8231489123/ShareGPT\_Vicuna\_unfiltered} (Hugging Face, perm
 \bibitem{ramdas2023} Ramdas, A., Gr\"unwald, P., Vovk, V., \& Shafer, G. (2023). \emph{Game-theoretic statistics and safe anytime-valid inference.} \emph{Statistical Science}, 38(4), 576--601.
 \bibitem{sharegpt} ShareGPT community (2023). \emph{ShareGPT\_Vicuna\_unfiltered: a corpus of real ChatGPT/GPT-4 conversations.} Hugging Face Hub: \url{https://huggingface.co/datasets/anon8231489123/ShareGPT_Vicuna_unfiltered}.
 \bibitem{burstgpt} Wang, Y., Chen, Y., Li, Z., Kang, X., Fang, Y., Zhou, Y., Zheng, Y., Tang, Z., He, X., Guo, R., Wang, X., Wang, Q., Zhou, A.~C., \& Chu, X. (2025). \emph{BurstGPT: A Real-world Workload Dataset to Optimize LLM Serving Systems.} In \emph{Proc.\ 31st ACM SIGKDD V.2}. arXiv:2401.17644. \url{https://github.com/HPMLL/BurstGPT}.
+\bibitem{carlini2024} Carlini, N., Nasr, M., Choquette-Choo, C.~A., et al. (2023). \emph{Are aligned neural networks adversarially aligned?} In \emph{Advances in Neural Information Processing Systems (NeurIPS)}.
+\bibitem{greshake2023} Greshake, K., Abdelnabi, S., Mishra, S., et al. (2023). \emph{Not what you've signed up for: Compromising real-world LLM-integrated applications with indirect prompt injection.} In \emph{Proc.\ 16th ACM Workshop on Artificial Intelligence and Security (AISec)}.
 \bibitem{welford1962} Welford, B.~P. (1962). \emph{Note on a Method for Calculating Corrected Sums of Squares and Products.} \emph{Technometrics}, 4(3), 419--420.
 \bibitem{cbwk} Badanidiyuru, A., Kleinberg, R., \& Slivkins, A. (2018). \emph{Bandits with Knapsacks.} \emph{Journal of the ACM}, 65(3), 1--55.
 \bibitem{aiact} European Parliament and Council (2024). \emph{Regulation (EU) 2024/1689 laying down harmonised rules on artificial intelligence (Artificial Intelligence Act).} Official Journal of the European Union. (See Arts.~12, 13, 15.)

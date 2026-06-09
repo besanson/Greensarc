@@ -5,7 +5,7 @@ PY ?= python
 ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST)))/..)
 TEX := green-sarc.tex
 
-.PHONY: paper paper-data paper-figures paper-binding-budget paper-realtrace paper-real-arrival paper-clean
+.PHONY: paper paper-data paper-figures paper-binding-budget paper-realtrace paper-real-arrival paper-adversarial paper-clean
 
 # Binding-budget gate sweep (§9): full stack under a finite budget, 20 seeds.
 paper-binding-budget:
@@ -25,8 +25,13 @@ paper-real-arrival:
 	cd $(ROOT) && $(PY) paper/scripts/run_real_arrival.py \
 		--out paper/data/real_arrival.json
 
+# Adversarial robustness study (§13): three attack classes vs the gate.
+paper-adversarial:
+	cd $(ROOT) && $(PY) paper/scripts/run_adversarial.py \
+		--out paper/data/adversarial.json
+
 # Regenerate every reproducible data asset.
-paper-data: paper-binding-budget paper-realtrace paper-real-arrival
+paper-data: paper-binding-budget paper-realtrace paper-real-arrival paper-adversarial
 	cd $(ROOT) && $(PY) examples/learning_curve/run_demo.py \
 		--emit-json paper/data/learning_curve.json --n 400 --seed 7
 	cd $(ROOT) && $(PY) -m paper.scripts.gen_data --seeds 20 \

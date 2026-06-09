@@ -1,0 +1,62 @@
+{
+  "seeds": 20,
+  "n_per_class": 200,
+  "scope_cap": 360,
+  "delta": 0.05,
+  "classes": {
+    "continuation_inflation": {
+      "admission_rate": {
+        "point": 1.0,
+        "lo": 1.0,
+        "hi": 1.0
+      },
+      "over_budget_rate": {
+        "point": 1.0,
+        "lo": 1.0,
+        "hi": 1.0
+      },
+      "realized_declared_ratio": {
+        "point": 3.7689315002804364,
+        "lo": 3.751397552060383,
+        "hi": 3.786666065064395
+      },
+      "failure_mode": "under-estimates"
+    },
+    "scope_cap_aware_padding": {
+      "admission_rate": {
+        "point": 1.0,
+        "lo": 1.0,
+        "hi": 1.0
+      },
+      "over_budget_rate": {
+        "point": 0.05025,
+        "lo": 0.042,
+        "hi": 0.05850000000000001
+      },
+      "realized_declared_ratio": {
+        "point": 0.9499046897517387,
+        "lo": 0.948287038822407,
+        "hi": 0.9516091963409812
+      },
+      "failure_mode": "over-admits"
+    },
+    "model_substitution_gaming": {
+      "admission_rate": {
+        "point": 1.0,
+        "lo": 1.0,
+        "hi": 1.0
+      },
+      "over_budget_rate": {
+        "point": 1.0,
+        "lo": 1.0,
+        "hi": 1.0
+      },
+      "realized_declared_ratio": {
+        "point": 5.0,
+        "lo": 5.0,
+        "hi": 5.0
+      },
+      "failure_mode": "under-estimates"
+    }
+  }
+}

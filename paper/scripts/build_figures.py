@@ -634,6 +634,11 @@ def main() -> int:
             "binding_budget_points": ra["binding_budget"]["points"],
         }
 
+    adv_path = DATA / "adversarial.json"
+    if adv_path.exists():
+        adv = json.loads(adv_path.read_text())
+        stats["adversarial"] = adv  # numbers only; §13 has no figure
+
     (DATA / "figure_stats.json").write_text(json.dumps(stats, indent=2), encoding="utf-8")
     print(f"wrote {n_fig} figures to {FIGS}")
     print(f"wrote {DATA / 'figure_stats.json'}")
