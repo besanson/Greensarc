@@ -1,22 +1,27 @@
-"""Build the paper's figures (7 deterministic PDFs) and a stats summary.
+"""Build the paper's figures (11 deterministic PDFs) and a stats summary.
 
-Reads the committed data assets (``paper/data/ibp_ablation.json`` from
-``paper.scripts.gen_data`` and ``paper/data/learning_curve.json`` from the
-learning-curve demo) and computes the remaining experiments deterministically
-from the benchmark model, then writes PDFs to ``paper/figures/`` and the headline
-numbers to ``paper/data/figure_stats.json`` so every quoted value is reproducible.
+Reads the committed data assets (ablation, learning curve, binding-budget sweep,
+real-trace calibration/shift) and computes the remaining experiments
+deterministically, then writes PDFs to ``paper/figures/`` and every quoted number
+to ``paper/data/figure_stats.json`` (the single source of truth checked by
+``check_stats.py``).
 
 Figures
 -------
-1. ``snowball_fit``      empirical quadratic cost vs. depth (Theorem 1) + scoped.
-2. ``ablation_bars``     per-lever token/USD/carbon reduction with 95% CIs.
-3. ``calibration``       predicted vs. actual token cost (learned forecasts).
-4. ``reliability``       nominal vs. empirical coverage: Normal-σ gate vs. conformal.
-5. ``delta_sensitivity`` δ knob: admission rate vs. overspend (overshoot) rate.
-6. ``coldstart``         forecast MAE vs. actions seen (cold start -> learned).
-7. ``penalty_vs_gate``   soft Lagrangian penalty cannot guarantee the budget; the gate can.
+1.  ``snowball_fit``           quadratic cost vs. depth (Theorem 1) + scoped.
+2.  ``ablation_bars``          per-lever token/USD/carbon reduction with 95% CIs.
+3.  ``calibration``            predicted vs. actual token cost (learned forecasts).
+4.  ``reliability``            nominal vs. empirical coverage (synthetic).
+5.  ``delta_sensitivity``      δ knob: admission rate vs. overspend rate.
+6.  ``coldstart``              forecast MAE vs. actions seen.
+7.  ``penalty_vs_gate``        soft penalty cannot guarantee the budget.
+8.  ``binding_budget_pareto``  gate vs. soft-penalty frontier under binding budgets (§9).
+9.  ``realtrace_reliability``  Gaussian-σ vs. conformal coverage on ShareGPT (§10).
+10. ``realtrace_residuals``    real residual histogram + Q--Q vs. Normal (§10).
+11. ``realtrace_shift``        fixed-quantile vs. ACI coverage under shift (§10).
 
-Run via ``make paper-figures`` or ``python -m paper.scripts.build_figures``.
+The §9/§10 data assets are optional; their figures are emitted only when the
+corresponding JSON exists. Run via ``make paper-figures``.
 """
 
 from __future__ import annotations
@@ -371,6 +376,7 @@ def fig_penalty(stats: Dict[str, Any]) -> None:
         "penalty_breach_prob_at_match": breach_prob[j],
         "gate_breach_prob": gate_breach,
         "gate_mean_spend_frac": statistics.fmean(gate_spends),
+        "max_mean_spend_frac": max(mean_spend),
     }
 
     fig, ax = plt.subplots()
@@ -396,12 +402,115 @@ def fig_penalty(stats: Dict[str, Any]) -> None:
     _save(fig, "penalty_vs_gate")
 
 
+# --------------------------------------------------------------------------
+# 8. Binding-budget Pareto: gate frontier vs. soft-penalty frontier (§9).
+# --------------------------------------------------------------------------
+def make_binding_budget_pareto(bb: Dict[str, Any], stats: Dict[str, Any]) -> None:
+    gate = bb["gate"]
+    gx = [g["completed_traj_rate"] for g in gate]
+    gy = [g["over_budget_incidence"] * 100 for g in gate]
+    fr = bb["soft_penalty_frontier"]
+    px = [p["completed_traj_rate"] for p in fr]
+    py = [p["over_budget_incidence"] * 100 for p in fr]
+
+    fig, ax = plt.subplots()
+    ax.scatter(px, py, s=18, color=ORANGE, alpha=0.7, label="soft penalty (sweep $\\lambda$)")
+    ax.plot(gx, gy, "o-", color=GREEN, ms=6, lw=1.6, label="Green SARC gate (sweep $B$)")
+    for g in gate:
+        ax.annotate(f"{g['fraction']}$\\times$", (g["completed_traj_rate"],
+                    g["over_budget_incidence"] * 100 + 3), fontsize=6, color=GREEN, ha="center")
+    ax.axhline(bb["delta"] * 100, color=GREY, ls=":", lw=1.0,
+               label=f"$\\delta={bb['delta']}$ ({bb['delta']*100:.0f}%)")
+    ax.set_xlabel("completed-trajectory fraction")
+    ax.set_ylabel("over-budget incidence (%)")
+    ax.set_title("Gate dominates the soft-penalty frontier")
+    ax.legend(fontsize=7, loc="center left")
+    stats["binding_budget"] = {
+        "delta": bb["delta"], "seeds": bb["seeds"],
+        "e_baseline_tokens": bb["e_baseline_tokens"],
+        "max_over_budget_incidence_pct": bb["max_over_budget_incidence"] * 100,
+        "points": [
+            {k: g[k] for k in ("fraction", "admission_rate", "over_budget_incidence",
+                               "completed_traj_rate", "mae_admitted", "tokens")}
+            for g in gate
+        ],
+        "soft_penalty_matched": bb["soft_penalty"],
+    }
+    _save(fig, "binding_budget_pareto")
+
+
+# --------------------------------------------------------------------------
+# 9-11. Real-trace (ShareGPT) reliability, residuals, distribution shift (§10).
+# --------------------------------------------------------------------------
+def fig_realtrace_reliability(cal: Dict[str, Any], stats: Dict[str, Any]) -> None:
+    fig, ax = plt.subplots()
+    ax.plot([0.6, 1.0], [0.6, 1.0], "--", color=GREY, lw=1.0, label="perfect")
+    ax.plot(cal["nominal"], cal["coverage_gaussian"], "o-", color=ORANGE, ms=4, lw=1.2,
+            label="Normal-$\\sigma$ gate")
+    ax.plot(cal["nominal"], cal["coverage_conformal"], "s-", color=GREEN, ms=4, lw=1.2,
+            label="split conformal")
+    ax.set_xlabel("nominal coverage $1-\\delta$")
+    ax.set_ylabel("empirical coverage (real traces)")
+    ax.set_title("Coverage on real ShareGPT residuals")
+    ax.legend(fontsize=8, loc="lower right")
+    _save(fig, "realtrace_reliability")
+
+
+def fig_realtrace_residuals(cal: Dict[str, Any], stats: Dict[str, Any]) -> None:
+    from scipy import stats as sps
+
+    r = np.array(cal["residual_sample"])
+    fig, (a1, a2) = plt.subplots(1, 2, figsize=(7.4, 3.2))
+    a1.hist(r, bins=60, color=BLUE, alpha=0.8, density=True)
+    xs = np.linspace(r.min(), r.max(), 200)
+    a1.plot(xs, sps.norm.pdf(xs, r.mean(), r.std()), color=ORANGE, lw=1.3, label="Normal fit")
+    a1.set_title(f"Residuals (skew={cal['residuals']['skew']:.2f}, "
+                 f"kurt={cal['residuals']['kurtosis_excess']:.2f})")
+    a1.set_xlabel("actual $-$ predicted (tokens)")
+    a1.legend(fontsize=7)
+    sps.probplot(r, dist="norm", plot=a2)
+    a2.set_title(f"Q--Q vs Normal (A-D={cal['residuals']['anderson_darling_stat']:.0f})")
+    a2.get_lines()[0].set_color(BLUE)
+    a2.get_lines()[0].set_markersize(2)
+    a2.get_lines()[1].set_color(ORANGE)
+    _save(fig, "realtrace_residuals")
+
+
+def fig_realtrace_shift(shift: Dict[str, Any], stats: Dict[str, Any]) -> None:
+    fig, ax = plt.subplots()
+    rf, ra = shift["rolling_fixed"], shift["rolling_aci"]
+    x = list(range(len(rf)))
+    ax.plot(x, [v * 100 for v in rf], color=ORANGE, lw=1.3, label="fixed quantile")
+    ax.plot(x, [v * 100 for v in ra], color=GREEN, lw=1.3, label="adaptive (ACI)")
+    ax.axhline(shift["target_coverage"] * 100, color=GREY, ls="--", lw=1.0,
+               label=f"target {shift['target_coverage']*100:.0f}%")
+    ax.set_xlabel("deployment step (post-shift, rolling window)")
+    ax.set_ylabel("empirical coverage (%)")
+    ax.set_title("Coverage under distribution shift")
+    ax.legend(fontsize=8, loc="lower right")
+    _save(fig, "realtrace_shift")
+
+
 def main() -> int:
     ab = json.loads((DATA / "ibp_ablation.json").read_text())
     lc = json.loads((DATA / "learning_curve.json").read_text())
     cfg = IBPConfig(n_skus=ab["config"]["n_skus"], depth=ab["config"]["depth"])
 
     stats: Dict[str, Any] = {}
+    # §8 raw means cited in the prose (single source of truth for those numbers).
+    base_s = ab["conditions"]["baseline"]["series"]
+    full = ab["conditions"]["+full"]
+    stats["eval"] = {
+        "baseline_tokens_M": statistics.fmean(base_s["tokens"]) / 1e6,
+        "full_tokens_M": statistics.fmean(full["series"]["tokens"]) / 1e6,
+        "baseline_usd": statistics.fmean(base_s["usd"]),
+        "full_usd": statistics.fmean(full["series"]["usd"]),
+        "baseline_carbon_tv": statistics.fmean(base_s["carbon_tv_g"]),
+        "full_carbon_tv": statistics.fmean(full["series"]["carbon_tv_g"]),
+        "full_mae": full.get("forecast_mae_tokens"),
+        "full_wape_pct": full.get("forecast_wape", 0.0) * 100,
+        "breaker_trips": full.get("breaker_trips"),
+    }
     fig_snowball(cfg, stats)
     fig_ablation(ab, stats)
     fig_calibration(ab, stats)
@@ -410,8 +519,53 @@ def main() -> int:
     fig_coldstart(lc, stats)
     fig_penalty(stats)
 
+    n_fig = 7
+    bb_path = DATA / "binding_budget_sweep.json"
+    if bb_path.exists():
+        bb = json.loads(bb_path.read_text())
+        make_binding_budget_pareto(bb, stats)
+        n_fig += 1
+    cal_path = DATA / "realtrace_calibration.json"
+    if cal_path.exists():
+        cal = json.loads(cal_path.read_text())
+        fig_realtrace_reliability(cal, stats)
+        fig_realtrace_residuals(cal, stats)
+        n_fig += 2
+        # Mirror the cited real-trace numbers into the single source of truth.
+        stats["realtrace"] = {
+            "dataset": cal["dataset"], "tokenizer": cal["tokenizer"],
+            "n_pairs": cal["n_pairs"], "n_cal": cal["n_cal"], "n_test": cal["n_test"],
+            "residuals": cal["residuals"], "deltas": cal["deltas"],
+            "coverage_gaussian": cal["coverage_gaussian"],
+            "coverage_conformal": cal["coverage_conformal"],
+            "gaussian_dev_at_005_pp": cal["gaussian_dev_at_005_pp"],
+            "conformal_dev_at_005_pp": cal["conformal_dev_at_005_pp"],
+            "max_conformal_dev_pp": cal["max_conformal_dev_pp"],
+            "turn_depth_quadratic": cal["turn_depth_quadratic"],
+            "gaussian_dev_pp": [(g - n) * 100 for g, n in
+                                zip(cal["coverage_gaussian"], cal["nominal"])],
+            "conformal_dev_pp": [(c - n) * 100 for c, n in
+                                 zip(cal["coverage_conformal"], cal["nominal"])],
+        }
+        # Drop the bulky residual sample from the committed stats file.
+        stats["realtrace"]["residuals"] = {
+            k: v for k, v in cal["residuals"].items() if k != "residual_sample"
+        }
+    shift_path = DATA / "realtrace_shift.json"
+    if shift_path.exists():
+        shift = json.loads(shift_path.read_text())
+        fig_realtrace_shift(shift, stats)
+        n_fig += 1
+        stats["realtrace_shift"] = {
+            k: shift[k] for k in (
+                "delta", "target_coverage", "gamma", "regime1_n", "regime2_n",
+                "fixed_quantile_coverage", "aci_coverage",
+                "fixed_undercoverage_pp", "aci_dev_pp",
+            )
+        }
+
     (DATA / "figure_stats.json").write_text(json.dumps(stats, indent=2), encoding="utf-8")
-    print(f"wrote 7 figures to {FIGS}")
+    print(f"wrote {n_fig} figures to {FIGS}")
     print(f"wrote {DATA / 'figure_stats.json'}")
     return 0
 

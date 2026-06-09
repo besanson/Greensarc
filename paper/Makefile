@@ -5,10 +5,22 @@ PY ?= python
 ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST)))/..)
 TEX := green-sarc.tex
 
-.PHONY: paper paper-data paper-figures paper-clean
+.PHONY: paper paper-data paper-figures paper-binding-budget paper-realtrace paper-clean
 
-# Regenerate the reproducible data assets from the benchmark (20 seeds).
-paper-data:
+# Binding-budget gate sweep (§9): full stack under a finite budget, 20 seeds.
+paper-binding-budget:
+	cd $(ROOT) && $(PY) paper/scripts/run_binding_budget.py \
+		--out paper/data/binding_budget_sweep.json
+
+# Real-trace coverage validation (§10): ShareGPT replay, token counts only.
+# Caches paper/data/sharegpt_subset.parquet on first run (git-ignored).
+paper-realtrace:
+	cd $(ROOT) && $(PY) paper/scripts/run_realtrace_replay.py \
+		--out paper/data/realtrace_calibration.json \
+		--shift-out paper/data/realtrace_shift.json
+
+# Regenerate every reproducible data asset.
+paper-data: paper-binding-budget paper-realtrace
 	cd $(ROOT) && $(PY) examples/learning_curve/run_demo.py \
 		--emit-json paper/data/learning_curve.json --n 400 --seed 7
 	cd $(ROOT) && $(PY) -m paper.scripts.gen_data --seeds 20 \

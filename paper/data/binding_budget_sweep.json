@@ -1,0 +1,367 @@
+{
+  "delta": 0.05,
+  "seeds": 20,
+  "config": {
+    "n_skus": 400,
+    "depth": 10
+  },
+  "e_baseline_tokens": 5989646.0,
+  "fractions": [
+    0.25,
+    0.5,
+    0.75,
+    1.0,
+    1.5,
+    2.0
+  ],
+  "gate": [
+    {
+      "fraction": 0.25,
+      "budget_tokens": 1497411.5,
+      "admission_rate": 0.9049769857503135,
+      "over_budget_incidence": 0.0,
+      "completed_traj_rate": 0.487375,
+      "mae_admitted": 19.912017065018414,
+      "tokens": 1497154.15
+    },
+    {
+      "fraction": 0.5,
+      "budget_tokens": 2994823.0,
+      "admission_rate": 0.9974454600600342,
+      "over_budget_incidence": 0.0,
+      "completed_traj_rate": 0.975,
+      "mae_admitted": 19.968483309703707,
+      "tokens": 2994620.75
+    },
+    {
+      "fraction": 0.75,
+      "budget_tokens": 4492234.5,
+      "admission_rate": 1.0,
+      "over_budget_incidence": 0.0,
+      "completed_traj_rate": 1.0,
+      "mae_admitted": 19.959746315075176,
+      "tokens": 3068570.75
+    },
+    {
+      "fraction": 1.0,
+      "budget_tokens": 5989646.0,
+      "admission_rate": 1.0,
+      "over_budget_incidence": 0.0,
+      "completed_traj_rate": 1.0,
+      "mae_admitted": 19.959746315075176,
+      "tokens": 3068570.75
+    },
+    {
+      "fraction": 1.5,
+      "budget_tokens": 8984469.0,
+      "admission_rate": 1.0,
+      "over_budget_incidence": 0.0,
+      "completed_traj_rate": 1.0,
+      "mae_admitted": 19.959746315075176,
+      "tokens": 3068570.75
+    },
+    {
+      "fraction": 2.0,
+      "budget_tokens": 11979292.0,
+      "admission_rate": 1.0,
+      "over_budget_incidence": 0.0,
+      "completed_traj_rate": 1.0,
+      "mae_admitted": 19.959746315075176,
+      "tokens": 3068570.75
+    }
+  ],
+  "soft_penalty": [
+    {
+      "lambda": 0.0012589254117941675,
+      "completed_traj_rate": 0.0,
+      "over_budget_incidence": 0.0,
+      "mean_spend": 630245.35,
+      "fraction": 0.25,
+      "budget_tokens": 1497411.5
+    },
+    {
+      "lambda": 0.00039810717055349735,
+      "completed_traj_rate": 1.0,
+      "over_budget_incidence": 1.0,
+      "mean_spend": 3068615.6,
+      "fraction": 0.5,
+      "budget_tokens": 2994823.0
+    },
+    {
+      "lambda": 0.00039810717055349735,
+      "completed_traj_rate": 1.0,
+      "over_budget_incidence": 0.0,
+      "mean_spend": 3068615.6,
+      "fraction": 0.75,
+      "budget_tokens": 4492234.5
+    },
+    {
+      "lambda": 0.00039810717055349735,
+      "completed_traj_rate": 1.0,
+      "over_budget_incidence": 0.0,
+      "mean_spend": 3068615.6,
+      "fraction": 1.0,
+      "budget_tokens": 5989646.0
+    },
+    {
+      "lambda": 0.00039810717055349735,
+      "completed_traj_rate": 1.0,
+      "over_budget_incidence": 0.0,
+      "mean_spend": 3068615.6,
+      "fraction": 1.5,
+      "budget_tokens": 8984469.0
+    },
+    {
+      "lambda": 0.00039810717055349735,
+      "completed_traj_rate": 1.0,
+      "over_budget_incidence": 0.0,
+      "mean_spend": 3068615.6,
+      "fraction": 2.0,
+      "budget_tokens": 11979292.0
+    }
+  ],
+  "pareto_reference_budget": 2994823.0,
+  "soft_penalty_frontier": [
+    {
+      "lambda": 0.00025118864315095795,
+      "completed_traj_rate": 1.0,
+      "over_budget_incidence": 1.0,
+      "mean_spend_frac": 1.0246400538529323
+    },
+    {
+      "lambda": 0.00028840315031266055,
+      "completed_traj_rate": 1.0,
+      "over_budget_incidence": 1.0,
+      "mean_spend_frac": 1.0246400538529323
+    },
+    {
+      "lambda": 0.0003311311214825911,
+      "completed_traj_rate": 1.0,
+      "over_budget_incidence": 1.0,
+      "mean_spend_frac": 1.0246400538529323
+    },
+    {
+      "lambda": 0.00038018939632056124,
+      "completed_traj_rate": 1.0,
+      "over_budget_incidence": 1.0,
+      "mean_spend_frac": 1.0246400538529323
+    },
+    {
+      "lambda": 0.0004365158322401656,
+      "completed_traj_rate": 1.0,
+      "over_budget_incidence": 1.0,
+      "mean_spend_frac": 1.0246400538529323
+    },
+    {
+      "lambda": 0.000501187233627272,
+      "completed_traj_rate": 1.0,
+      "over_budget_incidence": 1.0,
+      "mean_spend_frac": 1.0246400538529323
+    },
+    {
+      "lambda": 0.0005754399373371566,
+      "completed_traj_rate": 1.0,
+      "over_budget_incidence": 1.0,
+      "mean_spend_frac": 1.0246400538529323
+    },
+    {
+      "lambda": 0.0006606934480075957,
+      "completed_traj_rate": 1.0,
+      "over_budget_incidence": 1.0,
+      "mean_spend_frac": 1.0246400538529323
+    },
+    {
+      "lambda": 0.0007585775750291835,
+      "completed_traj_rate": 1.0,
+      "over_budget_incidence": 1.0,
+      "mean_spend_frac": 1.0246400538529323
+    },
+    {
+      "lambda": 0.0008709635899560805,
+      "completed_traj_rate": 1.0,
+      "over_budget_incidence": 1.0,
+      "mean_spend_frac": 1.0246400538529323
+    },
+    {
+      "lambda": 0.001,
+      "completed_traj_rate": 1.0,
+      "over_budget_incidence": 1.0,
+      "mean_spend_frac": 1.0246400538529323
+    },
+    {
+      "lambda": 0.0011481536214968818,
+      "completed_traj_rate": 0.006750000000000001,
+      "over_budget_incidence": 0.0,
+      "mean_spend_frac": 0.5933764032131449
+    },
+    {
+      "lambda": 0.0013182567385564075,
+      "completed_traj_rate": 0.0,
+      "over_budget_incidence": 0.0,
+      "mean_spend_frac": 0.20899228435203016
+    },
+    {
+      "lambda": 0.0015135612484362072,
+      "completed_traj_rate": 0.0,
+      "over_budget_incidence": 0.0,
+      "mean_spend_frac": 0.12265390976361541
+    },
+    {
+      "lambda": 0.0017378008287493745,
+      "completed_traj_rate": 0.0,
+      "over_budget_incidence": 0.0,
+      "mean_spend_frac": 0.11515632142533966
+    },
+    {
+      "lambda": 0.001995262314968879,
+      "completed_traj_rate": 0.0,
+      "over_budget_incidence": 0.0,
+      "mean_spend_frac": 0.05903472425582413
+    },
+    {
+      "lambda": 0.0022908676527677724,
+      "completed_traj_rate": 0.0,
+      "over_budget_incidence": 0.0,
+      "mean_spend_frac": 0.04664107027360215
+    },
+    {
+      "lambda": 0.0026302679918953813,
+      "completed_traj_rate": 0.0,
+      "over_budget_incidence": 0.0,
+      "mean_spend_frac": 0.041313944096195335
+    },
+    {
+      "lambda": 0.003019951720402016,
+      "completed_traj_rate": 0.0,
+      "over_budget_incidence": 0.0,
+      "mean_spend_frac": 0.010331094692407531
+    },
+    {
+      "lambda": 0.0034673685045253167,
+      "completed_traj_rate": 0.0,
+      "over_budget_incidence": 0.0,
+      "mean_spend_frac": 0.0002306146306476209
+    },
+    {
+      "lambda": 0.003981071705534969,
+      "completed_traj_rate": 0.0,
+      "over_budget_incidence": 0.0,
+      "mean_spend_frac": 0.0
+    },
+    {
+      "lambda": 0.004570881896148752,
+      "completed_traj_rate": 0.0,
+      "over_budget_incidence": 0.0,
+      "mean_spend_frac": 0.0
+    },
+    {
+      "lambda": 0.005248074602497723,
+      "completed_traj_rate": 0.0,
+      "over_budget_incidence": 0.0,
+      "mean_spend_frac": 0.0
+    },
+    {
+      "lambda": 0.006025595860743574,
+      "completed_traj_rate": 0.0,
+      "over_budget_incidence": 0.0,
+      "mean_spend_frac": 0.0
+    },
+    {
+      "lambda": 0.006918309709189363,
+      "completed_traj_rate": 0.0,
+      "over_budget_incidence": 0.0,
+      "mean_spend_frac": 0.0
+    },
+    {
+      "lambda": 0.007943282347242814,
+      "completed_traj_rate": 0.0,
+      "over_budget_incidence": 0.0,
+      "mean_spend_frac": 0.0
+    },
+    {
+      "lambda": 0.009120108393559097,
+      "completed_traj_rate": 0.0,
+      "over_budget_incidence": 0.0,
+      "mean_spend_frac": 0.0
+    },
+    {
+      "lambda": 0.01047128548050899,
+      "completed_traj_rate": 0.0,
+      "over_budget_incidence": 0.0,
+      "mean_spend_frac": 0.0
+    },
+    {
+      "lambda": 0.012022644346174125,
+      "completed_traj_rate": 0.0,
+      "over_budget_incidence": 0.0,
+      "mean_spend_frac": 0.0
+    },
+    {
+      "lambda": 0.013803842646028845,
+      "completed_traj_rate": 0.0,
+      "over_budget_incidence": 0.0,
+      "mean_spend_frac": 0.0
+    },
+    {
+      "lambda": 0.015848931924611124,
+      "completed_traj_rate": 0.0,
+      "over_budget_incidence": 0.0,
+      "mean_spend_frac": 0.0
+    },
+    {
+      "lambda": 0.018197008586099826,
+      "completed_traj_rate": 0.0,
+      "over_budget_incidence": 0.0,
+      "mean_spend_frac": 0.0
+    },
+    {
+      "lambda": 0.020892961308540386,
+      "completed_traj_rate": 0.0,
+      "over_budget_incidence": 0.0,
+      "mean_spend_frac": 0.0
+    },
+    {
+      "lambda": 0.023988329190194897,
+      "completed_traj_rate": 0.0,
+      "over_budget_incidence": 0.0,
+      "mean_spend_frac": 0.0
+    },
+    {
+      "lambda": 0.02754228703338166,
+      "completed_traj_rate": 0.0,
+      "over_budget_incidence": 0.0,
+      "mean_spend_frac": 0.0
+    },
+    {
+      "lambda": 0.03162277660168379,
+      "completed_traj_rate": 0.0,
+      "over_budget_incidence": 0.0,
+      "mean_spend_frac": 0.0
+    },
+    {
+      "lambda": 0.03630780547701014,
+      "completed_traj_rate": 0.0,
+      "over_budget_incidence": 0.0,
+      "mean_spend_frac": 0.0
+    },
+    {
+      "lambda": 0.041686938347033506,
+      "completed_traj_rate": 0.0,
+      "over_budget_incidence": 0.0,
+      "mean_spend_frac": 0.0
+    },
+    {
+      "lambda": 0.0478630092322638,
+      "completed_traj_rate": 0.0,
+      "over_budget_incidence": 0.0,
+      "mean_spend_frac": 0.0
+    },
+    {
+      "lambda": 0.05495408738576243,
+      "completed_traj_rate": 0.0,
+      "over_budget_incidence": 0.0,
+      "mean_spend_frac": 0.0
+    }
+  ],
+  "max_over_budget_incidence": 0.0
+}
