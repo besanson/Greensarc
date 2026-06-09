@@ -15,8 +15,9 @@ hand-entered. From the repository root:
 ```bash
 make paper-binding-budget  # data/binding_budget_sweep.json (§9, finite-budget sweep)
 make paper-realtrace       # data/realtrace_calibration.json + realtrace_shift.json (§10, ShareGPT)
+make paper-real-arrival    # data/real_arrival.json (§11, BurstGPT Azure trace)
 make paper-data            # all of the above + ablation (20 seeds) + learning curve
-make paper-figures         # build the 11 figures (figures/*.pdf) + data/figure_stats.json
+make paper-figures         # build the 13 figures (figures/*.pdf) + data/figure_stats.json
 make paper                 # the above, then compile green-sarc.pdf (needs a local LaTeX toolchain)
 python paper/scripts/check_stats.py   # verify every cited statistic resolves to figure_stats.json
 ```
@@ -25,6 +26,9 @@ python paper/scripts/check_stats.py   # verify every cited statistic resolves to
 Hub (ungated; token counts only, no LLM calls) and caches the extracted table to
 `data/sharegpt_subset.parquet` (git-ignored). LMSYS-Chat-1M is gated and would
 not reproduce on a clean clone, so ShareGPT is used as the real-trace source.
+§11 downloads the BurstGPT Azure trace (`BurstGPT_1.csv`, CC-BY-4.0) and caches
+`data/burstgpt_subset.parquet` (git-ignored); only the derived `real_arrival.json`
+is committed. Token counts only, no LLM calls.
 
 If you have no LaTeX locally, push to the repo: the
 [`paper`](../.github/workflows/paper.yml) workflow renders the PDF as a CI
@@ -61,7 +65,8 @@ benchmark.
 | Ablation + CIs, cold start, calibration (§8) | [`benchmarks/`](../benchmarks/), [`scripts/gen_data.py`](scripts/gen_data.py) |
 | Binding-budget gate sweep + Pareto (§9) | [`scripts/run_binding_budget.py`](scripts/run_binding_budget.py) |
 | Real-trace coverage + distribution shift (§10) | [`scripts/run_realtrace_replay.py`](scripts/run_realtrace_replay.py) |
-| Sensitivity to δ (§11); soft-penalty baseline (§12) | [`scripts/build_figures.py`](scripts/build_figures.py) |
+| Real-arrival ablation on BurstGPT (§11) | [`scripts/run_real_arrival.py`](scripts/run_real_arrival.py) |
+| Sensitivity to δ (§12); soft-penalty baseline (§13) | [`scripts/build_figures.py`](scripts/build_figures.py) |
 
 ## Scope notes (implementation vs. paper)
 
@@ -74,7 +79,7 @@ benchmark.
   blocks the degenerate "do nothing" solution) and is not tracked here.
 - The latency-headroom field `Δ_lat` is declared in the augmented state (§5.1)
   but **not enforced** in Phase 1 — the paper records this divergence explicitly
-  (§11), and so does [`state.py`](../src/green_sarc/state.py).
+  (§14), and so does [`state.py`](../src/green_sarc/state.py).
 - Green SARC is **standalone** (the §3 reading): the core has no dependency on
   SARC and composes with it via shared enforcement sites rather than importing
   it. See [`docs/relationship-to-sarc.md`](../docs/relationship-to-sarc.md).

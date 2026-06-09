@@ -491,6 +491,51 @@ def fig_realtrace_shift(shift: Dict[str, Any], stats: Dict[str, Any]) -> None:
     _save(fig, "realtrace_shift")
 
 
+# --------------------------------------------------------------------------
+# 12-13. Real-arrival ablation on BurstGPT (§11).
+# --------------------------------------------------------------------------
+def build_real_arrival_bars(ra: Dict[str, Any], stats: Dict[str, Any]) -> None:
+    conds = ["+scope", "+scope+route", "+full"]
+    metrics = [("tokens", "tokens"), ("usd", "USD"), ("carbon", "carbon")]
+    x = np.arange(len(conds))
+    width = 0.26
+    fig, ax = plt.subplots()
+    C = ra["ablation"]["conditions"]
+    for j, (key, label) in enumerate(metrics):
+        pts, los, his = [], [], []
+        for c in conds:
+            ci = C[c]["reduction_ci"][key]
+            pts.append(ci["point"])
+            los.append(ci["point"] - ci["lo"])
+            his.append(ci["hi"] - ci["point"])
+        ax.bar(x + (j - 1) * width, pts, width, yerr=[los, his], capsize=3,
+               color=[BLUE, ORANGE, GREEN][j], label=label, error_kw={"lw": 0.8})
+    ax.set_xticks(x)
+    ax.set_xticklabels(conds)
+    ax.set_ylabel("% reduction vs. baseline")
+    ax.set_title("Real-arrival ablation (BurstGPT, 95% CI)")
+    ax.legend(fontsize=8)
+    _save(fig, "real_arrival_bars")
+
+
+def build_real_arrival_pareto(ra: Dict[str, Any], stats: Dict[str, Any]) -> None:
+    bb = ra["binding_budget"]
+    gx = [p["completed_traj_rate"] for p in bb["points"]]
+    gy = [p["over_budget_incidence"] * 100 for p in bb["points"]]
+    fr = bb["soft_penalty_frontier"]
+    px = [p["completed_traj_rate"] for p in fr]
+    py = [p["over_budget_incidence"] * 100 for p in fr]
+    fig, ax = plt.subplots()
+    ax.scatter(px, py, s=18, color=ORANGE, alpha=0.7, label="soft penalty (sweep $\\lambda$)")
+    ax.plot(gx, gy, "o-", color=GREEN, ms=6, lw=1.6, label="Green SARC gate (sweep $B$)")
+    ax.axhline(bb["delta"] * 100, color=GREY, ls=":", lw=1.0, label=f"$\\delta={bb['delta']}$")
+    ax.set_xlabel("completed-trajectory fraction")
+    ax.set_ylabel("over-budget incidence (%)")
+    ax.set_title("Binding-budget frontier (BurstGPT)")
+    ax.legend(fontsize=7, loc="center left")
+    _save(fig, "real_arrival_pareto")
+
+
 def main() -> int:
     ab = json.loads((DATA / "ibp_ablation.json").read_text())
     lc = json.loads((DATA / "learning_curve.json").read_text())
@@ -562,6 +607,31 @@ def main() -> int:
                 "fixed_quantile_coverage", "aci_coverage",
                 "fixed_undercoverage_pp", "aci_dev_pp",
             )
+        }
+
+    ra_path = DATA / "real_arrival.json"
+    if ra_path.exists():
+        ra = json.loads(ra_path.read_text())
+        build_real_arrival_bars(ra, stats)
+        build_real_arrival_pareto(ra, stats)
+        n_fig += 2
+        C = ra["ablation"]["conditions"]
+        stats["real_arrival"] = {
+            "dataset": ra["dataset"],
+            "n_requests": ra["n_requests"],
+            "n_trajectories": ra["n_trajectories"],
+            "median_prompt_tokens": ra["median_prompt_tokens"],
+            "median_trajectory_depth": ra["median_trajectory_depth"],
+            "scope_cap": ra["scope_cap"],
+            "breaker_max_loops": ra["breaker_max_loops"],
+            "session_window_seconds": ra["session_window_seconds"],
+            "model_mix": ra["model_mix"],
+            "baseline_tokens": C["baseline"]["tokens_total"],
+            "baseline_usd": C["baseline"]["usd_total"],
+            "baseline_carbon": C["baseline"]["carbon_total"],
+            "reductions": {n: C[n]["reduction_ci"] for n in ("+scope", "+scope+route", "+full")},
+            "full_breaker_trips": C["+full"]["breaker_trips"],
+            "binding_budget_points": ra["binding_budget"]["points"],
         }
 
     (DATA / "figure_stats.json").write_text(json.dumps(stats, indent=2), encoding="utf-8")
