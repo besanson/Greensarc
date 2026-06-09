@@ -354,5 +354,99 @@
     "aci_coverage": 0.9008327550312283,
     "fixed_undercoverage_pp": -7.945870922970155,
     "aci_dev_pp": 0.08327550312282606
+  },
+  "real_arrival": {
+    "dataset": "HPMLL/BurstGPT BurstGPT_1.csv (CC-BY-4.0; Wang et al. 2025)",
+    "n_requests": 50000,
+    "n_trajectories": 30945,
+    "median_prompt_tokens": 84.0,
+    "median_trajectory_depth": 1.0,
+    "scope_cap": 168,
+    "breaker_max_loops": 15,
+    "session_window_seconds": 60,
+    "model_mix": {
+      "ChatGPT": 41271,
+      "GPT-4": 8729
+    },
+    "baseline_tokens": 28503880.0,
+    "baseline_usd": 191.95349600000003,
+    "baseline_carbon": 2883.0103050000002,
+    "reductions": {
+      "+scope": {
+        "tokens": {
+          "point": 55.68729239668424,
+          "lo": 55.317267561871056,
+          "hi": 56.06261278756896
+        },
+        "usd": {
+          "point": 38.84582023971056,
+          "lo": 38.3460623529252,
+          "hi": 39.30906536980879
+        },
+        "carbon": {
+          "point": 58.14582025921687,
+          "lo": 57.67839853357,
+          "hi": 58.59180881852451
+        }
+      },
+      "+scope+route": {
+        "tokens": {
+          "point": 55.68729239668424,
+          "lo": 55.32664409137724,
+          "hi": 56.07907616849991
+        },
+        "usd": {
+          "point": 54.969704745570255,
+          "lo": 54.057389256133646,
+          "hi": 55.9083727661374
+        },
+        "carbon": {
+          "point": 67.39812823874038,
+          "lo": 66.80784471904718,
+          "hi": 68.03195538972395
+        }
+      },
+      "+full": {
+        "tokens": {
+          "point": 55.68729239668424,
+          "lo": 55.32620045982682,
+          "hi": 56.04791063350628
+        },
+        "usd": {
+          "point": 54.969704745570255,
+          "lo": 54.008521360242284,
+          "hi": 55.91378446249948
+        },
+        "carbon": {
+          "point": 67.39812823874038,
+          "lo": 66.75198136238643,
+          "hi": 67.99665181722449
+        }
+      }
+    },
+    "full_breaker_trips": 0,
+    "binding_budget_points": [
+      {
+        "fraction": 0.5,
+        "budget_tokens": 14251940.0,
+        "admission_rate": 0.3598259991828691,
+        "over_budget_incidence": 0.0,
+        "completed_traj_rate": 0.139214735821619
+      },
+      {
+        "fraction": 1.0,
+        "budget_tokens": 28503880.0,
+        "admission_rate": 0.99988,
+        "over_budget_incidence": 0.0,
+        "completed_traj_rate": 0.9998061076102763
+      },
+      {
+        "fraction": 1.5,
+        "budget_tokens": 42755820.0,
+        "admission_rate": 1.0,
+        "over_budget_incidence": 0.0,
+        "completed_traj_rate": 1.0
+      }
+    ]
   }
 }

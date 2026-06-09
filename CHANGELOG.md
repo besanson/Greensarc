@@ -18,6 +18,10 @@ Third-pass audit follow-ups.
   a soft-penalty-vs-gate comparison — all from reproducible data assets
   (`paper/scripts/gen_data.py`, `paper/scripts/build_figures.py`, `make paper`);
   `examples/learning_curve --emit-json` emits the cold-start curve.
+- Paper §11 real-arrival ablation on the BurstGPT Azure GPT-3.5/GPT-4 trace
+  (`paper/scripts/run_real_arrival.py`, `make paper-real-arrival`): the four-condition
+  ablation reproduces the synthetic savings ordering on real arrivals (token/USD/carbon
+  −55.7% / −55.0% / −67.4%), with a binding-budget companion to §9.
 
 ### Changed
 - Benchmark now runs an **ablation** (`baseline → +scope → +scope+route → +full`) so
