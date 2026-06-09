@@ -13,10 +13,18 @@ Everything is reproducible from the repository — no number in the paper is
 hand-entered. From the repository root:
 
 ```bash
-make paper-data       # regenerate data/ibp_ablation.json (20 seeds) + data/learning_curve.json
-make paper-figures    # build the 7 figures (figures/*.pdf) + data/figure_stats.json
-make paper            # the above, then compile green-sarc.pdf (needs a local LaTeX toolchain)
+make paper-binding-budget  # data/binding_budget_sweep.json (§9, finite-budget sweep)
+make paper-realtrace       # data/realtrace_calibration.json + realtrace_shift.json (§10, ShareGPT)
+make paper-data            # all of the above + ablation (20 seeds) + learning curve
+make paper-figures         # build the 11 figures (figures/*.pdf) + data/figure_stats.json
+make paper                 # the above, then compile green-sarc.pdf (needs a local LaTeX toolchain)
+python paper/scripts/check_stats.py   # verify every cited statistic resolves to figure_stats.json
 ```
+
+§10 streams `anon8231489123/ShareGPT_Vicuna_unfiltered` from the Hugging Face
+Hub (ungated; token counts only, no LLM calls) and caches the extracted table to
+`data/sharegpt_subset.parquet` (git-ignored). LMSYS-Chat-1M is gated and would
+not reproduce on a clean clone, so ShareGPT is used as the real-trace source.
 
 If you have no LaTeX locally, push to the repo: the
 [`paper`](../.github/workflows/paper.yml) workflow renders the PDF as a CI
@@ -49,8 +57,11 @@ benchmark.
 | Escalation to human / deterministic fallback (§6, Table 2) | [`escalation.py`](../src/green_sarc/escalation.py) |
 | Phase 1 per-action; Phase 2 trajectory (§5.4) | Phase 1 implemented; Phase 2 stub in [`trajectory.py`](../src/green_sarc/trajectory.py) |
 | State-Snowball `Θ(n²)` theorem & Adapter Nodes (§4, §6) | [`scoping.py`](../src/green_sarc/scoping.py) `AdapterNode` |
+| Anytime-valid trajectory bound, Theorem 3 (§7) | [`build_figures.py`](scripts/build_figures.py) (`fig_realtrace_*`), `gate.py` |
 | Ablation + CIs, cold start, calibration (§8) | [`benchmarks/`](../benchmarks/), [`scripts/gen_data.py`](scripts/gen_data.py) |
-| Sensitivity to δ (§9); soft-penalty baseline (§10) | [`scripts/build_figures.py`](scripts/build_figures.py) |
+| Binding-budget gate sweep + Pareto (§9) | [`scripts/run_binding_budget.py`](scripts/run_binding_budget.py) |
+| Real-trace coverage + distribution shift (§10) | [`scripts/run_realtrace_replay.py`](scripts/run_realtrace_replay.py) |
+| Sensitivity to δ (§11); soft-penalty baseline (§12) | [`scripts/build_figures.py`](scripts/build_figures.py) |
 
 ## Scope notes (implementation vs. paper)
 

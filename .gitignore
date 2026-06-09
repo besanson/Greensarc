@@ -23,6 +23,9 @@ env/
 artifacts/
 *.jsonl.tmp
 
+# Real-trace dataset cache (regenerated on first run; large, not committed)
+paper/data/*.parquet
+
 # Editors / OS
 .idea/
 .vscode/
