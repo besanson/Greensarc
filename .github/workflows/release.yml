@@ -1,9 +1,12 @@
 name: release
 
+# Publishing fires only on an explicit GitHub Release (or manual dispatch), never
+# on a bare tag push. `git push origin v0.3.0` is therefore safe; PyPI publishing
+# requires `gh release create`, which the maintainer runs intentionally.
 on:
-  push:
-    tags:
-      - "v*"
+  release:
+    types: [published]
+  workflow_dispatch:
 
 jobs:
   test:

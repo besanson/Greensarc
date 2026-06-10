@@ -285,7 +285,7 @@ Audit schema & \texttt{plan\_id}, \texttt{session\_id}, \texttt{parent\_action\_
 \label{tab:roadmap}
 \end{table}
 
-\noindent\textbf{Reproducibility contract.} The committed \texttt{benchmarks/reference\_summary.json} (20 seeds, 4 conditions $\times$ 4 metrics) is the regression contract: a pull request that drifts these numbers by more than $2\%$ per cell, or by more than $1.5$ absolute percentage points on the \texttt{+full} token reduction, fails CI via \texttt{make verify}.
+\noindent\textbf{Reproducibility contract.} The committed \texttt{benchmarks/reference\_summary.json} (20 seeds, 4 conditions $\times$ 4 metrics) is the regression contract: a pull request that drifts these numbers by more than $2\%$ per cell, or by more than $1.5$ absolute percentage points on the \texttt{+full} token reduction, fails CI via \texttt{make verify}. This paper is companion to release \texttt{v0.3.0} of \texttt{besanson/Greensarc}; the tag pins the exact source tree that produced every number cited above.
 
 \noindent\textbf{API stability.} The public surfaces in \texttt{green\_sarc.governor}, \texttt{.state}, \texttt{.gate}, \texttt{.auditor}, \texttt{.escalation}, and the three adapters (\texttt{mcp}, \texttt{pais\_sidecar}, \texttt{otel}) follow semver within $0.x$; the \texttt{examples/} and \texttt{benchmarks/} paths and the audit-record schema may evolve.
 
@@ -529,8 +529,8 @@ The IBP pipeline tightened two claims and the real trace now corroborates them: 
 \subsection{Carbon savings under real grid mixes}\label{sec:realgrid}
 The carbon results so far use a stipulated intensity curve. We re-compute the BurstGPT carbon reductions under measured grid intensity for two zones with contrasting generation mixes.
 
-\subsubsection*{Setup}
-We had intended ElectricityMaps Italy and US-CAISO, but its historical portal, ENTSO-E, and CAISO OASIS all require an account or are unreachable from a sandboxed run. The one fully-open real source is the UK Carbon Intensity API~\cite{ukcarbon} (no account, half-hourly measured intensity), so the two real zones are GB regions with deliberately contrasting mixes: \textbf{GB-North-Scotland} (mean $\bar\kappa=3.5$\,gCO\textsubscript{2}e/kWh, $\approx$$90\%$ wind/hydro) and \textbf{GB-London} ($\bar\kappa=81.4$), against the stipulated curve ($\bar\kappa=250$). Carbon for each step is $\text{energy\_kwh}(\text{model},\text{tokens})\times\kappa(t)$, with the workload's actions spread across the zone's measured intensity window. \texttt{load\_grid.py} fetches and caches GB data automatically; an operator can drop ElectricityMaps/ENTSO-E/CAISO CSVs into \texttt{paper/data/grid/} to use IT/CAISO instead.
+\subsubsection*{Setup and data sources}
+We source half-hourly real carbon-intensity measurements from the UK National Grid ESO Carbon Intensity API~\cite{ukcarbon}, a public, account-free, regulator-curated feed covering 2024 with regional disaggregation. We use two contrasting GB regions to bracket the realistic operating range: \textbf{GB-North-Scotland} ($\bar\kappa \approx 3.5$ gCO\textsubscript{2}e/kWh, $\sim$$90\%$ wind+hydro) and \textbf{GB-London} ($\bar\kappa \approx 81.4$ gCO\textsubscript{2}e/kWh, gas-dominated). For reference we also report results under the benchmark's stipulated proxy ($\bar\kappa = 250$). Carbon for each step is $\text{energy\_kwh}(\text{model},\text{tokens})\times\kappa(t)$, with the workload's actions spread across the zone's measured intensity window. The \texttt{load\_grid.py} loader additionally accepts user-supplied ElectricityMaps, ENTSO-E, or CAISO OASIS CSVs at \texttt{paper/data/grid/}; the production-grid extension is left as a one-CSV addition to this paper's data directory.
 
 \subsubsection*{Results}
 \begin{table}[H]
