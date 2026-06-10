@@ -49,6 +49,8 @@ Third-pass audit follow-ups.
   behaviour unchanged; `make verify` holds. 9 new tests (split coverage on
   Gaussian/Pareto/mixture residuals, ACI coverage restoration under shift, and a
   gate/ShareGPT-style integration test). Re-exported from the package root.
+- Paper companion: `paper/green-sarc.tex` at this tag is the exact source for all
+  cited numbers; `python paper/scripts/check_stats.py` is the cross-check linter.
 
 ## [0.2.0] — 2026-06-08
 

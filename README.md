@@ -14,6 +14,10 @@ enforcement sites to the FinOps / GreenOps domain.
 > split-conformal / adaptive-conformal bound (opt-in via `calibrator=...`); the
 > default Normal-σ behaviour is unchanged.
 
+### Releases
+
+- v0.3.0: runtime conformal calibration (`PreActionGate(calibrator=...)`), real-arrival ablation on BurstGPT, real-grid sensitivity (UK ESO Carbon Intensity), joint sensitivity grid, multi-step trajectory ablation on SWE-rebench OpenHands, adversarial threat model. Paper companion at tag `v0.3.0`.
+
 ### Headline result
 
 The predictive gate is a *learned forecaster*, not a static rule. On the runnable
