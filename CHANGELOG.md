@@ -38,6 +38,18 @@ Third-pass audit follow-ups.
   (F-12); `release.yml` gates publish on the test job (F-13); `benchmarks` is now
   type-checked (F-8); runaway-SKU parameter documented as a stress scenario (F-7).
 
+## [0.3.0] — 2026-06-09
+
+### Added
+- **Conformal calibration in the runtime gate.** New `green_sarc.calibrator`
+  module (`Calibrator` protocol, `SplitConformal`, `ACIConformal`). `PreActionGate`
+  gains an optional `calibrator=...` argument: supplying it replaces the
+  Normal-σ token bound with a distribution-free conformal bound (working paper
+  Theorem 2); omitting it preserves the existing behaviour exactly. Default
+  behaviour unchanged; `make verify` holds. 9 new tests (split coverage on
+  Gaussian/Pareto/mixture residuals, ACI coverage restoration under shift, and a
+  gate/ShareGPT-style integration test). Re-exported from the package root.
+
 ## [0.2.0] — 2026-06-08
 
 Senior-review hardening (audit items P0/P1), the §8 benchmark, and out-of-the-box

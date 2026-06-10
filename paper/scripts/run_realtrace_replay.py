@@ -168,13 +168,23 @@ def calibration(rows: List[Dict[str, Any]], tok_name: str) -> Dict[str, Any]:
     r_cal = completion[cal] - pred_cal            # one-sided scores (over-shoot)
     r_test = completion[test] - pred_test
 
-    nominal, cov_gauss, cov_conf = [], [], []
+    # The runtime SplitConformal calibrator (green_sarc.calibrator) fit on the same
+    # residual log — its coverage should match the paper-side analysis to within
+    # Monte Carlo noise, demonstrating the §6.5 runtime path (Item C).
+    from green_sarc.calibrator import SplitConformal
+
+    runtime_cal = SplitConformal()
+    runtime_cal.fit(r_cal)
+
+    nominal, cov_gauss, cov_conf, cov_runtime = [], [], [], []
     for d in DELTAS:
         z = NormalDist().inv_cdf(1.0 - d)
         q = float(np.quantile(r_cal, 1.0 - d, method="higher"))
         cov_gauss.append(float(np.mean(r_test <= z * sigma)))
         cov_conf.append(float(np.mean(r_test <= q)))
+        cov_runtime.append(float(np.mean(r_test <= runtime_cal.upper_bound(0.0, d))))
         nominal.append(1.0 - d)
+    runtime_max_gap_pp = max(abs(a - b) for a, b in zip(cov_runtime, cov_conf)) * 100.0
 
     # Non-Gaussianity diagnostics on calibration residuals.
     ad = stats.anderson(r_cal, dist="norm")
@@ -194,6 +204,8 @@ def calibration(rows: List[Dict[str, Any]], tok_name: str) -> Dict[str, Any]:
         "nominal": nominal,
         "coverage_gaussian": cov_gauss,
         "coverage_conformal": cov_conf,
+        "coverage_runtime_conformal": cov_runtime,
+        "runtime_vs_papereside_max_gap_pp": runtime_max_gap_pp,
         "gaussian_dev_at_005_pp": abs(cov_gauss[j05] - (1 - 0.05)) * 100.0,
         "conformal_dev_at_005_pp": abs(cov_conf[j05] - (1 - 0.05)) * 100.0,
         "max_conformal_dev_pp": max(abs(c - n) for c, n in zip(cov_conf, nominal)) * 100.0,
@@ -310,6 +322,8 @@ def main(argv: Any = None) -> int:
     parser = argparse.ArgumentParser(prog="run_realtrace_replay", description=__doc__)
     parser.add_argument("--out", default="paper/data/realtrace_calibration.json")
     parser.add_argument("--shift-out", default="paper/data/realtrace_shift.json")
+    parser.add_argument("--use-runtime-conformal", action="store_true",
+                        help="report the green_sarc.SplitConformal runtime coverage (§6.5).")
     args = parser.parse_args(argv)
 
     rows, tok_name = _load_or_extract()
@@ -325,6 +339,9 @@ def main(argv: Any = None) -> int:
 
     rd = cal["residuals"]
     print(f"wrote {args.out}")
+    if args.use_runtime_conformal:
+        print(f"  runtime SplitConformal coverage matches paper-side to within "
+              f"{cal['runtime_vs_papereside_max_gap_pp']:.2f} pp across delta")
     print(
         f"  residuals: skew={rd['skew']:.2f} kurtosis={rd['kurtosis_excess']:.2f} "
         f"A-D={rd['anderson_darling_stat']:.1f} (1% crit {rd['anderson_darling_crit_1pct']:.2f}) "

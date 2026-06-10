@@ -5,7 +5,7 @@ PY ?= python
 ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST)))/..)
 TEX := green-sarc.tex
 
-.PHONY: paper paper-data paper-figures paper-binding-budget paper-realtrace paper-real-arrival paper-clean
+.PHONY: paper paper-data paper-figures paper-binding-budget paper-realtrace paper-real-arrival paper-adversarial paper-grid paper-sensitivity-grid paper-multistep paper-clean
 
 # Binding-budget gate sweep (§9): full stack under a finite budget, 20 seeds.
 paper-binding-budget:
@@ -25,8 +25,30 @@ paper-real-arrival:
 	cd $(ROOT) && $(PY) paper/scripts/run_real_arrival.py \
 		--out paper/data/real_arrival.json
 
+# Real grid intensity (§11.5): fetch + cache GB zones from the UK Carbon
+# Intensity API (no account). The grid_sensitivity block itself is produced by
+# paper-real-arrival, which computes carbon under each cached zone.
+paper-grid:
+	cd $(ROOT) && $(PY) paper/scripts/load_grid.py
+
+# Joint sensitivity grid (§12.5): 80 cells (delta x cap x route) x 20 seeds.
+paper-sensitivity-grid:
+	cd $(ROOT) && $(PY) paper/scripts/run_sensitivity_grid.py \
+		--out paper/data/sensitivity_grid.json --seeds 20
+
+# Multi-step real-trace ablation (§11.6): SWE-rebench OpenHands plans, token
+# counts only. Caches paper/data/swe_rebench_subset.parquet (git-ignored).
+paper-multistep:
+	cd $(ROOT) && $(PY) paper/scripts/run_multistep_replay.py \
+		--out paper/data/multistep_replay.json --max-trajectories 3000
+
+# Adversarial robustness study (§13): three attack classes vs the gate.
+paper-adversarial:
+	cd $(ROOT) && $(PY) paper/scripts/run_adversarial.py \
+		--out paper/data/adversarial.json
+
 # Regenerate every reproducible data asset.
-paper-data: paper-binding-budget paper-realtrace paper-real-arrival
+paper-data: paper-binding-budget paper-realtrace paper-real-arrival paper-multistep paper-sensitivity-grid paper-adversarial
 	cd $(ROOT) && $(PY) examples/learning_curve/run_demo.py \
 		--emit-json paper/data/learning_curve.json --n 400 --seed 7
 	cd $(ROOT) && $(PY) -m paper.scripts.gen_data --seeds 20 \

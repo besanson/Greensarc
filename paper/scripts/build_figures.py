@@ -536,6 +536,132 @@ def build_real_arrival_pareto(ra: Dict[str, Any], stats: Dict[str, Any]) -> None
     _save(fig, "real_arrival_pareto")
 
 
+def build_grid_sensitivity(ra: Dict[str, Any], stats: Dict[str, Any]) -> None:
+    """Carbon reduction per condition under each real grid (§11.5), one panel per zone."""
+    gs = ra["grid_sensitivity"]["zones"]
+    zones = ["stipulated", "GB-london", "GB-north-scotland"]
+    conds = ["+scope", "+scope+route", "+full"]
+    fig, axes = plt.subplots(1, len(zones), figsize=(8.2, 3.0), sharey=True)
+    for ax, zone in zip(axes, zones):
+        z = gs[zone]
+        pts = [z["carbon_reduction_ci"][c]["point"] for c in conds]
+        los = [pts[i] - z["carbon_reduction_ci"][c]["lo"] for i, c in enumerate(conds)]
+        his = [z["carbon_reduction_ci"][c]["hi"] - pts[i] for i, c in enumerate(conds)]
+        ax.bar(range(len(conds)), pts, yerr=[los, his], capsize=3,
+               color=[BLUE, ORANGE, GREEN], error_kw={"lw": 0.8})
+        ax.set_xticks(range(len(conds)))
+        ax.set_xticklabels(conds, rotation=20, fontsize=7)
+        ax.set_title(f"{zone}\n$\\bar\\kappa$={z['mean_kappa']:.0f} gCO$_2$e/kWh", fontsize=8)
+    axes[0].set_ylabel("carbon reduction (%)")
+    fig.suptitle("Carbon savings under real grid mixes (BurstGPT)", fontsize=10, y=1.10)
+    fig.tight_layout()
+    _save(fig, "grid_sensitivity")
+    stats["grid_sensitivity"] = {
+        z: {"mean_kappa": gs[z]["mean_kappa"], "carbon_reduction": gs[z]["carbon_reduction"],
+            "carbon_reduction_ci": gs[z]["carbon_reduction_ci"]}
+        for z in zones
+    }
+
+
+def build_sensitivity_grid_pareto(sg: Dict[str, Any], stats: Dict[str, Any]) -> None:
+    cells = sg["cells"]
+    x = [c["token_reduction"] for c in cells]
+    y = [c["over_budget_incidence"] * 100 for c in cells]
+    fr = [c for c in cells if c["on_frontier"]]
+    h = sg["headline"]
+    fig, ax = plt.subplots()
+    ax.scatter(x, y, s=14, color=GREY, alpha=0.5, label="80 cells")
+    ax.scatter([c["token_reduction"] for c in fr], [c["over_budget_incidence"] * 100 for c in fr],
+               s=26, color=BLUE, label="Pareto frontier")
+    ax.scatter([h["token_reduction"]], [h["over_budget_incidence"] * 100], s=90, marker="*",
+               color=ORANGE, zorder=5, label="headline (cap $0.5\\times$, route $0.5$, $\\delta{=}0.1$)")
+    ax.set_xlabel("token reduction (%)")
+    ax.set_ylabel("over-budget incidence (%)")
+    ax.set_title("Joint sensitivity: 80 operating points")
+    ax.legend(fontsize=7, loc="upper center")
+    _save(fig, "sensitivity_grid_pareto")
+
+
+def build_sensitivity_grid_heatmap(sg: Dict[str, Any], stats: Dict[str, Any]) -> None:
+    deltas = sg["deltas"]
+    caps = sg["cap_multiples"]
+    routes = sg["route_fractions"]
+    by = {(c["delta"], c["cap_mult"], c["route_fraction"]): c["token_reduction"] for c in sg["cells"]}
+    fig, axes = plt.subplots(1, len(deltas), figsize=(11, 2.8), sharey=True)
+    vmin = min(c["token_reduction"] for c in sg["cells"])
+    vmax = max(c["token_reduction"] for c in sg["cells"])
+    for ax, d in zip(axes, deltas):
+        grid = np.array([[by[(d, m, r)] for r in routes] for m in caps])
+        im = ax.imshow(grid, aspect="auto", cmap="viridis", vmin=vmin, vmax=vmax, origin="lower")
+        ax.set_xticks(range(len(routes)))
+        ax.set_xticklabels([f"{r:g}" for r in routes], fontsize=7)
+        ax.set_yticks(range(len(caps)))
+        ax.set_yticklabels([f"{m:g}$\\times$" for m in caps], fontsize=7)
+        ax.set_xlabel("route frac", fontsize=8)
+        ax.set_title(f"$\\delta={d}$", fontsize=8)
+    axes[0].set_ylabel("scope cap")
+    fig.colorbar(im, ax=axes, label="token reduction (%)", fraction=0.025)
+    fig.suptitle("Token reduction over (scope cap $\\times$ route), per $\\delta$", fontsize=10)
+    _save(fig, "sensitivity_grid_heatmap")
+    stats["sensitivity_grid"] = {
+        "n_cells": sg["n_cells"], "n_frontier": sg["n_frontier"],
+        "headline": sg["headline"], "headline_on_frontier": sg["headline_on_frontier"],
+        "caps": sg["caps"], "median_prompt": sg["median_prompt"],
+        "token_reduction_by_cap": {
+            str(m): statistics.fmean([c["token_reduction"] for c in sg["cells"]
+                                      if c["cap_mult"] == m]) for m in caps},
+        "max_over_budget_pct": max(c["over_budget_incidence"] for c in sg["cells"]) * 100,
+    }
+
+
+def build_multistep_bars(ms: Dict[str, Any], stats: Dict[str, Any]) -> None:
+    conds = ["+scope", "+scope+route", "+full"]
+    metrics = [("tokens", "tokens"), ("usd", "USD"), ("carbon", "carbon")]
+    x = np.arange(len(conds))
+    width = 0.26
+    fig, ax = plt.subplots()
+    C = ms["conditions"]
+    for j, (key, label) in enumerate(metrics):
+        pts = [C[c]["reduction_ci"][key]["point"] for c in conds]
+        los = [pts[i] - C[c]["reduction_ci"][key]["lo"] for i, c in enumerate(conds)]
+        his = [C[c]["reduction_ci"][key]["hi"] - pts[i] for i, c in enumerate(conds)]
+        ax.bar(x + (j - 1) * width, pts, width, yerr=[los, his], capsize=3,
+               color=[BLUE, ORANGE, GREEN][j], label=label, error_kw={"lw": 0.8})
+    ax.set_xticks(x)
+    ax.set_xticklabels(conds)
+    ax.set_ylabel("% reduction vs. baseline")
+    ax.set_title("Multi-step ablation (SWE-rebench, 95% CI)")
+    ax.legend(fontsize=8)
+    _save(fig, "multistep_bars")
+
+
+def build_multistep_snowball_fit(ms: Dict[str, Any], stats: Dict[str, Any]) -> None:
+    sf = ms["snowball_fit"]
+    c2 = np.array(sf["c2_sample"])
+    fig, ax = plt.subplots()
+    ax.hist(c2, bins=60, color=BLUE, alpha=0.8,
+            range=(float(np.percentile(c2, 1)), float(np.percentile(c2, 99))))
+    ax.axvline(sf["median_c2"], color=GREEN, lw=1.5, label=f"median $\\hat c_2$={sf['median_c2']:.0f}")
+    ax.axvline(sf["theoretical_c2_p_over_2"], color=ORANGE, lw=1.5, ls="--",
+               label=f"$p/2$={sf['theoretical_c2_p_over_2']:.0f}")
+    ax.axvline(0, color=GREY, lw=1.0, ls=":")
+    ax.set_xlabel("per-trajectory quadratic coefficient $\\hat c_2$")
+    ax.set_ylabel("trajectories")
+    ax.set_title(f"State-Snowball fit on real plans ({sf['frac_c2_positive']*100:.0f}% have $\\hat c_2>0$)")
+    ax.legend(fontsize=8)
+    _save(fig, "multistep_snowball_fit")
+    stats["multistep"] = {
+        "dataset": ms["dataset"], "n_trajectories": ms["n_trajectories"],
+        "median_depth": ms["median_depth"], "max_depth": ms["max_depth"],
+        "median_prompt_tokens": ms["median_prompt_tokens"], "scope_cap": ms["scope_cap"],
+        "breaker_max_loops": ms["breaker_max_loops"],
+        "reductions": {n: ms["conditions"][n]["reduction_ci"]
+                       for n in ("+scope", "+scope+route", "+full")},
+        "full_breaker_trip_rate": ms["conditions"]["+full"]["breaker_trip_rate"],
+        "snowball_fit": {k: v for k, v in sf.items() if k != "c2_sample"},
+    }
+
+
 def main() -> int:
     ab = json.loads((DATA / "ibp_ablation.json").read_text())
     lc = json.loads((DATA / "learning_curve.json").read_text())
@@ -583,6 +709,8 @@ def main() -> int:
             "residuals": cal["residuals"], "deltas": cal["deltas"],
             "coverage_gaussian": cal["coverage_gaussian"],
             "coverage_conformal": cal["coverage_conformal"],
+            "coverage_runtime_conformal": cal.get("coverage_runtime_conformal"),
+            "runtime_vs_papereside_max_gap_pp": cal.get("runtime_vs_papereside_max_gap_pp"),
             "gaussian_dev_at_005_pp": cal["gaussian_dev_at_005_pp"],
             "conformal_dev_at_005_pp": cal["conformal_dev_at_005_pp"],
             "max_conformal_dev_pp": cal["max_conformal_dev_pp"],
@@ -615,6 +743,9 @@ def main() -> int:
         build_real_arrival_bars(ra, stats)
         build_real_arrival_pareto(ra, stats)
         n_fig += 2
+        if "grid_sensitivity" in ra:
+            build_grid_sensitivity(ra, stats)
+            n_fig += 1
         C = ra["ablation"]["conditions"]
         stats["real_arrival"] = {
             "dataset": ra["dataset"],
@@ -633,6 +764,25 @@ def main() -> int:
             "full_breaker_trips": C["+full"]["breaker_trips"],
             "binding_budget_points": ra["binding_budget"]["points"],
         }
+
+    ms_path = DATA / "multistep_replay.json"
+    if ms_path.exists():
+        ms = json.loads(ms_path.read_text())
+        build_multistep_bars(ms, stats)
+        build_multistep_snowball_fit(ms, stats)
+        n_fig += 2
+
+    sg_path = DATA / "sensitivity_grid.json"
+    if sg_path.exists():
+        sg = json.loads(sg_path.read_text())
+        build_sensitivity_grid_pareto(sg, stats)
+        build_sensitivity_grid_heatmap(sg, stats)
+        n_fig += 2
+
+    adv_path = DATA / "adversarial.json"
+    if adv_path.exists():
+        adv = json.loads(adv_path.read_text())
+        stats["adversarial"] = adv  # numbers only; §13 has no figure
 
     (DATA / "figure_stats.json").write_text(json.dumps(stats, indent=2), encoding="utf-8")
     print(f"wrote {n_fig} figures to {FIGS}")

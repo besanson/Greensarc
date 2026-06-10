@@ -308,6 +308,17 @@
       0.9812505948415342,
       0.990815646711716
     ],
+    "coverage_runtime_conformal": [
+      0.5976491862567812,
+      0.7021033596649853,
+      0.8001808318264014,
+      0.8466736461406681,
+      0.9023508137432188,
+      0.9541734082040544,
+      0.9814409441324831,
+      0.9908632340344532
+    ],
+    "runtime_vs_papereside_max_gap_pp": 0.02855239364233375,
     "gaussian_dev_at_005_pp": 2.7329399447986957,
     "conformal_dev_at_005_pp": 0.4125820881317299,
     "max_conformal_dev_pp": 0.4125820881317299,
@@ -354,6 +365,83 @@
     "aci_coverage": 0.9008327550312283,
     "fixed_undercoverage_pp": -7.945870922970155,
     "aci_dev_pp": 0.08327550312282606
+  },
+  "grid_sensitivity": {
+    "stipulated": {
+      "mean_kappa": 250.0,
+      "carbon_reduction": {
+        "+scope": 57.910525274195784,
+        "+scope+route": 67.2460305390256,
+        "+full": 67.2460305390256
+      },
+      "carbon_reduction_ci": {
+        "+scope": {
+          "point": 57.910525274195784,
+          "lo": 57.40914742504912,
+          "hi": 58.352670306506994
+        },
+        "+scope+route": {
+          "point": 67.2460305390256,
+          "lo": 66.60635483324043,
+          "hi": 67.9497856292774
+        },
+        "+full": {
+          "point": 67.2460305390256,
+          "lo": 66.60635483324043,
+          "hi": 67.9497856292774
+        }
+      }
+    },
+    "GB-london": {
+      "mean_kappa": 81.394777265745,
+      "carbon_reduction": {
+        "+scope": 58.3699475808537,
+        "+scope+route": 67.6266694546861,
+        "+full": 67.6266694546861
+      },
+      "carbon_reduction_ci": {
+        "+scope": {
+          "point": 58.3699475808537,
+          "lo": 57.84563613575165,
+          "hi": 58.88233054098908
+        },
+        "+scope+route": {
+          "point": 67.6266694546861,
+          "lo": 66.99469779282538,
+          "hi": 68.28564563263876
+        },
+        "+full": {
+          "point": 67.6266694546861,
+          "lo": 66.99469779282538,
+          "hi": 68.28564563263876
+        }
+      }
+    },
+    "GB-north-scotland": {
+      "mean_kappa": 3.474654377880184,
+      "carbon_reduction": {
+        "+scope": 59.17804343003967,
+        "+scope+route": 68.81009854958603,
+        "+full": 68.81009854958603
+      },
+      "carbon_reduction_ci": {
+        "+scope": {
+          "point": 59.17804343003967,
+          "lo": 57.24841358676639,
+          "hi": 61.05713111632078
+        },
+        "+scope+route": {
+          "point": 68.81009854958603,
+          "lo": 66.32182344493835,
+          "hi": 71.38909401921435
+        },
+        "+full": {
+          "point": 68.81009854958603,
+          "lo": 66.32182344493835,
+          "hi": 71.38909401921435
+        }
+      }
+    }
   },
   "real_arrival": {
     "dataset": "HPMLL/BurstGPT BurstGPT_1.csv (CC-BY-4.0; Wang et al. 2025)",
@@ -448,5 +536,168 @@
         "completed_traj_rate": 1.0
       }
     ]
+  },
+  "multistep": {
+    "dataset": "nebius/SWE-rebench-openhands-trajectories (CC-BY-4.0)",
+    "n_trajectories": 3000,
+    "median_depth": 61.0,
+    "max_depth": 100,
+    "median_prompt_tokens": 21579.0,
+    "scope_cap": 43158,
+    "breaker_max_loops": 92,
+    "reductions": {
+      "+scope": {
+        "tokens": {
+          "point": 2.2671756791827278,
+          "lo": 2.005962634414213,
+          "hi": 2.534908005830156
+        },
+        "usd": {
+          "point": 2.2593819610180894,
+          "lo": 1.997024102131355,
+          "hi": 2.5241833395964073
+        },
+        "carbon": {
+          "point": 2.2671756791827207,
+          "lo": 1.994127198442026,
+          "hi": 2.543577368300007
+        }
+      },
+      "+scope+route": {
+        "tokens": {
+          "point": 2.2671756791827278,
+          "lo": 1.9936065933184661,
+          "hi": 2.534375166012728
+        },
+        "usd": {
+          "point": 42.3428199939009,
+          "lo": 40.720976537711934,
+          "hi": 44.05102425081221
+        },
+        "carbon": {
+          "point": 39.84199783620603,
+          "lo": 38.375748024121606,
+          "hi": 41.21426635931983
+        }
+      },
+      "+full": {
+        "tokens": {
+          "point": 4.564908975994543,
+          "lo": 4.175356008554541,
+          "hi": 4.933268491693974
+        },
+        "usd": {
+          "point": 43.66456138475215,
+          "lo": 42.0967920265883,
+          "hi": 45.24999010157955
+        },
+        "carbon": {
+          "point": 41.225455272945,
+          "lo": 39.75878180016095,
+          "hi": 42.649444928222096
+        }
+      }
+    },
+    "full_breaker_trip_rate": 0.114,
+    "snowball_fit": {
+      "n_trajectories_fit": 3000,
+      "median_c2": 216.05190219278967,
+      "frac_c2_positive": 1.0,
+      "median_per_turn_growth_p": 268.0,
+      "theoretical_c2_p_over_2": 134.0
+    }
+  },
+  "sensitivity_grid": {
+    "n_cells": 80,
+    "n_frontier": 20,
+    "headline": {
+      "delta": 0.1,
+      "cap_mult": 0.5,
+      "scope_cap": 370,
+      "route_fraction": 0.5,
+      "token_reduction": 46.69889589468226,
+      "usd_reduction": 67.29548196427052,
+      "carbon_reduction": 66.80981501243986,
+      "over_budget_incidence": 0.0,
+      "is_headline": true,
+      "on_frontier": true
+    },
+    "headline_on_frontier": true,
+    "caps": {
+      "0.5": 370,
+      "1.0": 740,
+      "2.0": 1480,
+      "4.0": 2960
+    },
+    "median_prompt": 740.0,
+    "token_reduction_by_cap": {
+      "0.5": 46.69889589468226,
+      "1.0": 28.36426309668384,
+      "2.0": 20.398620385912622,
+      "4.0": 20.261697435875174
+    },
+    "max_over_budget_pct": 0.0025207967318985574
+  },
+  "adversarial": {
+    "seeds": 20,
+    "n_per_class": 200,
+    "scope_cap": 360,
+    "delta": 0.05,
+    "classes": {
+      "continuation_inflation": {
+        "admission_rate": {
+          "point": 1.0,
+          "lo": 1.0,
+          "hi": 1.0
+        },
+        "over_budget_rate": {
+          "point": 1.0,
+          "lo": 1.0,
+          "hi": 1.0
+        },
+        "realized_declared_ratio": {
+          "point": 3.7689315002804364,
+          "lo": 3.751397552060383,
+          "hi": 3.786666065064395
+        },
+        "failure_mode": "under-estimates"
+      },
+      "scope_cap_aware_padding": {
+        "admission_rate": {
+          "point": 1.0,
+          "lo": 1.0,
+          "hi": 1.0
+        },
+        "over_budget_rate": {
+          "point": 0.05025,
+          "lo": 0.042,
+          "hi": 0.05850000000000001
+        },
+        "realized_declared_ratio": {
+          "point": 0.9499046897517387,
+          "lo": 0.948287038822407,
+          "hi": 0.9516091963409812
+        },
+        "failure_mode": "over-admits"
+      },
+      "model_substitution_gaming": {
+        "admission_rate": {
+          "point": 1.0,
+          "lo": 1.0,
+          "hi": 1.0
+        },
+        "over_budget_rate": {
+          "point": 1.0,
+          "lo": 1.0,
+          "hi": 1.0
+        },
+        "realized_declared_ratio": {
+          "point": 5.0,
+          "lo": 5.0,
+          "hi": 5.0
+        },
+        "failure_mode": "under-estimates"
+      }
+    }
   }
 }

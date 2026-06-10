@@ -10,6 +10,9 @@ enforcement sites to the FinOps / GreenOps domain.
 
 > Status: alpha (Phase 1). The core is framework-agnostic and runs standalone.
 > KAOS integrates as the caller through an adapter; the dependency runs one way.
+> As of v0.3.0 the Pre-Action Gate can admit on a distribution-free
+> split-conformal / adaptive-conformal bound (opt-in via `calibrator=...`); the
+> default Normal-σ behaviour is unchanged.
 
 ### Headline result
 

@@ -281,6 +281,53 @@ def binding_budget(trajs, cost_model, carbon, e_base: float, max_loops: int) -> 
             "pareto_reference_budget": b_star, "soft_penalty_frontier": frontier}
 
 
+def grid_sensitivity(trajs, cost_model, scope_cap, max_loops, zones, boot: int) -> Dict[str, Any]:
+    """Carbon reduction per condition under each real grid intensity series (§11.5).
+
+    Carbon of a step = energy_kwh(model, tokens) * kappa(t); the workload's actions
+    are spread across the zone's measured intensity window so kappa(t) varies.
+    """
+    from paper.scripts.load_grid import load_kappa, mean_intensity
+
+    rng = np.random.default_rng(0)
+    route_simple = rng.random(len(trajs)) < 0.5
+    out: Dict[str, Any] = {"zones": {}}
+    for zone in zones:
+        kappa = load_kappa(zone)
+        per: Dict[str, np.ndarray] = {}
+        for name, feats in CONDITIONS:
+            adapter = AdapterNode(scope_cap)
+            car = np.empty(len(trajs))
+            for j, tr in enumerate(trajs):
+                t = float(j * 1800)  # half-hour spacing across the kappa window
+                monitor = ActionTimeMonitor(max_loops=max_loops) if "monitor" in feats else None
+                c = 0.0
+                for s in tr:
+                    prompt = adapter.bound(s["prompt"]) if "scope" in feats else s["prompt"]
+                    model = SMALL_MODEL if ("routing" in feats and route_simple[j]) else s["model"]
+                    if monitor is not None:
+                        try:
+                            monitor.before()
+                        except CircuitTripped:
+                            break
+                    c += cost_model.energy_kwh(model, prompt + s["completion"]) * kappa(t)
+                car[j] = c
+            per[name] = car
+        base = per["baseline"]
+        out["zones"][zone] = {
+            "mean_kappa": mean_intensity(zone),
+            "carbon_reduction": {
+                n: _paired_ci(base, per[n], boot, np.random.default_rng(2))["point"]
+                for n in ("+scope", "+scope+route", "+full")
+            },
+            "carbon_reduction_ci": {
+                n: _paired_ci(base, per[n], boot, np.random.default_rng(2))
+                for n in ("+scope", "+scope+route", "+full")
+            },
+        }
+    return out
+
+
 def main(argv: Any = None) -> int:
     p = argparse.ArgumentParser(prog="run_real_arrival", description=__doc__)
     p.add_argument("--out", default="paper/data/real_arrival.json")
@@ -288,6 +335,9 @@ def main(argv: Any = None) -> int:
     p.add_argument("--bootstrap", type=int, default=1000)
     p.add_argument("--session-window-seconds", type=int, default=60)
     p.add_argument("--max-depth", type=int, default=10)
+    p.add_argument("--grid-zone", default="stipulated",
+                   help="grid zone for the headline carbon (default stipulated; "
+                        "real GB-* zones fetch from the UK Carbon Intensity API).")
     args = p.parse_args(argv)
 
     df = _load(args.max_conversations)
@@ -320,6 +370,9 @@ def main(argv: Any = None) -> int:
         "model_mix": {k: int((df["Model"] == k).sum()) for k in df["Model"].unique()},
         "ablation": abl,
         "binding_budget": bb,
+        "grid_sensitivity": grid_sensitivity(
+            trajs, cost_model, scope_cap, max_loops,
+            ["stipulated", "GB-north-scotland", "GB-london"], args.bootstrap),
     }
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
