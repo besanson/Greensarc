@@ -144,9 +144,10 @@ def mean_intensity(zone: str, year: int = 2024) -> float:
 
 
 if __name__ == "__main__":
-    for z in ("stipulated", *GB_REGIONS.keys()):
+    # Validate the zones used by §11.5 from their committed CSVs (no network).
+    for z in ("stipulated", "IT", "US-CAISO"):
         try:
-            print(f"{z:20s} mean kappa = {mean_intensity(z):.1f} gCO2e/kWh "
+            print(f"{z:12s} mean kappa = {mean_intensity(z):.1f} gCO2e/kWh "
                   f"({len(_series(z, 2024))} samples)")
         except SystemExit:
-            pass
+            print(f"{z:12s} no cached CSV; run paper-fetch-grid with the API key")

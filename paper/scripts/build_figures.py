@@ -539,7 +539,7 @@ def build_real_arrival_pareto(ra: Dict[str, Any], stats: Dict[str, Any]) -> None
 def build_grid_sensitivity(ra: Dict[str, Any], stats: Dict[str, Any]) -> None:
     """Carbon reduction per condition under each real grid (§11.5), one panel per zone."""
     gs = ra["grid_sensitivity"]["zones"]
-    zones = ["stipulated", "GB-london", "GB-north-scotland"]
+    zones = ["stipulated", "IT", "US-CAISO"]
     conds = ["+scope", "+scope+route", "+full"]
     fig, axes = plt.subplots(1, len(zones), figsize=(8.2, 3.0), sharey=True)
     for ax, zone in zip(axes, zones):
@@ -556,9 +556,18 @@ def build_grid_sensitivity(ra: Dict[str, Any], stats: Dict[str, Any]) -> None:
     fig.suptitle("Carbon savings under real grid mixes (BurstGPT)", fontsize=10, y=1.10)
     fig.tight_layout()
     _save(fig, "grid_sensitivity")
+
+    # Diurnal stats per real zone (from the committed CSV) for the §11.5.3 prose.
+    def _diurnal(name: str) -> Dict[str, float]:
+        csv = DATA / "grid" / f"{name}_hourly_2024.csv"
+        vals = [float(line.split(",")[1]) for line in csv.read_text().splitlines()[1:]]
+        return {"min": min(vals), "max": max(vals),
+                "swing_ratio": max(vals) / min(vals) if min(vals) else 0.0}
+
     stats["grid_sensitivity"] = {
         z: {"mean_kappa": gs[z]["mean_kappa"], "carbon_reduction": gs[z]["carbon_reduction"],
-            "carbon_reduction_ci": gs[z]["carbon_reduction_ci"]}
+            "carbon_reduction_ci": gs[z]["carbon_reduction_ci"],
+            **({"diurnal": _diurnal(z)} if (DATA / "grid" / f"{z}_hourly_2024.csv").exists() else {})}
         for z in zones
     }
 

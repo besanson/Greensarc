@@ -6,6 +6,13 @@ All notable changes to this project are documented here.
 
 Third-pass audit follow-ups.
 
+### Changed
+- Real-grid data source upgraded from UK ESO to ElectricityMaps IT + US-CAISO;
+  §11.5 now uses the two zones originally targeted in the brief. Fetched via
+  `paper/scripts/fetch_grid.py` (key from `ELECTRICITYMAPS_API_KEY`); cached
+  hourly CSVs committed under `paper/data/grid/` so §11.5 reproduces without API
+  access.
+
 ### Added
 - `make verify` / `python -m benchmarks.reproduce --verify REF` — reproduces the
   20-seed ablation and gates the headline numbers against

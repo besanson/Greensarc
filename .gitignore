@@ -32,3 +32,6 @@ paper/data/*.parquet
 .DS_Store
 paper/data/swe_rebench_subset.parquet
 paper/data/tau_bench_subset.parquet
+
+# Secrets (never commit real keys)
+.env
