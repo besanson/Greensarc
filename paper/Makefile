@@ -5,7 +5,7 @@ PY ?= python
 ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST)))/..)
 TEX := green-sarc.tex
 
-.PHONY: paper paper-data paper-figures paper-binding-budget paper-realtrace paper-real-arrival paper-adversarial paper-grid paper-sensitivity-grid paper-multistep paper-clean
+.PHONY: paper paper-data paper-figures paper-binding-budget paper-realtrace paper-real-arrival paper-adversarial paper-grid paper-fetch-grid paper-sensitivity-grid paper-multistep paper-clean
 
 # Binding-budget gate sweep (§9): full stack under a finite budget, 20 seeds.
 paper-binding-budget:
@@ -26,10 +26,17 @@ paper-real-arrival:
 		--out paper/data/real_arrival.json
 
 # Real grid intensity (§11.5): fetch + cache GB zones from the UK Carbon
-# Intensity API (no account). The grid_sensitivity block itself is produced by
-# paper-real-arrival, which computes carbon under each cached zone.
+# real grid (§11.5): the grid_sensitivity block is produced by paper-real-arrival,
+# which reads the committed CSVs at paper/data/grid/. paper-grid just validates
+# the cached zones; refreshing the data needs the API key (paper-fetch-grid).
 paper-grid:
 	cd $(ROOT) && $(PY) paper/scripts/load_grid.py
+
+# Optional: re-fetch real grid intensity from the ElectricityMaps API (§11.5).
+# Needs ELECTRICITYMAPS_API_KEY; not a paper-data dependency, since the committed
+# CSVs reproduce §11.5 without any API access.
+paper-fetch-grid:
+	cd $(ROOT) && $(PY) paper/scripts/fetch_grid.py --zones IT,US-CAL-CISO --year 2024
 
 # Joint sensitivity grid (§12.5): 80 cells (delta x cap x route) x 20 seeds.
 paper-sensitivity-grid:

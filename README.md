@@ -16,7 +16,7 @@ enforcement sites to the FinOps / GreenOps domain.
 
 ### Releases
 
-- v0.3.0: runtime conformal calibration (`PreActionGate(calibrator=...)`), real-arrival ablation on BurstGPT, real-grid sensitivity (UK ESO Carbon Intensity), joint sensitivity grid, multi-step trajectory ablation on SWE-rebench OpenHands, adversarial threat model. Paper companion at tag `v0.3.0`.
+- v0.3.0: runtime conformal calibration (`PreActionGate(calibrator=...)`), real-arrival ablation on BurstGPT, real-grid sensitivity (ElectricityMaps IT + US-CAISO), joint sensitivity grid, multi-step trajectory ablation on SWE-rebench OpenHands, adversarial threat model. Paper companion at tag `v0.3.0`.
 
 ### Headline result
 

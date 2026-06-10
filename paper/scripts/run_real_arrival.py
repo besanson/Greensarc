@@ -372,7 +372,7 @@ def main(argv: Any = None) -> int:
         "binding_budget": bb,
         "grid_sensitivity": grid_sensitivity(
             trajs, cost_model, scope_cap, max_loops,
-            ["stipulated", "GB-north-scotland", "GB-london"], args.bootstrap),
+            ["stipulated", "IT", "US-CAISO"], args.bootstrap),
     }
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)

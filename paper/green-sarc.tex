@@ -156,7 +156,7 @@ Symbol & Meaning \\
 \midrule
 $a, x$ & proposed action; its context \\
 $\btok$ & live remaining token budget \\
-$\kappa(\rho,t)$ & marginal carbon intensity (gCO\textsubscript{2}e/kWh), region $\rho$, time $t$; real grid data used in \S\ref{sec:realgrid}~\cite{ukcarbon}, stipulated by default \\
+$\kappa(\rho,t)$ & marginal carbon intensity (gCO\textsubscript{2}e/kWh), region $\rho$, time $t$; real grid data used in \S\ref{sec:realgrid}~\cite{electricitymaps}, stipulated by default \\
 $\Delta_{\mathrm{lat}}$ & latency/SLA headroom (declared in the state; not enforced in Phase~1) \\
 $\hat c(a,x),\,\hat e(a,x)$ & forecast token cost; forecast carbon \\
 $c, e$ & realized token cost; realized carbon \\
@@ -530,33 +530,35 @@ The IBP pipeline tightened two claims and the real trace now corroborates them: 
 The carbon results so far use a stipulated intensity curve. We re-compute the BurstGPT carbon reductions under measured grid intensity for two zones with contrasting generation mixes.
 
 \subsubsection*{Setup and data sources}
-We source half-hourly real carbon-intensity measurements from the UK National Grid ESO Carbon Intensity API~\cite{ukcarbon}, a public, account-free, regulator-curated feed covering 2024 with regional disaggregation. We use two contrasting GB regions to bracket the realistic operating range: \textbf{GB-North-Scotland} ($\bar\kappa \approx 3.5$ gCO\textsubscript{2}e/kWh, $\sim$$90\%$ wind+hydro) and \textbf{GB-London} ($\bar\kappa \approx 81.4$ gCO\textsubscript{2}e/kWh, gas-dominated). For reference we also report results under the benchmark's stipulated proxy ($\bar\kappa = 250$). Carbon for each step is $\text{energy\_kwh}(\text{model},\text{tokens})\times\kappa(t)$, with the workload's actions spread across the zone's measured intensity window. The \texttt{load\_grid.py} loader additionally accepts user-supplied ElectricityMaps, ENTSO-E, or CAISO OASIS CSVs at \texttt{paper/data/grid/}; the production-grid extension is left as a one-CSV addition to this paper's data directory.
+We source hourly carbon-intensity measurements from the ElectricityMaps v3 API~\cite{electricitymaps}, which aggregates regulator feeds (ENTSO-E, CAISO OASIS, national TSOs) into a consistent gCO\textsubscript{2}eq/kWh series on a lifecycle (LCA) basis. We use two zones with materially different generation mixes: \textbf{Italy (IT, $\bar\kappa\approx252$)}, gas- and import-dominated, and \textbf{California (US-CAL-CISO, $\bar\kappa\approx105$)}, characterised by deep daytime solar troughs and gas-heavy evening peaks. For reference we also report the benchmark's stipulated proxy ($\bar\kappa=250$). The free API tier exposes only the most recent $24$ hours of history, so we use a representative $24$-hour measured window per zone, which is sufficient to expose each zone's diurnal pattern; carbon for each step is $\text{energy\_kwh}(\text{model},\text{tokens})\times\kappa(t)$, with the workload's actions spread across that window. The fetched series is cached as committed CSV under \texttt{paper/data/grid/}, so this section reproduces from a clean clone without API access (\texttt{fetch\_grid.py --refresh} re-fetches).
 
 \subsubsection*{Results}
 \begin{table}[H]
 \centering\small
 \begin{tabular}{@{}lccc@{}}
 \toprule
-Condition & stipulated ($250$) & GB-London ($81$) & GB-N-Scotland ($3.5$) \\
+Condition & stipulated ($250$) & IT ($252$) & US-CAISO ($105$) \\
 \midrule
-\texttt{+scope}       & $57.9\%$ $[57.4,58.4]$ & $58.4\%$ $[57.8,58.9]$ & $59.2\%$ $[57.2,61.1]$ \\
-\texttt{+scope+route} & $67.2\%$ $[66.6,67.9]$ & $67.6\%$ $[67.0,68.3]$ & $68.8\%$ $[66.3,71.4]$ \\
-\texttt{+full}        & $67.2\%$ & $67.6\%$ & $68.8\%$ \\
+\texttt{+scope}       & $57.9\%$ $[57.4,58.4]$ & $58.0\%$ $[57.6,58.5]$ & $58.3\%$ $[57.9,58.8]$ \\
+\texttt{+scope+route} & $67.2\%$ $[66.6,67.9]$ & $67.3\%$ $[66.7,67.9]$ & $67.6\%$ $[67.0,68.3]$ \\
+\texttt{+full}        & $67.2\%$ & $67.3\%$ & $67.6\%$ \\
 \bottomrule
 \end{tabular}
-\caption{Carbon reduction vs.\ baseline under three grid intensities ($\bar\kappa$ in gCO\textsubscript{2}e/kWh; paired-bootstrap $95\%$ CIs). Figure~\ref{fig:grid}.}
+\caption{Carbon reduction vs.\ baseline under three grid intensities ($\bar\kappa$ in gCO\textsubscript{2}eq/kWh; paired-bootstrap $95\%$ CIs). Figure~\ref{fig:grid}.}
 \label{tab:grid}
 \end{table}
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.82\linewidth]{grid_sensitivity.pdf}
-\caption{Carbon reduction per lever under the stipulated curve and two real GB grids. The percentage reduction is nearly grid-invariant; the cleanest grid has the widest CI.}
+\caption{Carbon reduction per lever under the stipulated curve and two real ElectricityMaps grids (Italy, California). The percentage reduction is grid-invariant.}
 \label{fig:grid}
 \end{figure}
 
 \subsubsection*{Reading}
-What survives across grids is both the lever ordering and the \emph{percentage} reduction: scope plus routing cuts carbon by $67$--$69\%$ under all three intensities, because the reduction is a ratio of energy and $\kappa$ enters as a common positive multiplier. What changes is twofold. The \emph{absolute} carbon saved scales with $\bar\kappa$: a North-Scotland deployment ($\bar\kappa=3.5$) saves roughly $70\times$ less absolute carbon than the stipulated curve ($\bar\kappa=250$) for the same percentage, so the lever is most consequential on dirty grids. And the cleanest grid has the \emph{widest} CI ($[57.2,61.1]$ vs.\ $[57.4,58.4]$ for \texttt{+scope}), because a small, highly variable $\kappa$ amplifies the relative variance of the time-of-use weighting. The honest reading is that Green SARC's carbon-reduction percentage is robust to grid mix, but its real-world carbon \emph{impact} depends entirely on where and when the compute runs.
+What survives across grids is both the lever ordering and the \emph{percentage} reduction: scope plus routing cuts carbon by $67$--$68\%$ under all three intensities, because the reduction is a ratio of energy and $\kappa$ enters as a common positive multiplier. The result that held under the synthetic proxy holds on real Italian and Californian grids, despite a $2.4\times$ difference in mean intensity.
+
+What differs is the diurnal structure, and it matters more for one zone than the other. Italy's intensity is comparatively flat ($2.4\times$ intra-day swing, $134$--$320$), so the time at which an agent runs barely changes its carbon. California swings harder ($2.7\times$, $60$ midday to $162$ evening): the same inference is roughly $2.7\times$ cleaner in the midday solar trough than at the evening peak. The \emph{absolute} carbon saved therefore scales both with $\bar\kappa$ (a CAISO deployment at $\bar\kappa\approx105$ saves less than half the absolute carbon of an IT deployment for the same percentage) and, in CAISO, with \emph{when} the traffic lands. Green SARC's carbon-reduction percentage is robust to grid mix, but its real-world impact depends on where and when the compute runs; time-of-day carbon-aware routing is a Phase-2 opportunity this dataset would enable but the current code does not exploit (\S\ref{sec:limits}).
 
 \subsection{Multi-step real-trace ablation on SWE-rebench}\label{sec:multistep}
 BurstGPT is single-step; \S\ref{sec:realarrival} flagged that it cannot exercise the multi-step snowball or breaker. We close that gap on real agent plans.
@@ -679,7 +681,7 @@ Second, continuation inflation and model substitution both defeat the \emph{fore
 
 \paragraph{Negative and null results.} The gate produces no token savings in the headline workload (\S\ref{sec:eval}); adding routing yields \emph{zero} marginal token reduction (it trades models, saving USD/carbon only); the declared latency-headroom field $\Delta_{\mathrm{lat}}$ is not enforced in Phase~1; and on real chat traffic the cumulative-prompt curvature is \emph{negative} (\S\ref{sec:realtrace}), so the $\Theta(n^2)$ snowball is specific to naive orchestration, not universal. We report these rather than fold them into a single ``governance helps'' number.
 
-\paragraph{Future work.} The leading item is to \textbf{promote the split-conformal upper bound of \S\ref{sec:conformal} and the anytime-valid trajectory bound of Theorem~\ref{thm:anytime} from paper-side analyses into the runtime gate, with adaptive conformal inference~\cite{gibbs2021} under workload drift} (\S\ref{sec:realtrace} shows why this matters). Beyond that: a \emph{multi-step} agent trace (e.g.\ SWE-bench / OpenHands trajectories) to exercise the breaker and State-Snowball dynamics that the single-step BurstGPT trace does not, and cross-operator traces (Mooncake, Alibaba) for the carbon and arrival-distribution generalization \S\ref{sec:limits} flags; the Phase-2 full-trajectory estimator $\hat F_\theta(\pi,x)$ for plan-level rejection; a multi-tenant distributed \texttt{Budget} with fair-share reservations; latency-headroom enforcement; and a production KAOS deployment of the gate as a sidecar. These are roadmap directions, not claims.
+\paragraph{Future work.} The leading item is to \textbf{promote the split-conformal upper bound of \S\ref{sec:conformal} and the anytime-valid trajectory bound of Theorem~\ref{thm:anytime} from paper-side analyses into the runtime gate, with adaptive conformal inference~\cite{gibbs2021} under workload drift} (\S\ref{sec:realtrace} shows why this matters). Beyond that: a \emph{multi-step} agent trace (e.g.\ SWE-bench / OpenHands trajectories) to exercise the breaker and State-Snowball dynamics that the single-step BurstGPT trace does not, and cross-operator traces (Mooncake, Alibaba) for the carbon and arrival-distribution generalization \S\ref{sec:limits} flags; the Phase-2 full-trajectory estimator $\hat F_\theta(\pi,x)$ for plan-level rejection; time-of-day carbon-aware routing, which \S\ref{sec:realgrid}'s CAISO diurnal swing ($2.7\times$) shows is exploitable but the current router ignores; a multi-tenant distributed \texttt{Budget} with fair-share reservations; latency-headroom enforcement; and a production KAOS deployment of the gate as a sidecar. These are roadmap directions, not claims.
 
 \section{Conclusion}\label{sec:conclusion}
 
@@ -725,7 +727,7 @@ Dataset \texttt{anon8231489123/ShareGPT\_Vicuna\_unfiltered} (Hugging Face, perm
 \bibitem{ramdas2023} Ramdas, A., Gr\"unwald, P., Vovk, V., \& Shafer, G. (2023). \emph{Game-theoretic statistics and safe anytime-valid inference.} \emph{Statistical Science}, 38(4), 576--601.
 \bibitem{sharegpt} ShareGPT community (2023). \emph{ShareGPT\_Vicuna\_unfiltered: a corpus of real ChatGPT/GPT-4 conversations.} Hugging Face Hub: \url{https://huggingface.co/datasets/anon8231489123/ShareGPT_Vicuna_unfiltered}.
 \bibitem{burstgpt} Wang, Y., Chen, Y., Li, Z., Kang, X., Fang, Y., Zhou, Y., Zheng, Y., Tang, Z., He, X., Guo, R., Wang, X., Wang, Q., Zhou, A.~C., \& Chu, X. (2025). \emph{BurstGPT: A Real-world Workload Dataset to Optimize LLM Serving Systems.} In \emph{Proc.\ 31st ACM SIGKDD V.2}. arXiv:2401.17644. \url{https://github.com/HPMLL/BurstGPT}.
-\bibitem{ukcarbon} National Grid ESO (2024). \emph{Carbon Intensity API.} \url{https://carbonintensity.org.uk}. Open data, no account required; half-hourly national and regional GB carbon intensity.
+\bibitem{electricitymaps} Electricity Maps ApS. (2024). \emph{Electricity Maps API: hourly carbon intensity by zone.} \url{https://api.electricitymap.org/v3}. Free tier, attribution required. Data sources documented at \url{https://github.com/electricitymaps/electricitymaps-contrib}.
 \bibitem{swerebench} Nebius (2025). \emph{SWE-rebench OpenHands trajectories: 67k agent traces solving real GitHub issues with Qwen3-Coder-480B.} CC-BY-4.0. \url{https://huggingface.co/datasets/nebius/SWE-rebench-openhands-trajectories}.
 \bibitem{carlini2024} Carlini, N., Nasr, M., Choquette-Choo, C.~A., et al. (2023). \emph{Are aligned neural networks adversarially aligned?} In \emph{Advances in Neural Information Processing Systems (NeurIPS)}.
 \bibitem{greshake2023} Greshake, K., Abdelnabi, S., Mishra, S., et al. (2023). \emph{Not what you've signed up for: Compromising real-world LLM-integrated applications with indirect prompt injection.} In \emph{Proc.\ 16th ACM Workshop on Artificial Intelligence and Security (AISec)}.
