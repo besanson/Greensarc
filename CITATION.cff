@@ -1,0 +1,37 @@
+cff-version: 1.2.0
+message: "If you use Green SARC, please cite both the software and the paper below."
+title: "Green SARC"
+abstract: >-
+  Green SARC is a framework-agnostic, dependency-free Python library that
+  applies the SARC governance-by-architecture framework's four enforcement
+  sites (Pre-Action Gate, Action-Time Monitor, Post-Action Auditor,
+  Escalation Router) to predictive FinOps and GreenOps for agentic AI:
+  it forecasts an action's token, USD, and carbon cost before the action
+  fires and admits it only if it fits the remaining budget at a calibrated
+  confidence level.
+type: software
+authors:
+  - family-names: Besanson
+    given-names: Gaston
+    affiliation: "Universidad Torcuato Di Tella"
+    email: gbesanson@utdt.edu
+repository-code: "https://github.com/besanson/Greensarc"
+license: MIT
+version: 0.3.0
+keywords:
+  - finops
+  - greenops
+  - carbon
+  - agentic-ai
+  - governance
+  - conformal-prediction
+  - sarc
+preferred-citation:
+  type: article
+  title: "Green SARC: Predictive Cost and Carbon Governance for Agentic AI Systems"
+  authors:
+    - family-names: Besanson
+      given-names: Gaston
+      affiliation: "Universidad Torcuato Di Tella"
+      email: gbesanson@utdt.edu
+  year: 2026
