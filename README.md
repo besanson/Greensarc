@@ -32,6 +32,10 @@ and carbon ceiling are enforced in the same loop:
 
 A ~50× reduction — this is the `predict → act → log → retrain` loop working.
 
+**Overhead:** the gate adds **p99 ≈ 3.7 µs** per decision on the default
+Normal-σ path (~0.5 M decisions/sec; `benchmarks/gate_overhead.py`) — negligible
+beside any model call.
+
 And on the reproducible §8 **IBP benchmark** (`make reproduce`, 20 seeds, 400 SKUs,
 baseline State-Snowball vs. Green SARC), enforcement placement — Adapter-Node
 state scoping + energy-aware routing + the circuit breaker — yields:
@@ -63,6 +67,8 @@ Full docs live in [`docs/`](docs/):
 - [KAOS integration](docs/kaos-integration.md) — how **KAOS** ([`axsaucedo/kaos`](https://github.com/axsaucedo/kaos)) calls Green SARC, across all three surfaces, with deployment.
 - [**Use it**](docs/usage.md) — govern your own agent in 5 minutes (3-line setup).
 - [Quickstart](docs/quickstart.md) — install, run, govern your own loop.
+- [Metrics](docs/metrics.md) — Prometheus counters/gauges/latency histograms (optional `prometheus` extra) + a ready-to-import Grafana dashboard.
+- [Live feeds](docs/feeds.md) — load real LiteLLM prices and live ElectricityMaps carbon intensity (stdlib-only, no extra required).
 
 **Related repositories** (Green SARC depends on neither at runtime):
 [SARC framework](https://github.com/besanson/sarc-governance) ·
@@ -148,6 +154,14 @@ accumulate, `LearnedEstimator` takes over per `(action kind, model)` key.
   *plans*, not just expensive *steps*. It is trainable only on Phase 1's logged
   trajectories, so it cannot be built until Phase 1 has produced data. The
   interface is fixed in `trajectory.py` and raises `NotImplementedError`.
+
+The single-process `Budget` (thread-safe via `threading.Lock`) is authoritative
+for one replica. For multi-replica deployments an **experimental** distributed
+backend ships in Phase 1: `green_sarc.backends.RedisBudget` (optional `redis`
+extra) — one atomic Lua script per reserve/commit/release, with TTL reclamation
+of crashed-client reservations; atomic against a single Redis, no cross-region
+reconciliation or fair-share yet (a Postgres durable ledger + fair-share are
+Phase 2).
 
 ## The estimator is model-agnostic
 

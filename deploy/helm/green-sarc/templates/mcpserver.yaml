@@ -1,0 +1,17 @@
+{{- if .Values.mcpServer.enabled }}
+# KAOS discovers Green SARC through this MCPServer CR (one-way KAOS -> Green SARC).
+apiVersion: kaos.tools/v1alpha1
+kind: MCPServer
+metadata:
+  name: {{ .Values.mcpServer.name }}
+  labels:
+    {{- include "green-sarc.labels" . | nindent 4 }}
+    app.kubernetes.io/component: mcp-server
+spec:
+  runtime: custom
+  container:
+    image: {{ .Values.mcpServer.image | quote }}
+  telemetry:
+    enabled: {{ .Values.mcpServer.telemetry.enabled }}
+    endpoint: {{ .Values.mcpServer.telemetry.endpoint | quote }}
+{{- end }}

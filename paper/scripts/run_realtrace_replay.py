@@ -156,17 +156,34 @@ def calibration(rows: List[Dict[str, Any]], tok_name: str) -> Dict[str, Any]:
 
     prompt = np.array([r["prompt_tokens"] for r in rows])
     completion = np.array([r["completion_tokens"] for r in rows])
-    idx = np.arange(len(rows))
+    conv = np.array([r["conv_id"] for r in rows])
+
+    # Conversation-level split: assign whole conversations to cal/test so turns
+    # from one conversation never straddle the split. A pair-level (row) shuffle
+    # leaks within-conversation residual correlation across the split, violating
+    # exchangeability and overstating coverage.
     rng = np.random.default_rng(0)
-    rng.shuffle(idx)
-    half = len(idx) // 2
-    cal, test = idx[:half], idx[half:]
+    uniq = np.unique(conv)
+    rng.shuffle(uniq)
+    cal_convs = set(uniq[: len(uniq) // 2].tolist())
+    in_cal = np.array([c in cal_convs for c in conv])
+    cal = np.where(in_cal)[0]
+    test = np.where(~in_cal)[0]
 
     alpha, beta, sigma = _ols(prompt[cal], completion[cal])
     pred_cal = alpha + beta * prompt[cal]
     pred_test = alpha + beta * prompt[test]
     r_cal = completion[cal] - pred_cal            # one-sided scores (over-shoot)
     r_test = completion[test] - pred_test
+
+    # Honest comparison: the leaky pair-level split's conformal coverage at δ=0.05.
+    idxp = np.arange(len(rows))
+    np.random.default_rng(0).shuffle(idxp)
+    cp, tp = idxp[: len(idxp) // 2], idxp[len(idxp) // 2:]
+    ap, bp, _ = _ols(prompt[cp], completion[cp])
+    rc_p = completion[cp] - (ap + bp * prompt[cp])
+    rt_p = completion[tp] - (ap + bp * prompt[tp])
+    cov_conf_pair_05 = float(np.mean(rt_p <= float(np.quantile(rc_p, 0.95, method="higher"))))
 
     # The runtime SplitConformal calibrator (green_sarc.calibrator) fit on the same
     # residual log — its coverage should match the paper-side analysis to within
@@ -193,12 +210,15 @@ def calibration(rows: List[Dict[str, Any]], tok_name: str) -> Dict[str, Any]:
 
     # δ = 0.05 deviation (acceptance gate).
     j05 = DELTAS.index(0.05)
+    pair_overstatement_pp = (cov_conf_pair_05 - cov_conf[j05]) * 100.0
     return {
         "dataset": DATASET,
         "tokenizer": tok_name,
         "n_pairs": len(rows),
-        "n_cal": int(half),
-        "n_test": int(len(idx) - half),
+        "n_conversations_split": int(len(uniq)),
+        "split": "conversation-level (group by conv_id)",
+        "n_cal": int(len(cal)),
+        "n_test": int(len(test)),
         "ols": {"alpha": alpha, "beta": beta, "sigma": sigma},
         "deltas": DELTAS,
         "nominal": nominal,
@@ -206,6 +226,8 @@ def calibration(rows: List[Dict[str, Any]], tok_name: str) -> Dict[str, Any]:
         "coverage_conformal": cov_conf,
         "coverage_runtime_conformal": cov_runtime,
         "runtime_vs_papereside_max_gap_pp": runtime_max_gap_pp,
+        "conformal_coverage_pair_level_005": cov_conf_pair_05,
+        "pair_level_overstatement_pp": pair_overstatement_pp,
         "gaussian_dev_at_005_pp": abs(cov_gauss[j05] - (1 - 0.05)) * 100.0,
         "conformal_dev_at_005_pp": abs(cov_conf[j05] - (1 - 0.05)) * 100.0,
         "max_conformal_dev_pp": max(abs(c - n) for c, n in zip(cov_conf, nominal)) * 100.0,
@@ -258,10 +280,16 @@ def turn_depth_quadratic(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
 # §10.5 / A.6: distribution shift, fixed-quantile vs adaptive conformal (ACI).
 # --------------------------------------------------------------------------
 def shift_experiment(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
-    depth = np.array([r["turn_index"] for r in rows])
-    med = float(np.median(depth))
-    reg1 = [r for r in rows if r["turn_index"] <= med]   # short-context regime
-    reg2 = [r for r in rows if r["turn_index"] > med]    # long-context regime (shifted)
+    # Conversation-level regime split: classify each conversation as short or long
+    # by its own maximum depth, and assign all of its turns to one regime. (A
+    # per-turn split would put early and late turns of the same conversation in
+    # different regimes, leaking it across the shift.)
+    conv_depth: Dict[Any, int] = {}
+    for r in rows:
+        conv_depth[r["conv_id"]] = max(conv_depth.get(r["conv_id"], 0), int(r["turn_index"]))
+    med = float(np.median(list(conv_depth.values())))
+    reg1 = [r for r in rows if conv_depth[r["conv_id"]] <= med]  # short-conversation regime
+    reg2 = [r for r in rows if conv_depth[r["conv_id"]] > med]   # long-conversation regime
     if len(reg2) < 500:  # ensure a usable deployment stream
         reg1, reg2 = rows[: len(rows) // 2], rows[len(rows) // 2 :]
 

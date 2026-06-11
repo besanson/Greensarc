@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass, field
+from time import perf_counter
 from typing import Any, Awaitable, Callable, Optional
 
 from green_sarc.auditor import AuditRecord, PostActionAuditor
@@ -28,6 +29,19 @@ from green_sarc.escalation import (
 )
 from green_sarc.forecast import GateDecision, Verdict
 from green_sarc.gate import PreActionGate
+from green_sarc.metrics import (
+    BREAKER_TRIPS,
+    BUDGET_TOKENS_REMAINING,
+    BUDGET_USD_REMAINING,
+    CARBON_REMAINING_G,
+    ESCALATIONS,
+    FORECAST_ABS_ERROR_TOKENS,
+    GATE_ADMITTED,
+    GATE_DECISION_SECONDS,
+    GATE_REJECTED,
+    MetricsSink,
+    NullSink,
+)
 from green_sarc.monitor import ActionTimeMonitor, CircuitTripped
 from green_sarc.pricing import CarbonModel, CostModel, carbon_for_tokens
 from green_sarc.state import Action, Budget, GovernanceContext
@@ -78,6 +92,21 @@ class GateRejected(Exception):
 Executor = Callable[[Action], Awaitable[ActionOutcome]]
 
 
+def _reject_reason_label(decision: GateDecision) -> str:
+    """Map a gate rejection to a low-cardinality metric label.
+
+    One of ``exhausted`` (verdict ESCALATE), ``carbon``, ``usd``, or ``tokens``.
+    """
+    if decision.verdict is Verdict.ESCALATE:
+        return "exhausted"
+    reason = decision.reason.lower()
+    if "carbon" in reason or "gco2e" in reason:
+        return "carbon"
+    if "$" in decision.reason or "usd" in reason:
+        return "usd"
+    return "tokens"
+
+
 @dataclass
 class GreenGovernor:
     """Governs an agent's actions through the four enforcement sites.
@@ -94,6 +123,7 @@ class GreenGovernor:
     store: AuditStore = field(default_factory=MemoryAuditStore)
     monitor: ActionTimeMonitor = field(default_factory=ActionTimeMonitor)
     router: EscalationRouter = field(default_factory=EscalationRouter)
+    metrics: MetricsSink = field(default_factory=NullSink)
     gate: PreActionGate = field(init=False)
     auditor: PostActionAuditor = field(init=False)
 
@@ -179,8 +209,11 @@ class GreenGovernor:
         intensity = self.carbon_model.carbon_intensity(action.region, ctx.timestamp)
 
         # ---- SITE 1: Pre-Action Gate -------------------------------------
+        _t0 = perf_counter()
         decision = self.gate.evaluate(action, ctx)
+        self.metrics.observe(GATE_DECISION_SECONDS, perf_counter() - _t0)
         if not decision.admitted:
+            self.metrics.incr(GATE_REJECTED, reason=_reject_reason_label(decision))
             extra: dict[str, Any] = {}
             escalated = decision.verdict is Verdict.ESCALATE
             if escalated:
@@ -201,13 +234,17 @@ class GreenGovernor:
                 forecast=decision.forecast,
                 reason="insufficient budget after concurrent reservations",
             )
+            self.metrics.incr(GATE_REJECTED, reason="contention")
             self._record_blocked(action_id, action, raced, intensity, False, {})
             raise GateRejected(raced)
+
+        self.metrics.incr(GATE_ADMITTED)
 
         # ---- SITE 2: Action-Time Monitor (pre-execution loop guard) ------
         try:
             self.monitor.before()
         except CircuitTripped as exc:
+            self.metrics.incr(BREAKER_TRIPS)
             self.budget.release(reserve_tokens, reserve_carbon)
             outcome_er = await self._escalate(
                 EscalationReason.CIRCUIT_TRIPPED, action_id, action, exc.reason
@@ -248,11 +285,22 @@ class GreenGovernor:
         # Release the reservation and spend the actuals in one atomic step.
         self.budget.commit(reserve_tokens, reserve_carbon, actual_cost, actual_carbon, actual_usd)
 
+        # Observability: budget burn-down + forecast error at the audited point.
+        self.metrics.gauge(BUDGET_TOKENS_REMAINING, self.budget.remaining_tokens())
+        self.metrics.gauge(CARBON_REMAINING_G, self.budget.remaining_carbon())
+        _usd_left = self.budget.remaining_usd()
+        if _usd_left != float("inf"):
+            self.metrics.gauge(BUDGET_USD_REMAINING, _usd_left)
+        self.metrics.observe(
+            FORECAST_ABS_ERROR_TOKENS, abs(actual_cost - decision.forecast.cost_hat)
+        )
+
         # ---- SITE 2: Action-Time Monitor (post-execution cost guard) -----
         circuit_exc: Optional[CircuitTripped] = None
         try:
             self.monitor.after(actual_cost)
         except CircuitTripped as exc:
+            self.metrics.incr(BREAKER_TRIPS)
             circuit_exc = exc
 
         # ---- SITE 4: Escalation Router (route before recording so the audit
@@ -356,6 +404,7 @@ class GreenGovernor:
         action: Action,
         detail: str,
     ) -> RouteOutcome:
+        self.metrics.incr(ESCALATIONS, reason=reason.value)
         return await self.router.route(
             EscalationEvent(
                 reason=reason,

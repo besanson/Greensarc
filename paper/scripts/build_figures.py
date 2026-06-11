@@ -101,10 +101,15 @@ def fig_snowball(cfg: IBPConfig, stats: Dict[str, Any]) -> None:
     fig, ax = plt.subplots()
     ax.plot(depths, base, "o", color=BLUE, ms=3, label="baseline (State Snowball)")
     fit = np.poly1d(coeffs)
-    ax.plot(depths, fit(depths), "-", color=BLUE, lw=1.2,
-            label=rf"fit $\hat c_2 n^2$, $\hat c_2={coeffs[0]:.1f}$ ($p/2={c2_theory:.0f}$)")
-    ax.plot(depths, scoped, "s-", color=GREEN, ms=3, lw=1.2,
-            label="scoped (Adapter Node, linear)")
+    ax.plot(
+        depths,
+        fit(depths),
+        "-",
+        color=BLUE,
+        lw=1.2,
+        label=rf"fit $\hat c_2 n^2$, $\hat c_2={coeffs[0]:.1f}$ ($p/2={c2_theory:.0f}$)",
+    )
+    ax.plot(depths, scoped, "s-", color=GREEN, ms=3, lw=1.2, label="scoped (Adapter Node, linear)")
     ax.set_xlabel("loop depth $n$")
     ax.set_ylabel("cumulative prompt tokens")
     ax.legend(fontsize=7)
@@ -130,8 +135,16 @@ def fig_ablation(ab: Dict[str, Any], stats: Dict[str, Any]) -> None:
             los.append(ci["point"] - ci["lo"])
             his.append(ci["hi"] - ci["point"])
             rec[f"{c}:{key}"] = ci
-        ax.bar(x + (j - 1) * width, pts, width, yerr=[los, his], capsize=3,
-               color=[BLUE, ORANGE, GREEN][j], label=label, error_kw={"lw": 0.8})
+        ax.bar(
+            x + (j - 1) * width,
+            pts,
+            width,
+            yerr=[los, his],
+            capsize=3,
+            color=[BLUE, ORANGE, GREEN][j],
+            label=label,
+            error_kw={"lw": 0.8},
+        )
     ax.set_xticks(x)
     ax.set_xticklabels(conds)
     ax.set_ylabel("% reduction vs. baseline")
@@ -146,7 +159,8 @@ def fig_ablation(ab: Dict[str, Any], stats: Dict[str, Any]) -> None:
 # --------------------------------------------------------------------------
 def _learned_samples(ab: Dict[str, Any]) -> List[Dict[str, Any]]:
     return [
-        s for s in ab["calibration_samples"]
+        s
+        for s in ab["calibration_samples"]
         if s["source"] == "learned" and s["cost_std"] and s["cost_std"] > 0.0
     ]
 
@@ -164,7 +178,7 @@ def fig_calibration(ab: Dict[str, Any], stats: Dict[str, Any]) -> None:
     wape = float(np.sum(np.abs(act - pred)) / np.sum(act))
     ax.set_xlabel("predicted token cost $\\hat c$")
     ax.set_ylabel("actual token cost")
-    ax.set_title(f"Forecast calibration ($R^2={r2:.3f}$, WAPE={wape*100:.1f}%)")
+    ax.set_title(f"Forecast calibration ($R^2={r2:.3f}$, WAPE={wape * 100:.1f}%)")
     ax.legend(fontsize=8)
     stats["calibration"] = {"n": len(s), "r2": r2, "mae": mae, "wape": wape}
     _save(fig, "calibration")
@@ -205,9 +219,12 @@ def fig_reliability(ab: Dict[str, Any], stats: Dict[str, Any]) -> None:
     ax.set_title("Gate reliability (held-out test split)")
     ax.legend(fontsize=8, loc="lower right")
     stats["reliability"] = {
-        "n_cal": len(cal), "n_test": len(test),
-        "deltas": deltas, "nominal": nominal,
-        "coverage_normal": cov_normal, "coverage_conformal": cov_conf,
+        "n_cal": len(cal),
+        "n_test": len(test),
+        "deltas": deltas,
+        "nominal": nominal,
+        "coverage_normal": cov_normal,
+        "coverage_conformal": cov_conf,
     }
     _save(fig, "reliability")
 
@@ -219,14 +236,26 @@ def fig_delta(stats: Dict[str, Any]) -> None:
     # A finite-budget stream: pre-train the estimator, then gate a fresh stream.
     # Sweeping δ trades admission throughput against realized overspend.
     from green_sarc import (
-        Action, Budget, GovernanceContext, LearnedEstimator,
-        ModelProfile, PreActionGate, TableCarbonModel, TableCostModel,
+        Action,
+        Budget,
+        GovernanceContext,
+        LearnedEstimator,
+        ModelProfile,
+        PreActionGate,
+        TableCarbonModel,
+        TableCostModel,
     )
     from green_sarc.auditor import AuditRecord
 
-    cost_model = TableCostModel(profiles={"m": ModelProfile(energy_per_token_kwh=3e-7,
-                                                            usd_per_prompt_token=5e-7,
-                                                            usd_per_completion_token=1.5e-6)})
+    cost_model = TableCostModel(
+        profiles={
+            "m": ModelProfile(
+                energy_per_token_kwh=3e-7,
+                usd_per_prompt_token=5e-7,
+                usd_per_completion_token=1.5e-6,
+            )
+        }
+    )
     carbon = TableCarbonModel(intensities={"r": 300.0})
 
     # High forecast variance makes the (1-δ) safety margin z·σ material near the
@@ -239,13 +268,25 @@ def fig_delta(stats: Dict[str, Any]) -> None:
         for _ in range(400):
             prompt = warm.randint(100, 500)
             completion = max(1, int(40 + 0.6 * prompt + warm.gauss(0, NOISE)))
-            est.update(AuditRecord(
-                action_id="w", action_kind="k", model="m", region="r",
-                predicted_cost=0.0, predicted_carbon=0.0, confidence=0.0,
-                actual_cost=float(prompt + completion), actual_carbon=0.0,
-                budget_remaining_tokens=0.0, carbon_remaining=0.0,
-                carbon_intensity=300.0, admitted=True, verdict="admit",
-                prompt_tokens=prompt))
+            est.update(
+                AuditRecord(
+                    action_id="w",
+                    action_kind="k",
+                    model="m",
+                    region="r",
+                    predicted_cost=0.0,
+                    predicted_carbon=0.0,
+                    confidence=0.0,
+                    actual_cost=float(prompt + completion),
+                    actual_carbon=0.0,
+                    budget_remaining_tokens=0.0,
+                    carbon_remaining=0.0,
+                    carbon_intensity=300.0,
+                    admitted=True,
+                    verdict="admit",
+                    prompt_tokens=prompt,
+                )
+            )
         return est
 
     deltas = [0.40, 0.30, 0.20, 0.10, 0.05, 0.02, 0.01]
@@ -257,14 +298,14 @@ def fig_delta(stats: Dict[str, Any]) -> None:
             gate = PreActionGate(est)
             stream = random.Random(1000 + seed)
             # Budget sized so the gate fills it and must adjudicate the boundary.
-            budget = Budget(token_budget=18_000.0, carbon_ceiling=1e12,
-                            usd_budget=1e9, delta=d)
+            budget = Budget(token_budget=18_000.0, carbon_ceiling=1e12, usd_budget=1e9, delta=d)
             for _ in range(120):
                 prompt = stream.randint(100, 500)
                 completion = max(1, int(40 + 0.6 * prompt + stream.gauss(0, NOISE)))
                 actual = float(prompt + completion)
-                action = Action(kind="k", model="m", region="r",
-                                prompt_tokens=prompt, max_tokens=4000)
+                action = Action(
+                    kind="k", model="m", region="r", prompt_tokens=prompt, max_tokens=4000
+                )
                 dec = gate.evaluate(action, GovernanceContext(budget=budget, timestamp=0.0))
                 total += 1
                 if dec.admitted:
@@ -284,16 +325,25 @@ def fig_delta(stats: Dict[str, Any]) -> None:
     ax.tick_params(axis="y", labelcolor=BLUE)
     ax.set_ylim(0, 0.4)
     ax2 = ax.twinx()
-    ax2.plot(deltas, [100 * r for r in overshoot_rate], "s-", color=ORANGE, ms=4,
-             label="overspend rate (admitted)")
+    ax2.plot(
+        deltas,
+        [100 * r for r in overshoot_rate],
+        "s-",
+        color=ORANGE,
+        ms=4,
+        label="overspend rate (admitted)",
+    )
     ax2.set_ylabel("overspend rate (%)", color=ORANGE)
     ax2.tick_params(axis="y", labelcolor=ORANGE)
     ax2.grid(False)
     ax.set_title("Gate $\\delta$: throughput vs. overspend")
     lines = ax.get_lines() + ax2.get_lines()
     ax.legend(lines, [ln.get_label() for ln in lines], fontsize=8, loc="center left")
-    stats["delta"] = {"deltas": deltas, "admission_rate": admit_rate,
-                      "overspend_rate": overshoot_rate}
+    stats["delta"] = {
+        "deltas": deltas,
+        "admission_rate": admit_rate,
+        "overspend_rate": overshoot_rate,
+    }
     _save(fig, "delta_sensitivity")
 
 
@@ -306,19 +356,25 @@ def fig_coldstart(lc: Dict[str, Any], stats: Dict[str, Any]) -> None:
     err = [h["abs_error"] for h in hist]
     # Rolling-window MAE (window 15) to show the cold-start -> learned transition.
     w = 15
-    roll = [statistics.fmean(err[max(0, i - w + 1): i + 1]) for i in range(len(err))]
+    roll = [statistics.fmean(err[max(0, i - w + 1) : i + 1]) for i in range(len(err))]
     fig, ax = plt.subplots()
     ax.plot(n, err, ".", color=GREY, ms=3, alpha=0.4, label="per-action |error|")
     ax.plot(n, roll, "-", color=BLUE, lw=1.5, label=f"rolling MAE (w={w})")
-    ax.axhline(lc["ground_truth"]["noise_std"], color=GREEN, ls="--", lw=1.0,
-               label=f"noise floor ($\\sigma$={lc['ground_truth']['noise_std']:.0f})")
+    ax.axhline(
+        lc["ground_truth"]["noise_std"],
+        color=GREEN,
+        ls="--",
+        lw=1.0,
+        label=f"noise floor ($\\sigma$={lc['ground_truth']['noise_std']:.0f})",
+    )
     ax.set_yscale("log")
     ax.set_xlabel("actions observed")
     ax.set_ylabel("token-cost MAE (log)")
     ax.set_title("Cold start: forecast error decays as the loop learns")
     ax.legend(fontsize=8)
     stats["coldstart"] = {
-        "mae_first_half": lc["mae_first_half"], "mae_second_half": lc["mae_second_half"],
+        "mae_first_half": lc["mae_first_half"],
+        "mae_second_half": lc["mae_second_half"],
         "wape_second_half": lc["wape_second_half"],
     }
     _save(fig, "coldstart")
@@ -372,7 +428,8 @@ def fig_penalty(stats: Dict[str, Any]) -> None:
     # λ that matches the budget in expectation, and its breach probability.
     j = int(np.argmin([abs(m - 1.0) for m in mean_spend]))
     stats["penalty"] = {
-        "B": B, "lambda_star": float(lambdas[j]),
+        "B": B,
+        "lambda_star": float(lambdas[j]),
         "penalty_breach_prob_at_match": breach_prob[j],
         "gate_breach_prob": gate_breach,
         "gate_mean_spend_frac": statistics.fmean(gate_spends),
@@ -381,17 +438,27 @@ def fig_penalty(stats: Dict[str, Any]) -> None:
 
     fig, ax = plt.subplots()
     ax.axhline(1.0, color=GREY, ls="--", lw=1.0, label="budget $B$")
-    ax.plot(lambdas, mean_spend, "o-", color=ORANGE, ms=3, lw=1.2,
-            label="soft penalty: mean spend / $B$")
+    ax.plot(
+        lambdas,
+        mean_spend,
+        "o-",
+        color=ORANGE,
+        ms=3,
+        lw=1.2,
+        label="soft penalty: mean spend / $B$",
+    )
     ax2 = ax.twinx()
-    ax2.plot(lambdas, breach_prob, "s-", color=BLUE, ms=3, lw=1.2,
-             label="soft penalty: P(breach)")
+    ax2.plot(lambdas, breach_prob, "s-", color=BLUE, ms=3, lw=1.2, label="soft penalty: P(breach)")
     ax2.set_ylabel("P(budget breach)", color=BLUE)
     ax2.set_ylim(-0.05, 1.05)
     ax2.tick_params(axis="y", labelcolor=BLUE)
     ax2.grid(False)
-    ax.axhline(statistics.fmean(gate_spends), color=GREEN, lw=1.4,
-               label=f"gate: spend/$B$ (P(breach)={gate_breach:.0%})")
+    ax.axhline(
+        statistics.fmean(gate_spends),
+        color=GREEN,
+        lw=1.4,
+        label=f"gate: spend/$B$ (P(breach)={gate_breach:.0%})",
+    )
     ax.set_xscale("log")
     ax.set_xlabel("penalty weight $\\lambda$ (log)")
     ax.set_ylabel("mean spend / $B$", color=ORANGE)
@@ -417,21 +484,41 @@ def make_binding_budget_pareto(bb: Dict[str, Any], stats: Dict[str, Any]) -> Non
     ax.scatter(px, py, s=18, color=ORANGE, alpha=0.7, label="soft penalty (sweep $\\lambda$)")
     ax.plot(gx, gy, "o-", color=GREEN, ms=6, lw=1.6, label="Green SARC gate (sweep $B$)")
     for g in gate:
-        ax.annotate(f"{g['fraction']}$\\times$", (g["completed_traj_rate"],
-                    g["over_budget_incidence"] * 100 + 3), fontsize=6, color=GREEN, ha="center")
-    ax.axhline(bb["delta"] * 100, color=GREY, ls=":", lw=1.0,
-               label=f"$\\delta={bb['delta']}$ ({bb['delta']*100:.0f}%)")
+        ax.annotate(
+            f"{g['fraction']}$\\times$",
+            (g["completed_traj_rate"], g["over_budget_incidence"] * 100 + 3),
+            fontsize=6,
+            color=GREEN,
+            ha="center",
+        )
+    ax.axhline(
+        bb["delta"] * 100,
+        color=GREY,
+        ls=":",
+        lw=1.0,
+        label=f"$\\delta={bb['delta']}$ ({bb['delta'] * 100:.0f}%)",
+    )
     ax.set_xlabel("completed-trajectory fraction")
     ax.set_ylabel("over-budget incidence (%)")
     ax.set_title("Gate dominates the soft-penalty frontier")
     ax.legend(fontsize=7, loc="center left")
     stats["binding_budget"] = {
-        "delta": bb["delta"], "seeds": bb["seeds"],
+        "delta": bb["delta"],
+        "seeds": bb["seeds"],
         "e_baseline_tokens": bb["e_baseline_tokens"],
         "max_over_budget_incidence_pct": bb["max_over_budget_incidence"] * 100,
         "points": [
-            {k: g[k] for k in ("fraction", "admission_rate", "over_budget_incidence",
-                               "completed_traj_rate", "mae_admitted", "tokens")}
+            {
+                k: g[k]
+                for k in (
+                    "fraction",
+                    "admission_rate",
+                    "over_budget_incidence",
+                    "completed_traj_rate",
+                    "mae_admitted",
+                    "tokens",
+                )
+            }
             for g in gate
         ],
         "soft_penalty_matched": bb["soft_penalty"],
@@ -445,10 +532,24 @@ def make_binding_budget_pareto(bb: Dict[str, Any], stats: Dict[str, Any]) -> Non
 def fig_realtrace_reliability(cal: Dict[str, Any], stats: Dict[str, Any]) -> None:
     fig, ax = plt.subplots()
     ax.plot([0.6, 1.0], [0.6, 1.0], "--", color=GREY, lw=1.0, label="perfect")
-    ax.plot(cal["nominal"], cal["coverage_gaussian"], "o-", color=ORANGE, ms=4, lw=1.2,
-            label="Normal-$\\sigma$ gate")
-    ax.plot(cal["nominal"], cal["coverage_conformal"], "s-", color=GREEN, ms=4, lw=1.2,
-            label="split conformal")
+    ax.plot(
+        cal["nominal"],
+        cal["coverage_gaussian"],
+        "o-",
+        color=ORANGE,
+        ms=4,
+        lw=1.2,
+        label="Normal-$\\sigma$ gate",
+    )
+    ax.plot(
+        cal["nominal"],
+        cal["coverage_conformal"],
+        "s-",
+        color=GREEN,
+        ms=4,
+        lw=1.2,
+        label="split conformal",
+    )
     ax.set_xlabel("nominal coverage $1-\\delta$")
     ax.set_ylabel("empirical coverage (real traces)")
     ax.set_title("Coverage on real ShareGPT residuals")
@@ -464,8 +565,10 @@ def fig_realtrace_residuals(cal: Dict[str, Any], stats: Dict[str, Any]) -> None:
     a1.hist(r, bins=60, color=BLUE, alpha=0.8, density=True)
     xs = np.linspace(r.min(), r.max(), 200)
     a1.plot(xs, sps.norm.pdf(xs, r.mean(), r.std()), color=ORANGE, lw=1.3, label="Normal fit")
-    a1.set_title(f"Residuals (skew={cal['residuals']['skew']:.2f}, "
-                 f"kurt={cal['residuals']['kurtosis_excess']:.2f})")
+    a1.set_title(
+        f"Residuals (skew={cal['residuals']['skew']:.2f}, "
+        f"kurt={cal['residuals']['kurtosis_excess']:.2f})"
+    )
     a1.set_xlabel("actual $-$ predicted (tokens)")
     a1.legend(fontsize=7)
     sps.probplot(r, dist="norm", plot=a2)
@@ -482,8 +585,13 @@ def fig_realtrace_shift(shift: Dict[str, Any], stats: Dict[str, Any]) -> None:
     x = list(range(len(rf)))
     ax.plot(x, [v * 100 for v in rf], color=ORANGE, lw=1.3, label="fixed quantile")
     ax.plot(x, [v * 100 for v in ra], color=GREEN, lw=1.3, label="adaptive (ACI)")
-    ax.axhline(shift["target_coverage"] * 100, color=GREY, ls="--", lw=1.0,
-               label=f"target {shift['target_coverage']*100:.0f}%")
+    ax.axhline(
+        shift["target_coverage"] * 100,
+        color=GREY,
+        ls="--",
+        lw=1.0,
+        label=f"target {shift['target_coverage'] * 100:.0f}%",
+    )
     ax.set_xlabel("deployment step (post-shift, rolling window)")
     ax.set_ylabel("empirical coverage (%)")
     ax.set_title("Coverage under distribution shift")
@@ -508,8 +616,16 @@ def build_real_arrival_bars(ra: Dict[str, Any], stats: Dict[str, Any]) -> None:
             pts.append(ci["point"])
             los.append(ci["point"] - ci["lo"])
             his.append(ci["hi"] - ci["point"])
-        ax.bar(x + (j - 1) * width, pts, width, yerr=[los, his], capsize=3,
-               color=[BLUE, ORANGE, GREEN][j], label=label, error_kw={"lw": 0.8})
+        ax.bar(
+            x + (j - 1) * width,
+            pts,
+            width,
+            yerr=[los, his],
+            capsize=3,
+            color=[BLUE, ORANGE, GREEN][j],
+            label=label,
+            error_kw={"lw": 0.8},
+        )
     ax.set_xticks(x)
     ax.set_xticklabels(conds)
     ax.set_ylabel("% reduction vs. baseline")
@@ -547,8 +663,14 @@ def build_grid_sensitivity(ra: Dict[str, Any], stats: Dict[str, Any]) -> None:
         pts = [z["carbon_reduction_ci"][c]["point"] for c in conds]
         los = [pts[i] - z["carbon_reduction_ci"][c]["lo"] for i, c in enumerate(conds)]
         his = [z["carbon_reduction_ci"][c]["hi"] - pts[i] for i, c in enumerate(conds)]
-        ax.bar(range(len(conds)), pts, yerr=[los, his], capsize=3,
-               color=[BLUE, ORANGE, GREEN], error_kw={"lw": 0.8})
+        ax.bar(
+            range(len(conds)),
+            pts,
+            yerr=[los, his],
+            capsize=3,
+            color=[BLUE, ORANGE, GREEN],
+            error_kw={"lw": 0.8},
+        )
         ax.set_xticks(range(len(conds)))
         ax.set_xticklabels(conds, rotation=20, fontsize=7)
         ax.set_title(f"{zone}\n$\\bar\\kappa$={z['mean_kappa']:.0f} gCO$_2$e/kWh", fontsize=8)
@@ -561,13 +683,23 @@ def build_grid_sensitivity(ra: Dict[str, Any], stats: Dict[str, Any]) -> None:
     def _diurnal(name: str) -> Dict[str, float]:
         csv = DATA / "grid" / f"{name}_hourly_2024.csv"
         vals = [float(line.split(",")[1]) for line in csv.read_text().splitlines()[1:]]
-        return {"min": min(vals), "max": max(vals),
-                "swing_ratio": max(vals) / min(vals) if min(vals) else 0.0}
+        return {
+            "min": min(vals),
+            "max": max(vals),
+            "swing_ratio": max(vals) / min(vals) if min(vals) else 0.0,
+        }
 
     stats["grid_sensitivity"] = {
-        z: {"mean_kappa": gs[z]["mean_kappa"], "carbon_reduction": gs[z]["carbon_reduction"],
+        z: {
+            "mean_kappa": gs[z]["mean_kappa"],
+            "carbon_reduction": gs[z]["carbon_reduction"],
             "carbon_reduction_ci": gs[z]["carbon_reduction_ci"],
-            **({"diurnal": _diurnal(z)} if (DATA / "grid" / f"{z}_hourly_2024.csv").exists() else {})}
+            **(
+                {"diurnal": _diurnal(z)}
+                if (DATA / "grid" / f"{z}_hourly_2024.csv").exists()
+                else {}
+            ),
+        }
         for z in zones
     }
 
@@ -580,10 +712,22 @@ def build_sensitivity_grid_pareto(sg: Dict[str, Any], stats: Dict[str, Any]) -> 
     h = sg["headline"]
     fig, ax = plt.subplots()
     ax.scatter(x, y, s=14, color=GREY, alpha=0.5, label="80 cells")
-    ax.scatter([c["token_reduction"] for c in fr], [c["over_budget_incidence"] * 100 for c in fr],
-               s=26, color=BLUE, label="Pareto frontier")
-    ax.scatter([h["token_reduction"]], [h["over_budget_incidence"] * 100], s=90, marker="*",
-               color=ORANGE, zorder=5, label="headline (cap $0.5\\times$, route $0.5$, $\\delta{=}0.1$)")
+    ax.scatter(
+        [c["token_reduction"] for c in fr],
+        [c["over_budget_incidence"] * 100 for c in fr],
+        s=26,
+        color=BLUE,
+        label="Pareto frontier",
+    )
+    ax.scatter(
+        [h["token_reduction"]],
+        [h["over_budget_incidence"] * 100],
+        s=90,
+        marker="*",
+        color=ORANGE,
+        zorder=5,
+        label="headline (cap $0.5\\times$, route $0.5$, $\\delta{=}0.1$)",
+    )
     ax.set_xlabel("token reduction (%)")
     ax.set_ylabel("over-budget incidence (%)")
     ax.set_title("Joint sensitivity: 80 operating points")
@@ -595,7 +739,9 @@ def build_sensitivity_grid_heatmap(sg: Dict[str, Any], stats: Dict[str, Any]) ->
     deltas = sg["deltas"]
     caps = sg["cap_multiples"]
     routes = sg["route_fractions"]
-    by = {(c["delta"], c["cap_mult"], c["route_fraction"]): c["token_reduction"] for c in sg["cells"]}
+    by = {
+        (c["delta"], c["cap_mult"], c["route_fraction"]): c["token_reduction"] for c in sg["cells"]
+    }
     fig, axes = plt.subplots(1, len(deltas), figsize=(11, 2.8), sharey=True)
     vmin = min(c["token_reduction"] for c in sg["cells"])
     vmax = max(c["token_reduction"] for c in sg["cells"])
@@ -613,12 +759,18 @@ def build_sensitivity_grid_heatmap(sg: Dict[str, Any], stats: Dict[str, Any]) ->
     fig.suptitle("Token reduction over (scope cap $\\times$ route), per $\\delta$", fontsize=10)
     _save(fig, "sensitivity_grid_heatmap")
     stats["sensitivity_grid"] = {
-        "n_cells": sg["n_cells"], "n_frontier": sg["n_frontier"],
-        "headline": sg["headline"], "headline_on_frontier": sg["headline_on_frontier"],
-        "caps": sg["caps"], "median_prompt": sg["median_prompt"],
+        "n_cells": sg["n_cells"],
+        "n_frontier": sg["n_frontier"],
+        "headline": sg["headline"],
+        "headline_on_frontier": sg["headline_on_frontier"],
+        "caps": sg["caps"],
+        "median_prompt": sg["median_prompt"],
         "token_reduction_by_cap": {
-            str(m): statistics.fmean([c["token_reduction"] for c in sg["cells"]
-                                      if c["cap_mult"] == m]) for m in caps},
+            str(m): statistics.fmean(
+                [c["token_reduction"] for c in sg["cells"] if c["cap_mult"] == m]
+            )
+            for m in caps
+        },
         "max_over_budget_pct": max(c["over_budget_incidence"] for c in sg["cells"]) * 100,
     }
 
@@ -634,8 +786,16 @@ def build_multistep_bars(ms: Dict[str, Any], stats: Dict[str, Any]) -> None:
         pts = [C[c]["reduction_ci"][key]["point"] for c in conds]
         los = [pts[i] - C[c]["reduction_ci"][key]["lo"] for i, c in enumerate(conds)]
         his = [C[c]["reduction_ci"][key]["hi"] - pts[i] for i, c in enumerate(conds)]
-        ax.bar(x + (j - 1) * width, pts, width, yerr=[los, his], capsize=3,
-               color=[BLUE, ORANGE, GREEN][j], label=label, error_kw={"lw": 0.8})
+        ax.bar(
+            x + (j - 1) * width,
+            pts,
+            width,
+            yerr=[los, his],
+            capsize=3,
+            color=[BLUE, ORANGE, GREEN][j],
+            label=label,
+            error_kw={"lw": 0.8},
+        )
     ax.set_xticks(x)
     ax.set_xticklabels(conds)
     ax.set_ylabel("% reduction vs. baseline")
@@ -648,27 +808,83 @@ def build_multistep_snowball_fit(ms: Dict[str, Any], stats: Dict[str, Any]) -> N
     sf = ms["snowball_fit"]
     c2 = np.array(sf["c2_sample"])
     fig, ax = plt.subplots()
-    ax.hist(c2, bins=60, color=BLUE, alpha=0.8,
-            range=(float(np.percentile(c2, 1)), float(np.percentile(c2, 99))))
-    ax.axvline(sf["median_c2"], color=GREEN, lw=1.5, label=f"median $\\hat c_2$={sf['median_c2']:.0f}")
-    ax.axvline(sf["theoretical_c2_p_over_2"], color=ORANGE, lw=1.5, ls="--",
-               label=f"$p/2$={sf['theoretical_c2_p_over_2']:.0f}")
+    ax.hist(
+        c2,
+        bins=60,
+        color=BLUE,
+        alpha=0.8,
+        range=(float(np.percentile(c2, 1)), float(np.percentile(c2, 99))),
+    )
+    ax.axvline(
+        sf["median_c2"], color=GREEN, lw=1.5, label=f"median $\\hat c_2$={sf['median_c2']:.0f}"
+    )
+    ax.axvline(
+        sf["theoretical_c2_p_over_2"],
+        color=ORANGE,
+        lw=1.5,
+        ls="--",
+        label=f"$p/2$={sf['theoretical_c2_p_over_2']:.0f}",
+    )
     ax.axvline(0, color=GREY, lw=1.0, ls=":")
     ax.set_xlabel("per-trajectory quadratic coefficient $\\hat c_2$")
     ax.set_ylabel("trajectories")
-    ax.set_title(f"State-Snowball fit on real plans ({sf['frac_c2_positive']*100:.0f}% have $\\hat c_2>0$)")
+    ax.set_title(
+        f"State-Snowball fit on real plans ({sf['frac_c2_positive'] * 100:.0f}% have $\\hat c_2>0$)"
+    )
     ax.legend(fontsize=8)
     _save(fig, "multistep_snowball_fit")
     stats["multistep"] = {
-        "dataset": ms["dataset"], "n_trajectories": ms["n_trajectories"],
-        "median_depth": ms["median_depth"], "max_depth": ms["max_depth"],
-        "median_prompt_tokens": ms["median_prompt_tokens"], "scope_cap": ms["scope_cap"],
+        "dataset": ms["dataset"],
+        "n_trajectories": ms["n_trajectories"],
+        "median_depth": ms["median_depth"],
+        "max_depth": ms["max_depth"],
+        "median_prompt_tokens": ms["median_prompt_tokens"],
+        "scope_cap": ms["scope_cap"],
         "breaker_max_loops": ms["breaker_max_loops"],
-        "reductions": {n: ms["conditions"][n]["reduction_ci"]
-                       for n in ("+scope", "+scope+route", "+full")},
+        "reductions": {
+            n: ms["conditions"][n]["reduction_ci"] for n in ("+scope", "+scope+route", "+full")
+        },
         "full_breaker_trip_rate": ms["conditions"]["+full"]["breaker_trip_rate"],
         "snowball_fit": {k: v for k, v in sf.items() if k != "c2_sample"},
     }
+
+
+def build_cost_utility_frontier(ms: Dict[str, Any], stats: Dict[str, Any]) -> None:
+    """Pareto: token reduction vs (worst-case) resolution rate per scope cap."""
+    cu = ms["cost_utility"]
+    pts = cu["points"]
+    red = [p["token_reduction_pct"] for p in pts]
+    wc = [p["worst_case_resolution_rate"] * 100 for p in pts]
+    labels = [f"{p['cap_multiplier']:g}x" for p in pts]
+    fig, ax = plt.subplots()
+    ax.plot(red, wc, "-o", color=BLUE)
+    for x, y, lbl in zip(red, wc, labels):
+        ax.annotate(lbl, (x, y), textcoords="offset points", xytext=(5, 4), fontsize=8)
+    ax.axhline(
+        cu["baseline_resolution_rate"] * 100,
+        color=GREY,
+        ls=":",
+        lw=1.0,
+        label=f"baseline resolved ({cu['baseline_resolution_rate'] * 100:.1f}%)",
+    )
+    ax.set_xlabel("token reduction vs. uncapped (%)")
+    ax.set_ylabel("worst-case resolution rate (%)")
+    ax.set_title("Cost–utility frontier (SWE-rebench, observational)")
+    ax.legend(fontsize=8)
+    _save(fig, "cost_utility_frontier")
+    stats["cost_utility"] = {
+        "baseline_resolution_rate": cu["baseline_resolution_rate"],
+        "n_resolved": cu["n_resolved"],
+        "median_prompt_tokens": cu["median_prompt_tokens"],
+        "points": pts,
+    }
+
+
+def build_gate_overhead(stats: Dict[str, Any]) -> None:
+    """Fold the gate microbenchmark (benchmarks/gate_overhead.py) into stats."""
+    path = DATA / "gate_overhead.json"
+    if path.exists():
+        stats["gate_overhead"] = json.loads(path.read_text())
 
 
 def main() -> int:
@@ -713,9 +929,13 @@ def main() -> int:
         n_fig += 2
         # Mirror the cited real-trace numbers into the single source of truth.
         stats["realtrace"] = {
-            "dataset": cal["dataset"], "tokenizer": cal["tokenizer"],
-            "n_pairs": cal["n_pairs"], "n_cal": cal["n_cal"], "n_test": cal["n_test"],
-            "residuals": cal["residuals"], "deltas": cal["deltas"],
+            "dataset": cal["dataset"],
+            "tokenizer": cal["tokenizer"],
+            "n_pairs": cal["n_pairs"],
+            "n_cal": cal["n_cal"],
+            "n_test": cal["n_test"],
+            "residuals": cal["residuals"],
+            "deltas": cal["deltas"],
             "coverage_gaussian": cal["coverage_gaussian"],
             "coverage_conformal": cal["coverage_conformal"],
             "coverage_runtime_conformal": cal.get("coverage_runtime_conformal"),
@@ -724,10 +944,12 @@ def main() -> int:
             "conformal_dev_at_005_pp": cal["conformal_dev_at_005_pp"],
             "max_conformal_dev_pp": cal["max_conformal_dev_pp"],
             "turn_depth_quadratic": cal["turn_depth_quadratic"],
-            "gaussian_dev_pp": [(g - n) * 100 for g, n in
-                                zip(cal["coverage_gaussian"], cal["nominal"])],
-            "conformal_dev_pp": [(c - n) * 100 for c, n in
-                                 zip(cal["coverage_conformal"], cal["nominal"])],
+            "gaussian_dev_pp": [
+                (g - n) * 100 for g, n in zip(cal["coverage_gaussian"], cal["nominal"])
+            ],
+            "conformal_dev_pp": [
+                (c - n) * 100 for c, n in zip(cal["coverage_conformal"], cal["nominal"])
+            ],
         }
         # Drop the bulky residual sample from the committed stats file.
         stats["realtrace"]["residuals"] = {
@@ -739,10 +961,17 @@ def main() -> int:
         fig_realtrace_shift(shift, stats)
         n_fig += 1
         stats["realtrace_shift"] = {
-            k: shift[k] for k in (
-                "delta", "target_coverage", "gamma", "regime1_n", "regime2_n",
-                "fixed_quantile_coverage", "aci_coverage",
-                "fixed_undercoverage_pp", "aci_dev_pp",
+            k: shift[k]
+            for k in (
+                "delta",
+                "target_coverage",
+                "gamma",
+                "regime1_n",
+                "regime2_n",
+                "fixed_quantile_coverage",
+                "aci_coverage",
+                "fixed_undercoverage_pp",
+                "aci_dev_pp",
             )
         }
 
@@ -780,6 +1009,9 @@ def main() -> int:
         build_multistep_bars(ms, stats)
         build_multistep_snowball_fit(ms, stats)
         n_fig += 2
+        if "cost_utility" in ms:
+            build_cost_utility_frontier(ms, stats)
+            n_fig += 1
 
     sg_path = DATA / "sensitivity_grid.json"
     if sg_path.exists():
@@ -792,6 +1024,8 @@ def main() -> int:
     if adv_path.exists():
         adv = json.loads(adv_path.read_text())
         stats["adversarial"] = adv  # numbers only; §13 has no figure
+
+    build_gate_overhead(stats)  # gate microbenchmark (no figure; §6 number only)
 
     (DATA / "figure_stats.json").write_text(json.dumps(stats, indent=2), encoding="utf-8")
     print(f"wrote {n_fig} figures to {FIGS}")

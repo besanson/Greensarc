@@ -28,11 +28,11 @@ jobs:
         run: mypy src/green_sarc benchmarks
       - name: Test
         run: pytest -q
-      - name: Verify test count matches the paper (§6 states 122 passed)
+      - name: Verify test count matches the paper (§6 states 147 passed)
         run: |
           out=$(pytest -q 2>&1 | tail -1)
           echo "$out"
-          echo "$out" | grep -q "122 passed" || { echo "Test-count drift: paper §6 says 122 passed, got: $out"; exit 1; }
+          echo "$out" | grep -q "147 passed" || { echo "Test-count drift: paper §6 says 147 passed, got: $out"; exit 1; }
       - name: Verify benchmark reference
         if: matrix.python-version == '3.12'
         run: make verify

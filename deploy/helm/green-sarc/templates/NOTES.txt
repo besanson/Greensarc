@@ -1,0 +1,16 @@
+Green SARC installed as release {{ .Release.Name }}.
+
+{{- if .Values.sidecar.enabled }}
+
+Sidecar service:
+  {{ include "green-sarc.fullname" . }}-sidecar.{{ .Release.Namespace }}.svc:{{ .Values.service.port }}
+  Health:    GET /healthz   (liveness)
+  Readiness: GET /readyz    (503 when the budget is exhausted)
+  {{- if and .Values.auth.enabled .Values.auth.token }}
+  Auth:      bearer token required on governed paths (GREEN_SARC_AUTH_TOKEN set).
+  {{- else }}
+  Auth:      UNAUTHENTICATED. Set auth.enabled=true and auth.token to require a bearer token.
+  {{- end }}
+{{- end }}
+
+Budget: tokens={{ .Values.budget.tokenBudget }}, carbon={{ .Values.budget.carbonCeiling }} gCO2e, usd={{ .Values.budget.usdBudget }}; zone={{ .Values.zone }}.

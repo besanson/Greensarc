@@ -1,0 +1,18 @@
+apiVersion: v2
+name: green-sarc
+description: Green SARC predictive FinOps/GreenOps gate as a sidecar, plus its KAOS MCPServer.
+type: application
+version: 0.4.0
+appVersion: "0.4.0"
+keywords:
+  - finops
+  - greenops
+  - carbon
+  - governance
+  - sidecar
+  - mcp
+home: https://github.com/besanson/Greensarc
+sources:
+  - https://github.com/besanson/Greensarc
+maintainers:
+  - name: Gaston Besanson

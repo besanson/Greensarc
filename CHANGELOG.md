@@ -2,9 +2,55 @@
 
 All notable changes to this project are documented here.
 
-## [Unreleased]
+## [0.4.0] - 2026-06-11
 
-Third-pass audit follow-ups.
+v0.4.0 hardening + empirics pass (Phases A–D). Highlights:
+
+### Added
+- **Operational metrics** (`green_sarc.metrics`): stdlib `MetricsSink` protocol,
+  default `NullSink`, and `PrometheusSink` behind the optional `prometheus` extra,
+  emitted from the governor's existing decision points; Grafana dashboard at
+  `deploy/grafana/` and `docs/metrics.md`. (A2)
+- **Experimental distributed Budget** (`green_sarc.backends.RedisBudget`, optional
+  `redis` extra): atomic two-phase reserve/commit/release via one Lua script each,
+  with TTL reclamation of crashed-client reservations. **Experimental** — atomic
+  against a single Redis, no cross-region or fair-share guarantee (Phase 2). (A3)
+- **Live pricing & carbon feeds** (stdlib-only, no new extra): `pricing_loaders`
+  (LiteLLM catalogue → `TableCostModel`) and `carbon_feeds.ElectricityMapsKappa`
+  (live κ as an `IntensityProvider`, on-disk cache + stale fallback); `docs/feeds.md`. (A4)
+- **Kubernetes packaging**: `deploy/helm/green-sarc/` chart (sidecar Deployment +
+  Service + MCPServer CR; `helm lint` clean). Sidecar gains `/healthz`, `/readyz`,
+  optional `GREEN_SARC_AUTH_TOKEN` bearer auth, and a `Retry-After` + structured
+  body on 429. (A5)
+- **Gate microbenchmark** (`benchmarks/gate_overhead.py`): Normal-σ p99 ≈ 3.7 µs,
+  split-conformal p99 ≈ 42 µs per decision; wired into §6 and the README. (B5)
+- **`CITATION.cff`** (CFF 1.2.0) and confirmation that `release.yml` already does
+  PyPI trusted publishing (OIDC). (A1)
+- **Cost–utility frontier** on SWE-rebench (paper §11.7 + figure): observational
+  upper bound on truncation harm using the dataset's real `resolved` flag. (B2)
+- **Live governed-agent study harness** (`paper/scripts/run_live_study.py`): two
+  arms, in-script USD ceiling, probe-checkpoint spend sign-off, offline mock
+  transport. **The funded live run is pending** (the one result not yet reported). (D1)
+
+### Changed / Fixed
+- **(B1, paper)** Conformal calibration now splits **by conversation id**, not by
+  row, removing within-conversation leakage; §10 regenerated. The pair-level split
+  overstated coverage by ~0.26 pp; split-conformal still holds (95.2% at nominal
+  95%) while Normal-σ under-covers (92%).
+- **(paper)** Abstract restructured to ≤200 words around four cap-independent
+  results; related-work paragraphs on cost-aware routing/cascades (FrugalGPT,
+  RouteLLM) and reference-monitor lineage (Anderson 1972); §16 energy-model threat
+  (super-linear context energy; verified Luccioni/Samsi refs); Remark after
+  Theorem 3 conceding the sub-Gaussian assumption is unsupported and giving the
+  empirical-Bernstein confidence sequence (Howard et al. 2021). All new citations
+  web-verified. (B3, B4, C1, C2)
+- Version → 0.4.0 (`__version__` corrected from a stale 0.2.0).
+- Test suite 122 → 147 (+ metrics/redis/feeds/sidecar/live-study); CI test-count
+  guardrail and paper §6 updated to match.
+
+---
+
+Earlier third-pass audit follow-ups (also part of 0.4.0):
 
 ### Changed
 - Real-grid data source upgraded from UK ESO to ElectricityMaps IT + US-CAISO;

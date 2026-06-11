@@ -27,6 +27,7 @@ point the agent's model traffic at it, or wrap the PAIS ``app`` directly with
 from __future__ import annotations
 
 import json
+import logging
 import os
 import re
 import uuid
@@ -42,6 +43,8 @@ from green_sarc.pricing import CarbonModel, CostModel, carbon_for_tokens
 from green_sarc.state import Action, Budget, GovernanceContext
 from green_sarc.stores.base import AuditStore
 from green_sarc.stores.memory import MemoryAuditStore
+
+logger = logging.getLogger(__name__)
 
 __all__ = [
     "estimate_text_tokens",
@@ -311,6 +314,10 @@ class GreenSarcASGIMiddleware:
         path_regex: Optional[str] = None,
         max_buffer_bytes: int = 8 * 1024 * 1024,
         stream_passthrough: bool = True,
+        health_path: str = "/healthz",
+        ready_path: str = "/readyz",
+        retry_after_s: int = 5,
+        auth_token_env: str = "GREEN_SARC_AUTH_TOKEN",
     ) -> None:
         self.app = app
         self.sidecar = sidecar
@@ -323,14 +330,47 @@ class GreenSarcASGIMiddleware:
         self.path_re = re.compile(pattern)
         self.max_buffer_bytes = max_buffer_bytes
         self.stream_passthrough = stream_passthrough
+        self.health_path = health_path
+        self.ready_path = ready_path
+        self.retry_after_s = retry_after_s
+        # Optional shared-secret auth: when GREEN_SARC_AUTH_TOKEN is set, governed
+        # paths require `Authorization: Bearer <token>`; when unset, the sidecar is
+        # open (unchanged behaviour) and warns once so the gap is visible in logs.
+        self.auth_token = os.environ.get(auth_token_env) or None
+        if self.auth_token is None:
+            logger.warning(
+                "Green SARC sidecar is UNAUTHENTICATED: set %s to require a bearer "
+                "token on governed paths (budget-drain / auditor-spoofing surface).",
+                auth_token_env,
+            )
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope.get("type") == "http":
+            req_path = scope.get("path", "")
+            # Health probes bypass gating and auth (liveness/readiness for k8s).
+            if req_path == self.health_path:
+                await self._health(send, ready=True)
+                return
+            if req_path == self.ready_path:
+                exhausted = (
+                    self.sidecar.budget.is_token_exhausted()
+                    or self.sidecar.budget.is_carbon_exhausted()
+                    or self.sidecar.budget.is_usd_exhausted()
+                )
+                await self._health(send, ready=not exhausted)
+                return
+
         if (
             scope.get("type") != "http"
             or not self.path_re.match(scope.get("path", ""))
             or scope.get("method", "").upper() != "POST"
         ):
             await self.app(scope, receive, send)
+            return
+
+        # Optional shared-secret check on governed paths (fail closed with 401).
+        if self.auth_token is not None and not self._authorized(scope):
+            await self._unauthorized(send)
             return
 
         body = await self._read_body(receive)
@@ -404,27 +444,60 @@ class GreenSarcASGIMiddleware:
         source = "usage" if extract_usage_tokens(response) > 0.0 else "estimate_text"
         self.sidecar.audit_response(action_id, response, actuals_source=source)
 
+    def _authorized(self, scope: Scope) -> bool:
+        """True when the request carries the configured `Authorization: Bearer`."""
+        for k, v in scope.get("headers", []):
+            if k.lower() == b"authorization":
+                value = v.decode("latin-1").strip()
+                if value.lower().startswith("bearer "):
+                    return value[7:].strip() == self.auth_token
+                return False
+        return False
+
+    async def _send_json(self, send: Send, status: int, payload: dict, extra_headers=()) -> None:
+        body = json.dumps(payload).encode()
+        headers = [
+            (b"content-type", b"application/json"),
+            (b"content-length", str(len(body)).encode()),
+        ]
+        headers.extend(extra_headers)
+        await send({"type": "http.response.start", "status": status, "headers": headers})
+        await send({"type": "http.response.body", "body": body, "more_body": False})
+
+    async def _health(self, send: Send, *, ready: bool) -> None:
+        await self._send_json(
+            send, 200 if ready else 503, {"status": "ok" if ready else "budget_exhausted"}
+        )
+
+    async def _unauthorized(self, send: Send) -> None:
+        await self._send_json(
+            send,
+            401,
+            {
+                "error": {
+                    "message": "Green SARC: missing or invalid bearer token",
+                    "type": "green_sarc_unauthorized",
+                }
+            },
+            extra_headers=[(b"www-authenticate", b"Bearer")],
+        )
+
     async def _reject(self, send: Send, decision: GateDecision) -> None:
-        payload = json.dumps(
+        await self._send_json(
+            send,
+            429,
             {
                 "error": {
                     "message": f"Green SARC: {decision.reason}",
                     "type": "green_sarc_budget_exceeded",
                     "verdict": decision.verdict.value,
-                }
-            }
-        ).encode()
-        await send(
-            {
-                "type": "http.response.start",
-                "status": 429,
-                "headers": [
-                    (b"content-type", b"application/json"),
-                    (b"content-length", str(len(payload)).encode()),
-                ],
-            }
+                },
+                "reason": decision.reason,
+                "predicted_tokens": decision.forecast.cost_hat,
+                "budget_remaining": self.sidecar.budget.remaining_tokens(),
+            },
+            extra_headers=[(b"retry-after", str(self.retry_after_s).encode())],
         )
-        await send({"type": "http.response.body", "body": payload, "more_body": False})
 
     @staticmethod
     async def _read_body(receive: Receive) -> bytes:

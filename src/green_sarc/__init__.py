@@ -43,6 +43,7 @@ from green_sarc.governor import (
     GovernedResult,
     GreenGovernor,
 )
+from green_sarc.metrics import MetricsSink, NullSink, PrometheusSink
 from green_sarc.monitor import ActionTimeMonitor, CircuitTripped
 from green_sarc.pricing import (
     CarbonModel,
@@ -69,7 +70,7 @@ from green_sarc.trajectory import (
     TrajectoryEstimator,
 )
 
-__version__ = "0.2.0"
+__version__ = "0.4.0"
 
 __all__ = [
     "__version__",
@@ -118,6 +119,10 @@ __all__ = [
     "EscalationReason",
     "DeterministicFallbackHandler",
     "log_only_handler",
+    # operational metrics (Prometheus optional)
+    "MetricsSink",
+    "NullSink",
+    "PrometheusSink",
     # governor
     "GreenGovernor",
     "ActionOutcome",

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "green-sarc"
-version = "0.3.0"
+version = "0.4.0"
 description = "Green SARC — predictive cost + carbon governance layer for agentic AI systems, framework-agnostic"
 readme = "README.md"
 license = { text = "MIT" }
@@ -26,6 +26,11 @@ dependencies = []
 [project.optional-dependencies]
 mcp = ["mcp>=1.0"]
 otel = ["opentelemetry-sdk>=1.20"]
+prometheus = ["prometheus-client>=0.19"]
+redis = ["redis>=5"]
+# Live LiteLLM price + ElectricityMaps carbon loaders are stdlib-only (urllib);
+# this extra is intentionally empty, kept as a stable name for forward-compat.
+feeds = []
 sarc = ["sarc-governance @ git+https://github.com/besanson/sarc-governance"]
 tiktoken = ["tiktoken>=0.5"]
 dev = [
@@ -33,6 +38,8 @@ dev = [
     "pytest-asyncio>=0.23",
     "ruff==0.15.12",
     "mypy==1.15.0",
+    "prometheus-client>=0.19",
+    "fakeredis[lua]>=2.20",
 ]
 
 [project.scripts]
