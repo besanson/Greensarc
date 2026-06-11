@@ -291,7 +291,9 @@ class GreenGovernor:
         _usd_left = self.budget.remaining_usd()
         if _usd_left != float("inf"):
             self.metrics.gauge(BUDGET_USD_REMAINING, _usd_left)
-        self.metrics.observe(FORECAST_ABS_ERROR_TOKENS, abs(actual_cost - decision.forecast.cost_hat))
+        self.metrics.observe(
+            FORECAST_ABS_ERROR_TOKENS, abs(actual_cost - decision.forecast.cost_hat)
+        )
 
         # ---- SITE 2: Action-Time Monitor (post-execution cost guard) -----
         circuit_exc: Optional[CircuitTripped] = None

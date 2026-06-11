@@ -473,8 +473,12 @@ class GreenSarcASGIMiddleware:
         await self._send_json(
             send,
             401,
-            {"error": {"message": "Green SARC: missing or invalid bearer token",
-                       "type": "green_sarc_unauthorized"}},
+            {
+                "error": {
+                    "message": "Green SARC: missing or invalid bearer token",
+                    "type": "green_sarc_unauthorized",
+                }
+            },
             extra_headers=[(b"www-authenticate", b"Bearer")],
         )
 

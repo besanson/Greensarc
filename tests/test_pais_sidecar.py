@@ -356,7 +356,8 @@ async def test_auth_401_without_token(monkeypatch, cost_model, carbon_model):
 
     # Wrong token -> 401 too.
     bad = await _drive(
-        app, json.dumps(_chat_request()).encode(),
+        app,
+        json.dumps(_chat_request()).encode(),
         headers=[(b"authorization", b"Bearer wrong")],
     )
     assert bad[0]["status"] == 401
@@ -370,7 +371,8 @@ async def test_auth_200_with_valid_bearer(monkeypatch, cost_model, carbon_model)
     app = GreenSarcASGIMiddleware(pais, sc)
 
     messages = await _drive(
-        app, json.dumps(_chat_request()).encode(),
+        app,
+        json.dumps(_chat_request()).encode(),
         headers=[(b"authorization", b"Bearer s3cret")],
     )
     assert messages[0]["status"] == 200

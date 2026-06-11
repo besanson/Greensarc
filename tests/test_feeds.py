@@ -20,6 +20,7 @@ FIX = Path(__file__).parent / "fixtures"
 
 # --- LiteLLM price loader ---------------------------------------------------
 
+
 def test_litellm_loader_maps_usd_and_skips_meta():
     cm = load_litellm_prices(str(FIX / "litellm_prices_sample.json"))
     # Real models load with their per-token USD.
@@ -45,6 +46,7 @@ def test_litellm_loader_via_opener():
 
 
 # --- ElectricityMaps carbon feed -------------------------------------------
+
 
 def _fixture_opener():
     raw = (FIX / "electricitymaps_latest.json").read_bytes()
@@ -90,7 +92,7 @@ def test_em_provider_stale_fallback_on_failure(monkeypatch):
     now = [0.0]
     p = ElectricityMapsKappa("IT", opener=opener, ttl_s=10.0, clock=lambda: now[0])
     assert p.get() == 247.0  # primes the cache
-    now[0] = 100.0           # past TTL, force a refetch
+    now[0] = 100.0  # past TTL, force a refetch
     state["fail"] = True
     with pytest.warns(UserWarning, match="falling back"):
         assert p.get() == 247.0  # serves the stale cached value

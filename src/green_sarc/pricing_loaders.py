@@ -26,8 +26,7 @@ from green_sarc.pricing import ModelProfile, TableCostModel
 __all__ = ["load_litellm_prices", "LITELLM_PRICES_URL"]
 
 LITELLM_PRICES_URL = (
-    "https://raw.githubusercontent.com/BerriAI/litellm/main/"
-    "model_prices_and_context_window.json"
+    "https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json"
 )
 
 Opener = Callable[[str], bytes]

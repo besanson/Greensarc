@@ -146,7 +146,9 @@ class RedisBudget:
         """
         return self.client.eval(script, 3, self._h, self._z, self._a, *args)
 
-    def _init(self, token_budget: float, carbon_ceiling: float, usd_budget: Optional[float]) -> None:
+    def _init(
+        self, token_budget: float, carbon_ceiling: float, usd_budget: Optional[float]
+    ) -> None:
         """Initialise the hash once, atomically; never clobber an existing budget."""
         usd = "inf" if usd_budget is None else repr(float(usd_budget))
         # HSETNX per field is atomic and idempotent across racing replicas.
@@ -162,8 +164,11 @@ class RedisBudget:
         rid = uuid.uuid4().hex
         ok = self._eval(
             _RESERVE_LUA,
-            repr(self._clock()), repr(float(tokens)), repr(float(carbon)),
-            repr(self.reservation_ttl_s), rid,
+            repr(self._clock()),
+            repr(float(tokens)),
+            repr(float(carbon)),
+            repr(self.reservation_ttl_s),
+            rid,
         )
         if int(ok) == 1:
             return Reservation(id=rid, tokens=float(tokens), carbon=float(carbon))
@@ -178,7 +183,9 @@ class RedisBudget:
     ) -> None:
         self._eval(
             _COMMIT_LUA,
-            reservation.id, repr(float(actual_tokens)), repr(float(actual_carbon)),
+            reservation.id,
+            repr(float(actual_tokens)),
+            repr(float(actual_carbon)),
             repr(float(actual_usd)),
         )
 

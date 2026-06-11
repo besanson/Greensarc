@@ -134,9 +134,7 @@ class PrometheusSink:
                 "gate_rejected", "Actions rejected by the gate, by reason.", ["reason"]
             ),
             BREAKER_TRIPS: _c("breaker_trips", "Action-Time Monitor circuit-breaker trips."),
-            ESCALATIONS: _c(
-                "escalations", "Escalation Router dispatches, by reason.", ["reason"]
-            ),
+            ESCALATIONS: _c("escalations", "Escalation Router dispatches, by reason.", ["reason"]),
         }
         self._gauges: Dict[str, Any] = {
             BUDGET_TOKENS_REMAINING: _g("budget_tokens_remaining", "Remaining token budget."),

@@ -97,8 +97,12 @@ def test_ttl_expiry_reclaims_stale_reservation():
     now = [1000.0]
     c = _client()
     b = RedisBudget(
-        c, "run-1", token_budget=100.0, carbon_ceiling=100.0,
-        reservation_ttl_s=10.0, clock=lambda: now[0],
+        c,
+        "run-1",
+        token_budget=100.0,
+        carbon_ceiling=100.0,
+        reservation_ttl_s=10.0,
+        clock=lambda: now[0],
     )
     first = b.reserve(100.0, 0.0)
     assert first is not None
