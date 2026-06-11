@@ -27,6 +27,7 @@ dependencies = []
 mcp = ["mcp>=1.0"]
 otel = ["opentelemetry-sdk>=1.20"]
 prometheus = ["prometheus-client>=0.19"]
+redis = ["redis>=5"]
 sarc = ["sarc-governance @ git+https://github.com/besanson/sarc-governance"]
 tiktoken = ["tiktoken>=0.5"]
 dev = [
@@ -35,7 +36,7 @@ dev = [
     "ruff==0.15.12",
     "mypy==1.15.0",
     "prometheus-client>=0.19",
-    "fakeredis>=2.20",
+    "fakeredis[lua]>=2.20",
 ]
 
 [project.scripts]

@@ -150,6 +150,14 @@ accumulate, `LearnedEstimator` takes over per `(action kind, model)` key.
   trajectories, so it cannot be built until Phase 1 has produced data. The
   interface is fixed in `trajectory.py` and raises `NotImplementedError`.
 
+The single-process `Budget` (thread-safe via `threading.Lock`) is authoritative
+for one replica. For multi-replica deployments an **experimental** distributed
+backend ships in Phase 1: `green_sarc.backends.RedisBudget` (optional `redis`
+extra) — one atomic Lua script per reserve/commit/release, with TTL reclamation
+of crashed-client reservations; atomic against a single Redis, no cross-region
+reconciliation or fair-share yet (a Postgres durable ledger + fair-share are
+Phase 2).
+
 ## The estimator is model-agnostic
 
 The estimator predicts against **any** LLM: the caller supplies a pricing +
