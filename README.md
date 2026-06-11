@@ -64,6 +64,7 @@ Full docs live in [`docs/`](docs/):
 - [**Use it**](docs/usage.md) — govern your own agent in 5 minutes (3-line setup).
 - [Quickstart](docs/quickstart.md) — install, run, govern your own loop.
 - [Metrics](docs/metrics.md) — Prometheus counters/gauges/latency histograms (optional `prometheus` extra) + a ready-to-import Grafana dashboard.
+- [Live feeds](docs/feeds.md) — load real LiteLLM prices and live ElectricityMaps carbon intensity (stdlib-only, no extra required).
 
 **Related repositories** (Green SARC depends on neither at runtime):
 [SARC framework](https://github.com/besanson/sarc-governance) ·

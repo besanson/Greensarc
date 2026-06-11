@@ -28,6 +28,9 @@ mcp = ["mcp>=1.0"]
 otel = ["opentelemetry-sdk>=1.20"]
 prometheus = ["prometheus-client>=0.19"]
 redis = ["redis>=5"]
+# Live LiteLLM price + ElectricityMaps carbon loaders are stdlib-only (urllib);
+# this extra is intentionally empty, kept as a stable name for forward-compat.
+feeds = []
 sarc = ["sarc-governance @ git+https://github.com/besanson/sarc-governance"]
 tiktoken = ["tiktoken>=0.5"]
 dev = [
