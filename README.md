@@ -63,6 +63,7 @@ Full docs live in [`docs/`](docs/):
 - [KAOS integration](docs/kaos-integration.md) — how **KAOS** ([`axsaucedo/kaos`](https://github.com/axsaucedo/kaos)) calls Green SARC, across all three surfaces, with deployment.
 - [**Use it**](docs/usage.md) — govern your own agent in 5 minutes (3-line setup).
 - [Quickstart](docs/quickstart.md) — install, run, govern your own loop.
+- [Metrics](docs/metrics.md) — Prometheus counters/gauges/latency histograms (optional `prometheus` extra) + a ready-to-import Grafana dashboard.
 
 **Related repositories** (Green SARC depends on neither at runtime):
 [SARC framework](https://github.com/besanson/sarc-governance) ·
