@@ -291,6 +291,8 @@ Audit schema & \texttt{plan\_id}, \texttt{session\_id}, \texttt{parent\_action\_
 
 \noindent\textbf{Tests and CI.} The library passes 147 unit and integration tests on Python 3.11 and 3.12 (an additional SARC-composition suite is skipped unless the optional \texttt{sarc} extra is installed), including concurrency race tests, runtime conformal-coverage tests, an ACI-restoration test, sidecar SSE streaming tests, a distributed-budget race test, Prometheus-metrics tests, live-feed loader tests, and end-to-end ablation reproduction. CI runs \texttt{ruff}, \texttt{mypy} on \texttt{src/} and \texttt{benchmarks/}, \texttt{pytest -q}, and \texttt{make verify} on every push; the release workflow gates publication on the test matrix.
 
+\noindent\textbf{Gate overhead.} A microbenchmark (\texttt{benchmarks/gate\_overhead.py}, $2{\times}10^5$ warm decisions, single process) puts the Pre-Action Gate's cost at p50 $1.7~\mu$s / p99 $3.7~\mu$s per decision on the default Normal-$\sigma$ path ($\sim$$0.5$M decisions/s) --- negligible beside any model call. The split-conformal path is p50 $12.2~\mu$s / p99 $\sim$$42~\mu$s, dominated by recomputing the empirical residual quantile over the calibration set on each decision (a cost a production deployment would precompute and amortize); even unamortized it stays under $0.1$\,ms. Latency is hardware-dependent; the committed figure is from the reference runner.
+
 \subsection{Deploying Green SARC}\label{sec:deploy}
 Three integration patterns, in increasing order of loose coupling:
 \begin{enumerate}[leftmargin=1.5em,itemsep=2pt]
@@ -601,6 +603,18 @@ Condition & Token reduction & USD reduction & Carbon reduction \\
 \paragraph{Breaker activations.} On these real plans the circuit breaker fires on \textbf{$11.4\%$ of trajectories} (the long-plan tail beyond $1.5\times$ the median depth), versus \emph{zero} on BurstGPT. This is the decisive contrast: the breaker is a dormant safeguard on single-step serving traffic but a \emph{live, material lever} on real multi-step agent plans, where it supplies the entire token-saving increment of \texttt{+full} over \texttt{+scope+route}.
 
 \paragraph{What survives, what shifts.} Routing's USD/carbon saving ($\sim$$42\%$/$40\%$) and the lever ordering reproduce here as on BurstGPT and the IBP. Two things differ from BurstGPT. The breaker is no longer dormant ($11.4\%$ vs $0\%$), vindicating its inclusion. And scope yields little here ($2.3\%$) only because the $2\times$-median cap ($\sim$$43$k tokens) rarely binds on these plans; a tighter cap would truncate more but risks dropping the context the agent needs --- the same policy/quality tradeoff named in \S\ref{sec:realarrival}, now with real multi-step stakes. Token reduction is modest precisely because we did not tune the cap aggressively; the load-bearing real-plan findings are the confirmed super-linear snowball and the live breaker.
+
+\subsection{Cost--utility frontier}\label{sec:costutility}
+The paragraph above names a tradeoff; because SWE-rebench records task outcomes, we can bound it. Each trajectory carries the benchmark's real \texttt{resolved} flag --- whether the agent's patch passed the held-out tests --- and $49.3\%$ of the $3{,}000$ plans resolved. We sweep the scope cap $C=m\cdot\tilde p$ ($m\in\{0.5,1,2,4\}$, $\tilde p$ the median per-step prompt) and, for each cap, report tokens saved against an \emph{upper bound on quality harm}: a worst-case resolution rate that assumes \textbf{every resolved trajectory whose actually-used context the cap would have truncated flips to unresolved}. This is deliberately pessimistic and, crucially, \emph{observational} --- truncation is simulated on logged trajectories, so the agent cannot react to the smaller context. The replay therefore bounds how much resolved work a cap \emph{puts at risk}; it cannot establish that the work would in fact fail (a live agent might recover by re-fetching). It is a correlational upper bound, not a causal estimate.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.6\linewidth]{cost_utility_frontier.pdf}
+\caption{Cost--utility frontier on SWE-rebench: token reduction vs.\ the worst-case resolution rate (every truncated resolved plan assumed to fail). The cap that saves tokens truncates nearly every plan; the cap that is near-harmless saves little.}
+\label{fig:costutility}
+\end{figure}
+
+\noindent The frontier is steep (Figure~\ref{fig:costutility}). The aggressive $0.5\times$ cap saves $55.7\%$ of tokens but truncates $100\%$ of plans, putting \emph{all} resolved work at risk ($0\%$ worst-case resolution); the $1\times$ cap saves $23.7\%$ while still truncating $92.3\%$. Only the loose $2\times$ cap used in our ablation is close to benign --- $2.3\%$ tokens for a worst-case resolution of $42.3\%$ (it touches $23.2\%$ of plans) --- and the $4\times$ cap is essentially free ($0.4\%$ truncated, $49.2\%$ worst-case, against the $49.3\%$ baseline). The honest reading: \textbf{on real multi-step plans the token savings available from scope capping are bought against a real and possibly large truncation risk, and the cap that is safe saves little}. The causal version --- where the agent adapts to the cap --- needs the live study (\S\ref{sec:limits}); this observational frontier is the upper bound that motivates it.
 
 \section{Sensitivity Analysis: the $\delta$ Knob}\label{sec:sensitivity}
 

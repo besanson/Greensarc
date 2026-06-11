@@ -1,0 +1,17 @@
+{
+  "n_decisions": 200000,
+  "warmup": 5000,
+  "seed": 0,
+  "normal_sigma": {
+    "p50_us": 1.737,
+    "p99_us": 3.6610100000000094,
+    "mean_us": 1.872722775,
+    "decisions_per_sec": 533981.8649879986
+  },
+  "split_conformal": {
+    "p50_us": 12.186,
+    "p99_us": 41.953010000000006,
+    "mean_us": 13.615373380000001,
+    "decisions_per_sec": 73446.38829140946
+  }
+}

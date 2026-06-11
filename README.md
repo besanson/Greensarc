@@ -32,6 +32,10 @@ and carbon ceiling are enforced in the same loop:
 
 A ~50× reduction — this is the `predict → act → log → retrain` loop working.
 
+**Overhead:** the gate adds **p99 ≈ 3.7 µs** per decision on the default
+Normal-σ path (~0.5 M decisions/sec; `benchmarks/gate_overhead.py`) — negligible
+beside any model call.
+
 And on the reproducible §8 **IBP benchmark** (`make reproduce`, 20 seeds, 400 SKUs,
 baseline State-Snowball vs. Green SARC), enforcement placement — Adapter-Node
 state scoping + energy-aware routing + the circuit breaker — yields:
