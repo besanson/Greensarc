@@ -1,0 +1,69 @@
+{{- if .Values.sidecar.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "green-sarc.fullname" . }}-sidecar
+  labels:
+    {{- include "green-sarc.labels" . | nindent 4 }}
+    app.kubernetes.io/component: sidecar
+spec:
+  replicas: {{ .Values.sidecar.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "green-sarc.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: sidecar
+  template:
+    metadata:
+      {{- with .Values.sidecar.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "green-sarc.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: sidecar
+    spec:
+      containers:
+        - name: green-sarc-sidecar
+          image: "{{ .Values.sidecar.image.repository }}:{{ .Values.sidecar.image.tag }}"
+          imagePullPolicy: {{ .Values.sidecar.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.sidecar.port }}
+          env:
+            - name: GREEN_SARC_TOKEN_BUDGET
+              value: {{ .Values.budget.tokenBudget | quote }}
+            - name: GREEN_SARC_CARBON_CEILING
+              value: {{ .Values.budget.carbonCeiling | quote }}
+            - name: GREEN_SARC_USD_BUDGET
+              value: {{ .Values.budget.usdBudget | quote }}
+            - name: GREEN_SARC_ZONE
+              value: {{ .Values.zone | quote }}
+            {{- if and .Values.auth.enabled .Values.auth.token }}
+            - name: GREEN_SARC_AUTH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "green-sarc.secretName" . }}
+                  key: GREEN_SARC_AUTH_TOKEN
+            {{- end }}
+            {{- if .Values.electricityMaps.apiKey }}
+            - name: ELECTRICITYMAPS_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "green-sarc.secretName" . }}
+                  key: ELECTRICITYMAPS_API_KEY
+            {{- end }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.sidecar.resources | nindent 12 }}
+{{- end }}

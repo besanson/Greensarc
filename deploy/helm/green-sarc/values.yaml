@@ -1,0 +1,55 @@
+# Green SARC Helm values.
+#
+# The chart deploys two optional pieces: the hard-gating PAIS sidecar
+# (Deployment + Service) and the KAOS MCPServer custom resource. Both are
+# templatized on image, the budget env vars, and the carbon zone.
+
+nameOverride: ""
+fullnameOverride: ""
+
+# --- Sidecar (hard gate in front of an OpenAI-compatible endpoint) ---------
+sidecar:
+  enabled: true
+  image:
+    repository: ghcr.io/besanson/green-sarc-sidecar
+    tag: "0.4.0"
+    pullPolicy: IfNotPresent
+  replicaCount: 1
+  # The container must serve the GreenSarcASGIMiddleware over this port and
+  # expose /healthz (liveness) and /readyz (readiness).
+  port: 8000
+  resources: {}
+  podAnnotations: {}
+
+# --- Budget (mapped to the sidecar container's env) ------------------------
+budget:
+  tokenBudget: 2000000
+  carbonCeiling: 1000000
+  usdBudget: 50
+
+# ElectricityMaps zone for the live carbon feed (kappa(rho,t)).
+zone: "IT"
+
+# Optional shared-secret auth on governed paths. When token is non-empty it is
+# stored in a Secret and injected as GREEN_SARC_AUTH_TOKEN; the sidecar then
+# requires `Authorization: Bearer <token>`. Empty == unauthenticated (warns).
+auth:
+  enabled: false
+  token: ""
+
+# Optional ElectricityMaps API key (Secret -> ELECTRICITYMAPS_API_KEY).
+electricityMaps:
+  apiKey: ""
+
+service:
+  type: ClusterIP
+  port: 80
+
+# --- KAOS MCPServer CR (advisory gate tool; one-way KAOS -> Green SARC) -----
+mcpServer:
+  enabled: true
+  name: green-sarc
+  image: ghcr.io/besanson/green-sarc-mcp:0.4.0
+  telemetry:
+    enabled: true
+    endpoint: "otel-collector:4317"

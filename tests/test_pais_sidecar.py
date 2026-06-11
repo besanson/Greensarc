@@ -140,9 +140,9 @@ def _make_mock_pais(usage_total: int = 250):
 
 
 async def _drive(
-    app, body: bytes, *, path="/v1/chat/completions", method="POST"
+    app, body: bytes, *, path="/v1/chat/completions", method="POST", headers=None
 ) -> List[Dict[str, Any]]:
-    scope = {"type": "http", "path": path, "method": method, "headers": []}
+    scope = {"type": "http", "path": path, "method": method, "headers": headers or []}
     sent = {"done": False}
 
     async def receive():
@@ -298,3 +298,91 @@ def test_orphan_gate_releases_reservation(cost_model, carbon_model):
     d2, _ = sc.gate_request(_chat_request())  # evicts the first, releasing its reservation
     assert d2.admitted
     assert budget.reserved_tokens == reserved  # one reservation outstanding, not two
+
+
+# -- A5: health endpoints, Retry-After, optional bearer auth ----------------
+
+
+async def test_healthz_bypasses_gating(cost_model, carbon_model):
+    sc = _sidecar(Budget(10_000.0, 100.0), cost_model, carbon_model)
+    pais, state = _make_mock_pais()
+    app = GreenSarcASGIMiddleware(pais, sc)
+
+    messages = await _drive(app, b"", path="/healthz", method="GET")
+
+    assert state["called"] is False  # health handled by the middleware, not the app
+    assert messages[0]["status"] == 200
+    assert json.loads(messages[1]["body"])["status"] == "ok"
+
+
+async def test_readyz_503_when_budget_exhausted(cost_model, carbon_model):
+    budget = Budget(token_budget=10_000.0, carbon_ceiling=100.0)
+    sc = _sidecar(budget, cost_model, carbon_model)
+    app = GreenSarcASGIMiddleware(_make_mock_pais()[0], sc)
+
+    ok = await _drive(app, b"", path="/readyz", method="GET")
+    assert ok[0]["status"] == 200
+
+    budget.spend(10_000.0, 0.0)  # drain the token budget
+    drained = await _drive(app, b"", path="/readyz", method="GET")
+    assert drained[0]["status"] == 503
+
+
+async def test_429_carries_retry_after_and_structured_body(cost_model, carbon_model):
+    budget = Budget(token_budget=10.0, carbon_ceiling=100.0)
+    sc = _sidecar(budget, cost_model, carbon_model)
+    app = GreenSarcASGIMiddleware(_make_mock_pais()[0], sc, retry_after_s=7)
+
+    messages = await _drive(app, json.dumps(_chat_request(max_tokens=4000)).encode())
+
+    assert messages[0]["status"] == 429
+    headers = {k.lower(): v for k, v in messages[0]["headers"]}
+    assert headers[b"retry-after"] == b"7"
+    body = json.loads(messages[1]["body"])
+    assert set(("reason", "predicted_tokens", "budget_remaining")) <= set(body)
+    assert body["budget_remaining"] == 10.0
+
+
+async def test_auth_401_without_token(monkeypatch, cost_model, carbon_model):
+    monkeypatch.setenv("GREEN_SARC_AUTH_TOKEN", "s3cret")
+    sc = _sidecar(Budget(10_000.0, 100.0), cost_model, carbon_model)
+    pais, state = _make_mock_pais()
+    app = GreenSarcASGIMiddleware(pais, sc)
+
+    # No Authorization header -> 401, app never reached, nothing gated.
+    messages = await _drive(app, json.dumps(_chat_request()).encode())
+    assert messages[0]["status"] == 401
+    assert state["called"] is False
+
+    # Wrong token -> 401 too.
+    bad = await _drive(
+        app, json.dumps(_chat_request()).encode(),
+        headers=[(b"authorization", b"Bearer wrong")],
+    )
+    assert bad[0]["status"] == 401
+
+
+async def test_auth_200_with_valid_bearer(monkeypatch, cost_model, carbon_model):
+    monkeypatch.setenv("GREEN_SARC_AUTH_TOKEN", "s3cret")
+    budget = Budget(token_budget=10_000.0, carbon_ceiling=100.0)
+    sc = _sidecar(budget, cost_model, carbon_model)
+    pais, state = _make_mock_pais(usage_total=250)
+    app = GreenSarcASGIMiddleware(pais, sc)
+
+    messages = await _drive(
+        app, json.dumps(_chat_request()).encode(),
+        headers=[(b"authorization", b"Bearer s3cret")],
+    )
+    assert messages[0]["status"] == 200
+    assert state["called"] is True
+    assert budget.remaining_tokens() == 10_000.0 - 250.0
+
+
+async def test_unauthenticated_when_token_unset(monkeypatch, cost_model, carbon_model):
+    monkeypatch.delenv("GREEN_SARC_AUTH_TOKEN", raising=False)
+    budget = Budget(token_budget=10_000.0, carbon_ceiling=100.0)
+    sc = _sidecar(budget, cost_model, carbon_model)
+    app = GreenSarcASGIMiddleware(_make_mock_pais()[0], sc)  # warns once, stays open
+
+    messages = await _drive(app, json.dumps(_chat_request()).encode())
+    assert messages[0]["status"] == 200  # unchanged behaviour
