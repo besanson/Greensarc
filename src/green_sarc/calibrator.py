@@ -17,51 +17,69 @@ upper bound on cost.  Two implementations are provided:
 
 Both are strategy objects passed to :class:`~green_sarc.gate.PreActionGate` via
 ``calibrator=...``; omitting it preserves the Normal-:math:`\\sigma` behaviour
-exactly (backward compatible).  Pure ``numpy``; no SciPy dependency.
+exactly (backward compatible).  Pure Python (stdlib only); no numpy/SciPy
+dependency, so the calibrated gate ships in the library's zero-dependency core.
 """
 
 from __future__ import annotations
 
+import math
+from collections.abc import Iterable
 from typing import Optional, Protocol, runtime_checkable
 
-import numpy as np
-
 __all__ = ["Calibrator", "SplitConformal", "ACIConformal"]
+
+
+def _to_floats(residuals: Iterable[float]) -> list[float]:
+    """Flatten an array-like of residuals to a flat list of floats (``ravel`` semantics)."""
+    out: list[float] = []
+
+    def _walk(x: object) -> None:
+        if isinstance(x, (str, bytes)):
+            raise TypeError("residuals must be numeric, not str/bytes")
+        if isinstance(x, Iterable):
+            for item in x:
+                _walk(item)
+        else:
+            out.append(float(x))  # type: ignore[arg-type]
+
+    _walk(residuals)
+    return out
 
 
 @runtime_checkable
 class Calibrator(Protocol):
     """Maps a point forecast ``mu`` to a one-sided upper bound at risk ``level``."""
 
-    def fit(self, residuals: np.ndarray) -> None: ...
+    def fit(self, residuals: Iterable[float]) -> None: ...
 
     def upper_bound(self, mu: float, level: float) -> float: ...
 
     def update(self, observed: float, predicted: float) -> None: ...
 
 
-def _one_sided_quantile(scores: np.ndarray, coverage: float) -> float:
+def _one_sided_quantile(scores: list[float], coverage: float) -> float:
     """Conformal ``coverage`` quantile of one-sided scores (``+inf`` if degenerate)."""
-    if scores.size == 0:
+    if len(scores) == 0:
         return float("inf")
     coverage = min(max(coverage, 0.0), 1.0)
     # The finite-sample-valid level uses the (n+1) correction; clamp to +inf when
     # the requested coverage exceeds what the calibration set can certify.
-    n = scores.size
-    rank = int(np.ceil((n + 1) * coverage))
+    n = len(scores)
+    rank = math.ceil((n + 1) * coverage)
     if rank > n:
         return float("inf")
-    return float(np.sort(scores)[rank - 1])
+    return float(sorted(scores)[rank - 1])
 
 
 class SplitConformal:
     """Split (inductive) conformal upper bound: ``mu + q_{1-level}``."""
 
     def __init__(self) -> None:
-        self._scores: Optional[np.ndarray] = None
+        self._scores: Optional[list[float]] = None
 
-    def fit(self, residuals: np.ndarray) -> None:
-        self._scores = np.asarray(residuals, dtype=float).ravel()
+    def fit(self, residuals: Iterable[float]) -> None:
+        self._scores = _to_floats(residuals)
 
     def upper_bound(self, mu: float, level: float) -> float:
         if self._scores is None:
@@ -84,13 +102,13 @@ class ACIConformal:
 
     def __init__(self, gamma: float = 0.05) -> None:
         self.gamma = gamma
-        self._scores: Optional[np.ndarray] = None
+        self._scores: Optional[list[float]] = None
         self._target: Optional[float] = None
         self._alpha: float = 0.0
         self._last_q: float = 0.0
 
-    def fit(self, residuals: np.ndarray) -> None:
-        self._scores = np.asarray(residuals, dtype=float).ravel()
+    def fit(self, residuals: Iterable[float]) -> None:
+        self._scores = _to_floats(residuals)
 
     def upper_bound(self, mu: float, level: float) -> float:
         if self._scores is None:
@@ -101,7 +119,7 @@ class ACIConformal:
         self._last_q = _one_sided_quantile(self._scores, 1.0 - self._alpha)
         if self._last_q == float("inf"):
             # cannot certify at this level; fall back to the empirical max score
-            self._last_q = float(self._scores.max()) if self._scores.size else 0.0
+            self._last_q = float(max(self._scores)) if self._scores else 0.0
         return mu + self._last_q
 
     def update(self, observed: float, predicted: float) -> None:
