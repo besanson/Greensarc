@@ -40,6 +40,7 @@ dev = [
     "mypy==1.15.0",
     "prometheus-client>=0.19",
     "fakeredis[lua]>=2.20",
+    "numpy>=1.26",  # test/benchmark data generation only; the library core is numpy-free
 ]
 
 [project.scripts]
