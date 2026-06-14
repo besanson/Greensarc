@@ -1,0 +1,72 @@
+name: citation-sync
+
+# Keep CITATION.cff in step with each GitHub Release without any manual edit:
+# on a published release we rewrite the top-level `version:` and `date-released:`
+# from the release tag/date and commit the result back to `main`. The README DOI
+# badge uses the Zenodo *concept* DOI, so it never needs touching per release.
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to sync CITATION.cff to (e.g. v0.4.1)"
+        required: true
+
+permissions:
+  contents: write  # push the citation bump back to main
+
+concurrency:
+  group: citation-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Resolve version + date from the release
+        id: meta
+        run: |
+          set -euo pipefail
+          tag="${{ github.event.release.tag_name || github.event.inputs.tag }}"
+          version="${tag#v}"                       # strip leading "v"
+          published="${{ github.event.release.published_at }}"
+          date="${published:0:10}"                 # YYYY-MM-DD from ISO timestamp
+          [ -n "$date" ] || date="$(date -u +%F)"  # workflow_dispatch has no published_at
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "date=$date" >> "$GITHUB_OUTPUT"
+          echo "Syncing CITATION.cff -> version=$version date-released=$date"
+
+      - name: Rewrite CITATION.cff
+        run: |
+          set -euo pipefail
+          v='${{ steps.meta.outputs.version }}'
+          d='${{ steps.meta.outputs.date }}'
+          # Anchored to line start so cff-version: is never touched.
+          sed -i -E "s/^version:.*/version: ${v}/" CITATION.cff
+          if grep -qE '^date-released:' CITATION.cff; then
+            sed -i -E "s/^date-released:.*/date-released: ${d}/" CITATION.cff
+          else
+            # Insert directly after the version line if the field is missing.
+            sed -i -E "/^version:/a date-released: ${d}" CITATION.cff
+          fi
+          echo "--- CITATION.cff (head) ---"
+          sed -n '1,24p' CITATION.cff
+
+      - name: Commit if changed
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- CITATION.cff; then
+            echo "CITATION.cff already in sync; nothing to commit."
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add CITATION.cff
+          git commit -m "docs: sync CITATION.cff to ${{ steps.meta.outputs.version }} [skip ci]"
+          git push origin main
