@@ -17,7 +17,7 @@ authors:
     email: gbesanson@utdt.edu
 repository-code: "https://github.com/besanson/Greensarc"
 license: MIT
-version: 0.4.0
+version: 0.4.1
 keywords:
   - finops
   - greenops

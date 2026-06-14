@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "green-sarc"
-version = "0.4.0"
+version = "0.4.1"
 description = "Green SARC — predictive cost + carbon governance layer for agentic AI systems, framework-agnostic"
 readme = "README.md"
 license = { text = "MIT" }

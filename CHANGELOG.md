@@ -2,6 +2,24 @@
 
 All notable changes to this project are documented here.
 
+## [0.4.1] - 2026-06-14
+
+Packaging + CI maintenance release; first release archived to Zenodo for a
+citable DOI. No library API changes since 0.4.0.
+
+### Fixed
+- **PyPI upload rejection**: the `sarc` extra carried a direct VCS dependency
+  (`sarc-governance @ git+https://...`), which PyPI forbids in published
+  metadata (`400 Can't have direct dependency`), so the 0.4.0 upload was
+  rejected (namespace reserved, no files landed). `sarc` is now an empty,
+  forward-compat extra (same convention as `feeds`) with the manual install
+  command documented in `pyproject.toml`; `python -m build` + `twine check`
+  pass clean. (#13)
+
+### Changed
+- **Library core is now numpy-free**; numpy is confined to the `dev` extra for
+  test/benchmark data generation only. Test count synced to 152. (#12)
+
 ## [0.4.0] - 2026-06-11
 
 v0.4.0 hardening + empirics pass (Phases A–D). Highlights:
