@@ -5,7 +5,7 @@ PY ?= python
 ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST)))/..)
 TEX := green-sarc.tex
 
-.PHONY: paper paper-data paper-figures paper-binding-budget paper-realtrace paper-real-arrival paper-adversarial paper-grid paper-fetch-grid paper-sensitivity-grid paper-multistep paper-clean
+.PHONY: paper paper-data paper-figures paper-binding-budget paper-realtrace paper-real-arrival paper-adversarial paper-grid paper-fetch-grid paper-sensitivity-grid paper-multistep paper-clean arxiv
 
 # Binding-budget gate sweep (§9): full stack under a finite budget, 20 seeds.
 paper-binding-budget:
@@ -71,6 +71,20 @@ paper: paper-figures
 	pdflatex -interaction=nonstopmode $(TEX)
 	pdflatex -interaction=nonstopmode $(TEX)
 
+# Assemble a self-contained arXiv upload: the .tex plus only the figures it
+# references. The bibliography is inline (thebibliography), so no .bib/.bbl is
+# needed; \pdfoutput=1 in the .tex forces arXiv to use pdflatex for the PDF
+# figures. Produces paper/green-sarc-arxiv.tar.gz (figures must be built first).
+arxiv:
+	rm -rf arxiv-build && mkdir -p arxiv-build/figures
+	cp $(TEX) arxiv-build/
+	for f in $$(grep -oE '\{[a-zA-Z0-9_]+\.pdf\}' $(TEX) | tr -d '{}' | sort -u); do \
+		cp figures/$$f arxiv-build/figures/ || { echo "missing figure: $$f (run make paper-figures)"; exit 1; }; \
+	done
+	cd arxiv-build && tar czf ../green-sarc-arxiv.tar.gz .
+	@echo "wrote paper/green-sarc-arxiv.tar.gz"
+
 paper-clean:
 	rm -f green-sarc.aux green-sarc.log green-sarc.out green-sarc.pdf
 	rm -f figures/*.pdf
+	rm -rf arxiv-build green-sarc-arxiv.tar.gz green-sarc-arxiv.zip

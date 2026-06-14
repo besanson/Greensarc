@@ -33,5 +33,10 @@ paper/data/*.parquet
 paper/data/swe_rebench_subset.parquet
 paper/data/tau_bench_subset.parquet
 
+# arXiv upload bundle (regenerate with `make -C paper arxiv`)
+paper/arxiv-build/
+paper/green-sarc-arxiv.tar.gz
+paper/green-sarc-arxiv.zip
+
 # Secrets (never commit real keys)
 .env
