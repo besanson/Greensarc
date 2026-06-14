@@ -31,7 +31,11 @@ redis = ["redis>=5"]
 # Live LiteLLM price + ElectricityMaps carbon loaders are stdlib-only (urllib);
 # this extra is intentionally empty, kept as a stable name for forward-compat.
 feeds = []
-sarc = ["sarc-governance @ git+https://github.com/besanson/sarc-governance"]
+# SARC composition layer. `sarc-governance` is not yet on PyPI and PyPI forbids
+# direct VCS (`git+https`) URLs in published metadata, so this extra is kept as a
+# stable name only; install the dependency manually until it is released:
+#   pip install "sarc-governance @ git+https://github.com/besanson/sarc-governance"
+sarc = []
 tiktoken = ["tiktoken>=0.5"]
 dev = [
     "pytest>=8.0",
