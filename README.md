@@ -1,5 +1,7 @@
 # Green SARC
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20692197.svg)](https://doi.org/10.5281/zenodo.20692197)
+
 **Predictive cost + carbon governance for agentic AI systems.**
 
 Green SARC wraps an agent's execution loop and decides, in real time, whether a
