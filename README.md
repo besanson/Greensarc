@@ -1,6 +1,6 @@
 # Green SARC
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20692197.svg)](https://doi.org/10.5281/zenodo.20692197)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20692196.svg)](https://doi.org/10.5281/zenodo.20692196)
 
 **Predictive cost + carbon governance for agentic AI systems.**
 
