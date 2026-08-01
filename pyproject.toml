@@ -7,14 +7,14 @@ name = "green-sarc"
 version = "0.4.1"
 description = "Green SARC — predictive cost + carbon governance layer for agentic AI systems, framework-agnostic"
 readme = "README.md"
-license = { text = "MIT" }
+license = { text = "Apache-2.0" }
 requires-python = ">=3.11"
 authors = [{ name = "G. Besanson" }]
 keywords = ["finops", "greenops", "carbon", "agents", "governance", "sarc", "llm"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",

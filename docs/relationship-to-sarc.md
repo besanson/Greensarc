@@ -77,7 +77,7 @@ So that a reader of one repository recognises the other, Green SARC follows
 | Convention | SARC | Green SARC |
 |---|---|---|
 | Layout | `src/sarc_governance/`, `adapters/`, `stores/`, `tests/`, `examples/`, `docs/` | `src/green_sarc/`, `adapters/`, `stores/`, `tests/`, `examples/`, `docs/` |
-| Packaging | setuptools, `pyproject.toml`, Python ≥ 3.11, MIT | identical |
+| Packaging | setuptools, `pyproject.toml`, Python ≥ 3.11, Apache-2.0 | identical |
 | Tooling | ruff (line-length 99) + mypy + pytest-asyncio (`asyncio_mode=auto`); CI on 3.11/3.12 | identical |
 | Value objects | `@dataclass(frozen=True)`, `str, Enum` enums, `@runtime_checkable` Protocols | identical |
 | Records | `to_dict()` / `from_dict()` round-trips; explicit `__all__`; `from __future__ import annotations`; Google-style docstrings | identical |

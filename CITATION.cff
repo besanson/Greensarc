@@ -16,7 +16,7 @@ authors:
     affiliation: "Universidad Torcuato Di Tella"
     email: gbesanson@utdt.edu
 repository-code: "https://github.com/besanson/Greensarc"
-license: MIT
+license: Apache-2.0
 version: 0.4.1
 date-released: 2026-06-14
 doi: 10.5281/zenodo.20692196
